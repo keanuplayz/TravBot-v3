@@ -2,7 +2,7 @@
   "name": "d.js-v12-bot",
   "version": "0.0.1",
   "description": "A Discord bot built on Discord.JS v12",
-  "main": "index.js",
+  "main": "src/index",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
