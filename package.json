@@ -1,0 +1,22 @@
+{
+  "name": "d.js-v12-bot",
+  "version": "0.0.1",
+  "description": "A Discord bot built on Discord.JS v12",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "discord.js",
+    "bot"
+  ],
+  "author": "Keanu Timmermans",
+  "license": "Apache-2.0",
+  "dependencies": {
+    "discord.js": "^12.2.0"
+  },
+  "devDependencies": {
+    "eslint": "^7.0.0",
+    "eslint-config-tesseract": "^0.0.2"
+  }
+}
