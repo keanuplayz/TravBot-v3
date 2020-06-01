@@ -43,7 +43,7 @@ module.exports = class BotClient extends Client {
 		this.prefix = options.prefix;
 	}
 
-	async login(token = this.token) {
+	async start(token = this.token) {
 		super.login(token);
 	}
 
