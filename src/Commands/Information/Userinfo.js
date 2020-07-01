@@ -22,7 +22,8 @@ module.exports = class extends Command {
 
 	constructor(...args) {
 		super(...args, {
-			aliases: ['user', 'ui']
+			aliases: ['user', 'ui'],
+			category: 'Information'
 		});
 	}
 

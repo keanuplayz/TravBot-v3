@@ -1,4 +1,5 @@
 {
-    "prefix": "!!",
-    "token": "<token>"
+    "prefix": "!!", // Bot Prefix
+    "token": "<token>", // Bot Token
+    "owners": ["<id>"] // Array of bot owner IDs
 }

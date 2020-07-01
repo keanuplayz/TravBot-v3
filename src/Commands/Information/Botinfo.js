@@ -9,7 +9,8 @@ module.exports = class extends Command {
 
 	constructor(...args) {
 		super(...args, {
-			aliases: ['info', 'bot', 'botinfo']
+			aliases: ['info', 'bot', 'botinfo'],
+			category: 'Information'
 		});
 	}
 
