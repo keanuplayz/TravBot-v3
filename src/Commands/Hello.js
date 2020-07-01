@@ -1,3 +1,4 @@
+/* eslint-disable no-unused-vars */
 const Command = require('./../Structures/Command.js');
 
 module.exports = class extends Command {

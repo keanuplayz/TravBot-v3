@@ -1,3 +1,4 @@
+/* eslint-disable no-undef */
 /* eslint-disable no-warning-comments */
 const Command = require('../../Structures/Command');
 const { MessageEmbed } = require('discord.js');
