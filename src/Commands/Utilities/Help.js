@@ -21,6 +21,14 @@ module.exports = class extends Command {
 			const cmd = this.client.commands.get(command) || this.client.command.get(this.aliases.get(command));
 
 			if (!cmd) return message.channel.send(`\`${command}\` is not a valid command.`);
+
+			embed.setAuthor(`${this.client.utils.captalise(cmd.name)} Command Help`, this.client.user.displayAvatarURL());
+			embed.setDescription([
+				`**❯ Aliases:** ${cmd.aliases.length ? cmd.aliases.map(alias => `\`${alias}\``).join(' ') : 'No Aliases'}`,
+				`**❯ Description:** ${cmd.description}`,
+				`**❯ Category:** ${cmd.category}`,
+				`**❯ Usage:** ${cmd.usage}`
+			]);
 		}
 	}
 
