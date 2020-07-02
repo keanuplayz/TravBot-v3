@@ -1,5 +1,9 @@
-const BotClient = require('./Structures/BotClient');
-const config = require('../config.json');
+(async() => {
+	await require('./setup.js').init();
 
-const client = new BotClient(config);
-client.start();
+	const BotClient = require('./Structures/BotClient');
+	const config = require('../data/config.json');
+
+	const client = new BotClient(config);
+	client.start();
+})()

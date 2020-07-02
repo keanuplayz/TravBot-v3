@@ -55,7 +55,13 @@ module.exports = class BotClient extends Client {
 
 	async start(token = this.token) {
 		this.utils.loadCommands();
-		super.login(token);
+		
+		try {
+			await super.login(token);
+		} catch (error) {
+			console.error('It seems that the token you provided is invalid.');
+			require('../setup.js').again();
+		}
 	}
 
 };
