@@ -4,7 +4,7 @@ const ms = require('ms');
 module.exports = class extends Command {
 
 	constructor(...args) {
-		super(...args)({
+		super(...args, {
 			aliases: ['uptime'],
 			category: 'Utilities'
 		});

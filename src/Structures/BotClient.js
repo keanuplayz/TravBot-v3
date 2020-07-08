@@ -11,35 +11,13 @@ module.exports = class BotClient extends Client {
 
 		this.commands = new Collection();
 
+		this.events = new Collection();
+
 		this.aliases = new Collection();
 
 		this.utils = new Util(this);
 
 		this.owners = options.owners;
-
-		this.once('ready', () => {
-			console.log(`Logged in as ${this.user.username}.`);
-		});
-
-		this.on('message', async (message) => {
-			const mentionRegex = RegExp(`^<@!${this.user.id}>$`);
-			const mentionRegexPrefix = RegExp(`^<@!${this.user.id}> `);
-
-			if (!message.guild || message.author.bot) return;
-
-			if (message.content.match(mentionRegex)) message.channel.send(`My prefix for ${message.guild.name} is \`${this.prefix}\`.`);
-
-			const prefix = message.content.match(mentionRegexPrefix) ?
-				message.content.match(mentionRegexPrefix)[0] : this.prefix;
-
-			// eslint-disable-next-line no-unused-vars
-			const [cmd, ...args] = message.content.slice(prefix.length).trim().split(/ +/g);
-
-			const command = this.commands.get(cmd.toLowerCase()) || this.commands.get(this.aliases.get(cmd.toLowerCase()));
-			if (command) {
-				command.run(message, args);
-			}
-		});
 	}
 
 	validate(options) {
@@ -55,6 +33,7 @@ module.exports = class BotClient extends Client {
 
 	async start(token = this.token) {
 		this.utils.loadCommands();
+		this.utils.loadEvents();
 		super.login(token);
 	}
 
