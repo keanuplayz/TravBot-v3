@@ -3,8 +3,7 @@
 
 	const BotClient = require('./Structures/BotClient');
 	const config = require('../data/config.json');
-	const panel = require('./panel.js');
 
-	const client = new BotClient(config, panel);
+	const client = new BotClient(config);
 	client.start();
 })()
