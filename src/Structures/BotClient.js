@@ -3,7 +3,7 @@ const Util = require('./Util.js');
 
 module.exports = class BotClient extends Client {
 
-	constructor(options = {}) {
+	constructor(options = {}, panel) {
 		super({
 			disableMentions: 'everyone'
 		});
@@ -26,6 +26,7 @@ module.exports = class BotClient extends Client {
 			const mentionRegexPrefix = RegExp(`^<@!${this.user.id}> `);
 
 			if (!message.guild || message.author.bot) return;
+			panel.send(message);
 
 			if (message.content.match(mentionRegex)) message.channel.send(`My prefix for ${message.guild.name} is \`${this.prefix}\`.`);
 
@@ -39,6 +40,11 @@ module.exports = class BotClient extends Client {
 			if (command) {
 				command.run(message, args);
 			}
+		});
+
+		panel.listen('message', info => {
+			if (!info || !('channel' in info) || !('message' in info)) return;
+			this.channels.cache.get(info.channel).send(info.message);
 		});
 	}
 
