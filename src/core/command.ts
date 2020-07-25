@@ -1,4 +1,7 @@
-import {isType, parseVars, CommonLibrary} from "./lib";
+import $, {isType, parseVars, CommonLibrary} from "./lib";
+import {Collection} from "discord.js";
+import Storage, {generateHandler} from "./storage";
+import {existsSync, writeFile} from "fs";
 
 // Permission levels starting from zero then increasing, allowing for numerical comparisons.
 // Note: For my bot, there really isn't much purpose to doing so, as it's just one command. And plus, if you're doing stuff like moderation commands, it's probably better to make a permissions system that allows for you to separate permissions into different trees. After all, it'd be a really bad idea to allow a bot mechanic to ban users.
@@ -93,6 +96,31 @@ export default class Command
 	console.log(member, permission, length);
 	return true;
 }*/
+
+let commands: Collection<string, Command> | null = null;
+
+/** Returns the cache of the commands if it exists and searches the directory if not. */
+// Fun, Miscellaneous (default), Music, System, Utility
+export async function loadCommands(): Promise<Collection<string, Command>>
+{
+	if(commands)
+		return commands;
+	
+	if(process.argv[2] === "dev" && !existsSync("src/commands/test.ts"))
+		writeFile("src/commands/test.ts", template, generateHandler('"test.ts" (testing/template command) successfully generated.'));
+	
+	commands = new Collection();
+	
+	for(const file of Storage.open("dist/commands", (filename: string) => filename.endsWith(".js")))
+	{
+		const header = file.substring(0, file.indexOf(".js"));
+		const command = (await import(`../commands/${header}`)).default;
+		commands.set(header, command);
+		$.log(`Loading Command: ${header}`);
+	}
+	
+	return commands;
+}
 
 // The template should be built with a reductionist mentality.
 // Provide everything the user needs and then let them remove whatever they want.

@@ -1,6 +1,6 @@
 import Command from "../core/command";
 import {CommonLibrary} from "../core/lib";
-import FileManager from "../core/storage";
+import {loadCommands} from "../core/command";
 
 const types = ["user", "number", "any"];
 
@@ -9,7 +9,7 @@ export default new Command({
 	usage: "([command, [subcommand/type], ...])",
 	async run($: CommonLibrary): Promise<any>
 	{
-		const commands = await FileManager.loadCommands();
+		const commands = await loadCommands();
 		const list: string[] = [];
 		
 		for(const [header, command] of commands)
@@ -22,7 +22,7 @@ export default new Command({
 	any: new Command({
 		async run($: CommonLibrary): Promise<any>
 		{
-			const commands = await FileManager.loadCommands();
+			const commands = await loadCommands();
 			let header = $.args.shift();
 			let command = commands.get(header);
 			

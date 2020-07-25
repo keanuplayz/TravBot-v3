@@ -2,8 +2,8 @@ import Event from "../core/event";
 import Command from "../core/command";
 import $ from "../core/lib";
 import {Message, Permissions, Collection} from "discord.js";
-import FileManager from "../core/storage";
 import {Config, Storage} from "../core/structures";
+import {loadCommands} from "../core/command";
 
 // It's a rather hacky solution, but since there's no top-level await, I just have to make the loading conditional.
 let commands: Collection<string, Command>|null = null;
@@ -13,7 +13,7 @@ export default new Event({
 	{
 		// Load commands if it hasn't already done so. Luckily, it's called once at most.
 		if(!commands)
-			commands = await FileManager.loadCommands();
+			commands = await loadCommands();
 		
 		// Message Setup //
 		if(message.author.bot)
