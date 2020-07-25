@@ -4,6 +4,7 @@ The top-level directory is reserved for files that have to be there for it to wo
 	- `core`: This is where core structures and critical functions for the bot go.
 	- `modules`: This is where modules go that accomplish one specific purpose but isn't so necessary for the bot to function. The goal is to be able to safely remove these without too much trouble.
 	- `commands`: Here's the place to store commands. The file name determines the command name.
+	- `events`: Here's the place to store events. The file name determines the event type.
 - `dist`: This is where the runnable code in `src` compiles to. (The directory structure mirrors `src`.)
 - `data`: Holds all the dynamic data used by the bot. This is what you modify if you want to change stuff for just your instance of the bot.
 - `standard`: Contains all the standard data to be used with the project itself. It's part of the code and will not be checked for inaccuracies because it's not meant to be easily modified.
@@ -16,6 +17,7 @@ This list starts from `src`/`dist`.
 - `core/lib`: Exports a function object which lets you wrap values letting you call special functions as well as calling utility functions common to all commands.
 - `core/structures`: Contains all the structures that the dynamic data read from JSON files should follow. This exports instances of these classes.
 - `core/command`: Contains the class used to instantiate commands.
+- `core/event`: Contains the class used to instantiate events.
 - `core/storage`: Exports an object which handles everything related to files.
 - `core/wrappers`: Contains classes that wrap around values and provide extra functionality.
 

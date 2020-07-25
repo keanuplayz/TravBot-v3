@@ -1,7 +1,8 @@
 import fs from "fs";
 import $ from "./lib";
-import {Collection} from "discord.js";
+import {Collection, Client} from "discord.js";
 import Command, {template} from "../core/command";
+import {EVENTS} from "./event";
 
 let commands: Collection<string, Command>|null = null;
 
@@ -89,10 +90,26 @@ const Storage = {
 			const header = file.substring(0, file.indexOf(".js"));
 			const command = (await import(`../commands/${header}`)).default;
 			commands.set(header, command);
-			$.log("Loading Command:", header);
+			$.log(`Loading Command: ${header}`);
 		}
 		
 		return commands;
+	},
+	async loadEvents(client: Client)
+	{
+		for(const file of Storage.open("dist/events", (filename: string) => filename.endsWith(".js")))
+		{
+			const header = file.substring(0, file.indexOf(".js"));
+			const event = (await import(`../events/${header}`)).default;
+			
+			if(EVENTS.includes(header))
+			{
+				event.attach(client, header);
+				$.log(`Loading Event: ${header}`);
+			}
+			else
+				$.warn(`"${header}" is not a valid event type! Did you misspell it? (Note: If you fixed the issue, delete "dist" because the compiler won't automatically delete any extra files.)`);
+		}
 	}
 };
 
