@@ -18,8 +18,16 @@ const prompts = [{
 	default: "$"
 }, {
 	type: "input",
-	name: "mechanics",
-	message: "Enter a list of bot mechanics (by their IDs) separated by spaces."
+	name: "owner",
+	message: "Enter the owner's user ID here."
+}, {
+	type: "input",
+	name: "admins",
+	message: "Enter a list of bot admins (by their IDs) separated by spaces."
+}, {
+	type: "input",
+	name: "support",
+	message: "Enter a list of bot troubleshooters (by their IDs) separated by spaces."
 }];
 
 export default {
@@ -31,8 +39,11 @@ export default {
 			Storage.open("data");
 			Config.token = answers.token as string;
 			Config.prefix = answers.prefix as string;
-			const mechanics = (answers.mechanics as string);
-			Config.mechanics = mechanics !== "" ? mechanics.split(" ") : [];
+			Config.owner = answers.owner as string;
+			const admins = (answers.admins as string);
+			Config.admins = admins !== "" ? admins.split(" ") : [];
+			const support = (answers.support as string);
+			Config.support = support !== "" ? support.split(" ") : [];
 			Config.save();
 		}
 	},

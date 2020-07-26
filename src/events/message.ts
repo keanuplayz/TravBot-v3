@@ -1,9 +1,9 @@
 import Event from "../core/event";
-import Command from "../core/command";
+import Command, {loadCommands} from "../core/command";
+import {hasPermission, getPermissionLevel, PermissionNames} from "../core/permissions";
 import $ from "../core/lib";
 import {Message, Permissions, Collection} from "discord.js";
 import {Config, Storage} from "../core/structures";
-import {loadCommands} from "../core/command";
 
 // It's a rather hacky solution, but since there's no top-level await, I just have to make the loading conditional.
 let commands: Collection<string, Command>|null = null;
@@ -47,6 +47,7 @@ export default new Event({
 		if(!command) return $.warn(`Command "${header}" was called but for some reason it's still undefined!`);
 		const params: any[] = [];
 		let isEndpoint = false;
+		let permLevel = command.permission ?? Command.PERMISSIONS.NONE;
 		
 		for(let param of args)
 		{
@@ -60,6 +61,7 @@ export default new Event({
 			
 			const type = command.resolve(param);
 			command = command.get(param);
+			permLevel = command.permission ?? permLevel;
 			
 			if(type === Command.TYPES.USER)
 			{
@@ -73,6 +75,13 @@ export default new Event({
 				params.push(param);
 		}
 		
+		if(!message.member)
+			return $.warn("This command was likely called from a DM channel meaning the member object is null.");
+		if(!hasPermission(message.member, permLevel))
+		{
+			const userPermLevel = getPermissionLevel(message.member);
+			return message.channel.send(`You don't have access to this command! Your permission level is \`${PermissionNames[userPermLevel]}\` (${userPermLevel}), but this command requires a permission level of \`${PermissionNames[permLevel]}\` (${permLevel}).`);
+		}
 		if(isEndpoint)
 			return message.channel.send("Too many arguments!");
 		

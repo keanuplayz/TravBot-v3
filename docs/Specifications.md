@@ -23,6 +23,7 @@ This list starts from `src`/`dist`.
 - `core/event`: Contains the class used to instantiate events.
 - `core/storage`: Exports an object which handles everything related to files.
 - `core/wrappers`: Contains classes that wrap around values and provide extra functionality.
+- `core/permissions`: The file containing everything related to permissions.
 
 # Design Decisions
 - All top-level files (relative to `src`/`dist`) should ideally be independent, one-time use scripts. This helps separate code that just initializes once and reusable code that forms the bulk of the main program itself. That's why all the file searching and loading commands/events will be done in `index`.

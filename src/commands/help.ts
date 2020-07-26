@@ -1,6 +1,7 @@
 import Command from "../core/command";
 import {CommonLibrary} from "../core/lib";
 import {loadCommands, categories} from "../core/command";
+import {PermissionNames} from "../core/permissions";
 
 const types = ["user", "number", "any"];
 
@@ -42,6 +43,7 @@ export default new Command({
 			if(!command || header === "test")
 				return $.channel.send(`No command found by the name \`${header}\`!`);
 			
+			let permLevel = command.permission ?? Command.PERMISSIONS.NONE;
 			let usage = command.usage;
 			let invalid = false;
 			
@@ -65,6 +67,7 @@ export default new Command({
 				}
 				
 				command = command.get(param);
+				permLevel = command.permission ?? permLevel;
 			}
 			
 			if(invalid)
@@ -98,7 +101,7 @@ export default new Command({
 			else
 				append = `Usage: \`${header} ${usage}\``;
 			
-			$.channel.send(`Command: \`${header}\`\nDescription: ${command.description}\n${append}`, {split: true});
+			$.channel.send(`Command: \`${header}\`\nPermission Required: \`${PermissionNames[permLevel]}\` (${permLevel})\nDescription: ${command.description}\n${append}`, {split: true});
 		}
 	})
 });

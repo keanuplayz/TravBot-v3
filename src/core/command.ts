@@ -1,19 +1,15 @@
 import $, {isType, parseVars, CommonLibrary} from "./lib";
 import {Collection} from "discord.js";
 import {generateHandler} from "./storage";
-import {existsSync, writeFile} from "fs";
-import {promises as ffs} from "fs";
-
-// Permission levels starting from zero then increasing, allowing for numerical comparisons.
-// Note: For my bot, there really isn't much purpose to doing so, as it's just one command. And plus, if you're doing stuff like moderation commands, it's probably better to make a permissions system that allows for you to separate permissions into different trees. After all, it'd be a really bad idea to allow a bot mechanic to ban users.
-//enum PERMISSIONS {NONE, ADMIN, MECHANIC}
+import {promises as ffs, existsSync, writeFile} from "fs";
+import {PERMISSIONS} from "./permissions";
 
 interface CommandOptions
 {
 	description?: string;
 	endpoint?: boolean;
 	usage?: string;
-	//permissions?: number;
+	permission?: PERMISSIONS;
 	run?: Function|string;
 	subcommands?: {[key: string]: Command};
 	user?: Command;
@@ -28,22 +24,22 @@ export default class Command
 	public readonly description: string;
 	public readonly endpoint: boolean;
 	public readonly usage: string;
-	//public readonly permissions: number;
+	public readonly permission: PERMISSIONS|null;
 	private run: Function|string;
 	public subcommands: {[key: string]: Command}|null;
 	public user: Command|null;
 	public number: Command|null;
 	public any: Command|null;
-	//public static readonly PERMISSIONS = PERMISSIONS;
 	[key: string]: any; // Allow for dynamic indexing. The CommandOptions interface will still prevent users from adding unused properties though.
 	public static readonly TYPES = TYPES;
+	public static readonly PERMISSIONS = PERMISSIONS;
 	
 	constructor(options?: CommandOptions)
 	{
 		this.description = options?.description || "No description.";
 		this.endpoint = options?.endpoint || false;
 		this.usage = options?.usage || "";
-		//this.permissions = options?.permissions || Command.PERMISSIONS.NONE;
+		this.permission = options?.permission ?? null;
 		this.run = options?.run || "No action was set on this command!";
 		this.subcommands = options?.subcommands || null;
 		this.user = options?.user || null;
@@ -114,13 +110,6 @@ export default class Command
 		return command;
 	}
 }
-
-/*export function hasPermission(member: GuildMember, permission: number): boolean
-{
-	const length = Object.keys(PERMISSIONS).length / 2;
-	console.log(member, permission, length);
-	return true;
-}*/
 
 let commands: Collection<string, Command>|null = null;
 export const categories: Collection<string, string[]> = new Collection();
