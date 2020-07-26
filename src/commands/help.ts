@@ -40,76 +40,65 @@ export default new Command({
 			let command = commands.get(header);
 			
 			if(!command || header === "test")
-				$.channel.send(`No command found by the name \`${header}\`!`);
-			else
+				return $.channel.send(`No command found by the name \`${header}\`!`);
+			
+			let usage = command.usage;
+			let invalid = false;
+			
+			for(const param of $.args)
 			{
-				let usage = command.usage;
+				const type = command.resolve(param);
 				
-				for(const param of $.args)
+				switch(type)
 				{
-					header += ` ${param}`;
-					
-					if(/<\w+>/g.test(param))
-					{
-						const type = param.match(/\w+/g)[0];
-						command = command[type];
-						
-						if(types.includes(type) && command?.usage)
-							usage = command.usage;
-						else
-						{
-							command = undefined;
-							break;
-						}
-					}
-					else if(command?.subcommands?.[param])
-					{
-						command = command.subcommands[param];
-						
-						if(command.usage !== "")
-							usage = command.usage;
-					}
-					else
-					{
-						command = undefined;
-						break;
-					}
+					case Command.TYPES.SUBCOMMAND: header += ` ${param}`; break;
+					case Command.TYPES.USER: header += " <user>" ; break;
+					case Command.TYPES.NUMBER: header += " <number>" ; break;
+					case Command.TYPES.ANY: header += " <any>" ; break;
+					default: header += ` ${param}`; break;
 				}
 				
-				if(!command)
-					return $.channel.send(`No command found by the name \`${header}\`!`);
-				
-				let append = "";
-				
-				if(usage === "")
+				if(type === Command.TYPES.NONE)
 				{
-					const list: string[] = [];
-					
-					for(const subtag in command.subcommands)
-					{
-						const subcmd = command.subcommands[subtag];
-						const customUsage = subcmd.usage ? ` ${subcmd.usage}` : "";
-						list.push(`- \`${header} ${subtag}${customUsage}\` - ${subcmd.description}`);
-					}
-					
-					for(const type of types)
-					{
-						if(command[type])
-						{
-							const cmd = command[type];
-							const customUsage = cmd.usage ? ` ${cmd.usage}` : "";
-							list.push(`- \`${header} <${type}>${customUsage}\` - ${cmd.description}`);
-						}
-					}
-						
-					
-					append = "Usages:" + (list.length > 0 ? `\n${list.join('\n')}` : " None.");
+					invalid = true;
+					break;
 				}
-				else
-					append = `Usage: \`${header} ${usage}\``;
 				
-				$.channel.send(`Command: \`${header}\`\nDescription: ${command.description}\n${append}`, {split: true});
+				command = command.get(param);
 			}
+			
+			if(invalid)
+				return $.channel.send(`No command found by the name \`${header}\`!`);
+			
+			let append = "";
+			
+			if(usage === "")
+			{
+				const list: string[] = [];
+				
+				for(const subtag in command.subcommands)
+				{
+					const subcmd = command.subcommands[subtag];
+					const customUsage = subcmd.usage ? ` ${subcmd.usage}` : "";
+					list.push(`- \`${header} ${subtag}${customUsage}\` - ${subcmd.description}`);
+				}
+				
+				for(const type of types)
+				{
+					if(command[type])
+					{
+						const cmd = command[type];
+						const customUsage = cmd.usage ? ` ${cmd.usage}` : "";
+						list.push(`- \`${header} <${type}>${customUsage}\` - ${cmd.description}`);
+					}
+				}
+				
+				append = "Usages:" + (list.length > 0 ? `\n${list.join('\n')}` : " None.");
+			}
+			else
+				append = `Usage: \`${header} ${usage}\``;
+			
+			$.channel.send(`Command: \`${header}\`\nDescription: ${command.description}\n${append}`, {split: true});
 		}
 	})
 });

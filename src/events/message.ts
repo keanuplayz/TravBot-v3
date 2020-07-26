@@ -58,28 +58,18 @@ export default new Event({
 				break;
 			}
 			
-			if(command.subcommands?.[param])
-				command = command.subcommands[param];
-			// Any Discord ID format will automatically format to a user ID.
-			else if(command.user && (/\d{17,19}/.test(param)))
+			const type = command.resolve(param);
+			command = command.get(param);
+			
+			if(type === Command.TYPES.USER)
 			{
 				const id = param.match(/\d+/g)![0];
-				command = command.user;
 				try {params.push(await message.client.users.fetch(id))}
 				catch(error) {return message.channel.send(`No user found by the ID \`${id}\`!`)}
 			}
-			// Disallow infinity and allow for 0.
-			else if(command.number && (Number(param) || param === "0") && !param.includes("Infinity"))
-			{
-				command = command.number;
+			else if(type === Command.TYPES.NUMBER)
 				params.push(Number(param));
-			}
-			else if(command.any)
-			{
-				command = command.any;
-				params.push(param);
-			}
-			else
+			else if(type !== Command.TYPES.SUBCOMMAND)
 				params.push(param);
 		}
 		

@@ -21,6 +21,8 @@ interface CommandOptions
 	any?: Command;
 }
 
+export enum TYPES {SUBCOMMAND, USER, NUMBER, ANY, NONE};
+
 export default class Command
 {
 	public readonly description: string;
@@ -34,6 +36,7 @@ export default class Command
 	public any: Command|null;
 	//public static readonly PERMISSIONS = PERMISSIONS;
 	[key: string]: any; // Allow for dynamic indexing. The CommandOptions interface will still prevent users from adding unused properties though.
+	public static readonly TYPES = TYPES;
 	
 	constructor(options?: CommandOptions)
 	{
@@ -78,17 +81,38 @@ export default class Command
 		this.subcommands[key] = command;
 	}
 	
-	/** See if a subcommand exists for the command. */
-	/*public has(type: string): boolean
+	public resolve(param: string): TYPES
 	{
-		return this.subcommands && (type in this.subcommands) || false;
-	}*/
+		if(this.subcommands?.[param])
+			return TYPES.SUBCOMMAND;
+		// Any Discord ID format will automatically format to a user ID.
+		else if(this.user && (/\d{17,19}/.test(param)))
+			return TYPES.USER;
+		// Disallow infinity and allow for 0.
+		else if(this.number && (Number(param) || param === "0") && !param.includes("Infinity"))
+			return TYPES.NUMBER;
+		else if(this.any)
+			return TYPES.ANY;
+		else
+			return TYPES.NONE;
+	}
 	
-	/** Get the requested subcommand if it exists. */
-	/*public get(type: string): Command|null
+	public get(param: string): Command
 	{
-		return this.subcommands && this.subcommands[type] || null;
-	}*/
+		const type = this.resolve(param);
+		let command;
+		
+		switch(type)
+		{
+			case TYPES.SUBCOMMAND: command = this.subcommands![param]; break;
+			case TYPES.USER: command = this.user as Command; break;
+			case TYPES.NUMBER: command = this.number as Command; break;
+			case TYPES.ANY: command = this.any as Command; break;
+			default: command = this; break;
+		}
+		
+		return command;
+	}
 }
 
 /*export function hasPermission(member: GuildMember, permission: number): boolean
