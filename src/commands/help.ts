@@ -1,6 +1,6 @@
 import Command from "../core/command";
 import {CommonLibrary} from "../core/lib";
-import {loadCommands} from "../core/command";
+import {loadCommands, categories} from "../core/command";
 
 const types = ["user", "number", "any"];
 
@@ -10,14 +10,27 @@ export default new Command({
 	async run($: CommonLibrary): Promise<any>
 	{
 		const commands = await loadCommands();
-		const list: string[] = [];
+		let output = `Legend: \`<type>\`, \`[list/of/subcommands]\`, \`(optional)\`, \`(<optional type>)\`, \`([optional/list/...])\``;
 		
-		for(const [header, command] of commands)
-			if(header !== "test")
-				list.push(`- \`${header}\` - ${command.description}`);
+		for(const [category, headers] of categories)
+		{
+			output += `\n\n===[ ${category} ]===`;
+			
+			for(const header of headers)
+			{
+				if(header !== "test")
+				{
+					const command = commands.get(header);
+					
+					if(!command)
+						return $.warn(`Command "${header}" of category "${category}" unexpectedly doesn't exist!`);
+					
+					output += `\n- \`${header}\`: ${command.description}`;
+				}
+			}
+		}
 		
-		const outList = list.length > 0 ? `\n${list.join('\n')}` : " None";
-		$.channel.send(`Legend: \`<type>\`, \`[list/of/subcommands]\`, \`(optional)\`, \`(<optional type>)\`, \`([optional/list/...])\`\nCommands:${outList}`, {split: true});
+		$.channel.send(output, {split: true});
 	},
 	any: new Command({
 		async run($: CommonLibrary): Promise<any>

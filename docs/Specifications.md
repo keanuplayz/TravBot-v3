@@ -4,6 +4,9 @@ The top-level directory is reserved for files that have to be there for it to wo
 	- `core`: This is where core structures and critical functions for the bot go.
 	- `modules`: This is where modules go that accomplish one specific purpose but isn't so necessary for the bot to function. The goal is to be able to safely remove these without too much trouble.
 	- `commands`: Here's the place to store commands. The file name determines the command name.
+		- `subcommands/`: All commands here are ignored by the category loader. Here is where you can split commands into different files. Also works per directory, for example, `utility/subcommands/` is ignored.
+		- `<directory>/`: Specify a directory which'll group commands into a category. For example, a `utility` folder would make all commands inside have the `Utility` category.
+		- `<file>.ts`: All commands at this level will have the `Miscellaneous` category.
 	- `events`: Here's the place to store events. The file name determines the event type.
 - `dist`: This is where the runnable code in `src` compiles to. (The directory structure mirrors `src`.)
 - `data`: Holds all the dynamic data used by the bot. This is what you modify if you want to change stuff for just your instance of the bot.

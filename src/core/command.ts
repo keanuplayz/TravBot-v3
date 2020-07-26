@@ -1,7 +1,8 @@
 import $, {isType, parseVars, CommonLibrary} from "./lib";
 import {Collection} from "discord.js";
-import Storage, {generateHandler} from "./storage";
+import {generateHandler} from "./storage";
 import {existsSync, writeFile} from "fs";
+import {promises as ffs} from "fs";
 
 // Permission levels starting from zero then increasing, allowing for numerical comparisons.
 // Note: For my bot, there really isn't much purpose to doing so, as it's just one command. And plus, if you're doing stuff like moderation commands, it's probably better to make a permissions system that allows for you to separate permissions into different trees. After all, it'd be a really bad idea to allow a bot mechanic to ban users.
@@ -97,10 +98,10 @@ export default class Command
 	return true;
 }*/
 
-let commands: Collection<string, Command> | null = null;
+let commands: Collection<string, Command>|null = null;
+export const categories: Collection<string, string[]> = new Collection();
 
 /** Returns the cache of the commands if it exists and searches the directory if not. */
-// Fun, Miscellaneous (default), Music, System, Utility
 export async function loadCommands(): Promise<Collection<string, Command>>
 {
 	if(commands)
@@ -110,22 +111,83 @@ export async function loadCommands(): Promise<Collection<string, Command>>
 		writeFile("src/commands/test.ts", template, generateHandler('"test.ts" (testing/template command) successfully generated.'));
 	
 	commands = new Collection();
+	const dir = await ffs.opendir("dist/commands");
+	const listMisc: string[] = [];
+	let selected;
 	
-	for(const file of Storage.open("dist/commands", (filename: string) => filename.endsWith(".js")))
+	// There will only be one level of directory searching (per category).
+	while(selected = await dir.read())
 	{
-		const header = file.substring(0, file.indexOf(".js"));
-		const command = (await import(`../commands/${header}`)).default;
-		commands.set(header, command);
-		$.log(`Loading Command: ${header}`);
+		if(selected.isDirectory())
+		{
+			if(selected.name === "subcommands")
+				continue;
+			
+			const subdir = await ffs.opendir(`dist/commands/${selected.name}`);
+			const category = getTitleCase(selected.name);
+			const list: string[] = [];
+			let cmd;
+			
+			while(cmd = await subdir.read())
+			{
+				if(cmd.isDirectory())
+				{
+					if(cmd.name === "subcommands")
+						continue;
+					else
+						$.warn(`You can't have multiple levels of directories! From: "dist/commands/${cmd.name}"`);
+				}
+				else
+				{
+					const header = cmd.name.substring(0, cmd.name.indexOf(".js"));
+					const command = (await import(`../commands/${selected.name}/${header}`)).default;
+					list.push(header);
+					
+					if(commands.has(header))
+						$.warn(`Command "${header}" already exists! Make sure to make each command uniquely identifiable across categories!`);
+					else
+						commands.set(header, command);
+					
+					$.log(`Loading Command: ${header} (${category})`);
+				}
+			}
+			
+			subdir.close();
+			categories.set(category, list);
+		}
+		else
+		{
+			const header = selected.name.substring(0, selected.name.indexOf(".js"));
+			const command = (await import(`../commands/${header}`)).default;
+			listMisc.push(header);
+			
+			if(commands.has(header))
+				$.warn(`Command "${header}" already exists! Make sure to make each command uniquely identifiable across categories.`);
+			else
+				commands.set(header, command);
+			
+			$.log(`Loading Command: ${header} (Miscellaneous)`);
+		}
 	}
 	
+	dir.close();
+	categories.set("Miscellaneous", listMisc);
+	
 	return commands;
+}
+
+function getTitleCase(name: string): string
+{
+	if(name.length < 1)
+		return name;
+	const first = name[0].toUpperCase();
+	return first + name.substring(1);
 }
 
 // The template should be built with a reductionist mentality.
 // Provide everything the user needs and then let them remove whatever they want.
 // That way, they aren't focusing on what's missing, but rather what they need for their command.
-export const template =
+const template =
 `import Command from '../core/command';
 import {CommonLibrary} from '../core/lib';
 
