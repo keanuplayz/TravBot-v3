@@ -1,0 +1,17 @@
+{
+	"compilerOptions":
+	{
+		"rootDir": "src",
+		"outDir": "dist",
+		"target": "ES6",
+		"module": "CommonJS",
+		"moduleResolution": "node",
+		"esModuleInterop": true,
+		"noImplicitAny": true,
+		"noImplicitReturns": true,
+		"strictNullChecks": true,
+		"strictFunctionTypes": true,
+		"strictPropertyInitialization": true,
+		"removeComments": true
+	}
+}

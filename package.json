@@ -1,0 +1,31 @@
+{
+  "name": "d.js-v12-bot",
+  "version": "0.0.1",
+  "description": "A Discord bot built on Discord.JS v12",
+  "main": "dist/index.js",
+  "dependencies": {
+    "chalk": "^4.1.0",
+    "discord.js": "^12.2.0",
+    "inquirer": "^7.3.1"
+  },
+  "devDependencies": {
+    "@types/inquirer": "^6.5.0",
+    "@types/node": "^14.0.22",
+    "@types/ws": "^7.2.6",
+    "tsc-watch": "^4.2.9",
+    "typescript": "^3.9.6"
+  },
+  "scripts": {
+    "build": "tsc",
+    "watch": "tsc --watch",
+    "autobuild": "tsc && npm start",
+    "start": "node dist/index.js",
+    "dev": "tsc-watch --onSuccess \"node dist/index.js dev\""
+  },
+  "keywords": [
+    "discord.js",
+    "bot"
+  ],
+  "author": "Keanu Timmermans",
+  "license": "MIT"
+}
