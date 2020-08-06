@@ -90,12 +90,17 @@ export default new Command({
 		description: "Displays info about mentioned user.",
 		async run($: CommonLibrary): Promise<any>
 		{
-			const member = $.args[0] || $.args[0].mentions.members.last() || $.guild?.members.cache.get($.args[0]) || $.member;
+			// Transforms the User object into a GuildMember object of the current guild.
+			const member = $.guild?.members.resolve($.args[0]);
+
+			if(!member)
+				return $.channel.send("No member object was found by that user! Are you sure you used this command in a server?");
+
 			const roles = member.roles.cache
 				.sort((a: { position: number; }, b: { position: number; }) => b.position - a.position)
 				.map((role: { toString: () => any; }) => role.toString())
 				.slice(0, -1);
-			const userFlags = member.user.flags.toArray();
+			const userFlags = member.permissions.toArray();
 
 			const embed = new MessageEmbed()
 				.setThumbnail(member.user.displayAvatarURL({ dynamic: true, size: 512 }))
@@ -104,11 +109,11 @@ export default new Command({
 					`**❯ Username:** ${member.user.username}`,
 					`**❯ Discriminator:** ${member.user.discriminator}`,
 					`**❯ ID:** ${member.id}`,
-					`**❯ Flags:** ${userFlags.length ? userFlags.map((flag: string | number) => flags[flag]).join(', ') : 'None'}`,
+					`**❯ Flags:** ${userFlags.length ? userFlags.join(', ') : 'None'}`,
 					`**❯ Avatar:** [Link to avatar](${member.user.displayAvatarURL({ dynamic: true })})`,
 					`**❯ Time Created:** ${moment(member.user.createdTimestamp).format('LT')} ${moment(member.user.createdTimestamp).format('LL')} ${moment(member.user.createdTimestamp).fromNow()}`,
 					`**❯ Status:** ${member.user.presence.status}`,
-					`**❯ Game:** ${member.user.presence.game || 'Not playing a game.'}`
+					`**❯ Game:** ${member.user.presence.activities || 'Not playing a game.'}`
 				])
 				.addField('Member', [
 					`**❯ Highest Role:** ${member.roles.highest.id === $.guild?.id ? 'None' : member.roles.highest.name}`,
