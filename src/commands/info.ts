@@ -100,7 +100,8 @@ export default new Command({
 				.sort((a: { position: number; }, b: { position: number; }) => b.position - a.position)
 				.map((role: { toString: () => any; }) => role.toString())
 				.slice(0, -1);
-			const userFlags = member.permissions.toArray();
+			// @ts-ignore - Discord.js' typings seem to be outdated here. According to their v12 docs, it's User.fetchFlags() instead of User.flags.
+			const userFlags = (await member.user.fetchFlags() as UserFlags).toArray();
 
 			const embed = new MessageEmbed()
 				.setThumbnail(member.user.displayAvatarURL({ dynamic: true, size: 512 }))
