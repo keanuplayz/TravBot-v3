@@ -67,6 +67,26 @@ export default new Command({
 						$.channel.send(`Couldn't find a verbosity level named \`${type}\`! The available types are \`[${Object.keys(logs)}]\`.`);
 				}
 			})
+		}),
+		status: new Command({
+			description: "Changes the bot's status.",
+			permission: Command.PERMISSIONS.BOT_SUPPORT,
+			async run($: CommonLibrary): Promise<any>
+			{
+				$.channel.send('Setting status to `online`...');
+			},
+			any: new Command({
+				description: `Select a status to set to. Available statuses: \`online\`, \`idle\`, \`dnd\`, \`invisible\``,
+				async run($: CommonLibrary): Promise<any>
+				{
+					let statuses = ['online', 'idle', 'dnd', 'invisible'];
+					if (!statuses.includes($.args[0])) return $.channel.send("That status doesn't exist!");
+					else {
+						$.client.user?.setStatus($.args[0]);
+						$.channel.send(`Setting status to \`${$.args[0]}\`...`);
+					}
+				}
+			})
 		})
 	}
 });
