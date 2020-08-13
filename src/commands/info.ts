@@ -6,11 +6,7 @@ import { verificationLevels, filterLevels, regions, flags } from "../defs/info";
 
 export default new Command({
 	description: "Command to provide all sorts of info about the current server, a user, etc.",
-	async run($: CommonLibrary): Promise<any>
-	{
-		$.channel.send("Please provide an argument. `.help info`")
-		console.log(verificationLevels);
-	},
+	run: "Please provide an argument.\nFor help, run `.help info`.",
 	subcommands:
 	{
 		avatar: new Command({
