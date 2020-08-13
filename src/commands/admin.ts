@@ -87,6 +87,24 @@ export default new Command({
 					}
 				}
 			})
+		}),
+		purge: new Command({
+			description: "Purges bot messages.",
+			permission: Command.PERMISSIONS.BOT_SUPPORT,
+			async run($: CommonLibrary): Promise<any>
+			{
+				$.message.delete();
+				const msgs = await $.channel.messages.fetch({
+					limit: 100
+				});
+				const travMessages = msgs.filter(m => m.author.id === $.client.user?.id);
+
+				await $.message.channel.send(`Found ${travMessages.size} messages to delete.`)
+					.then(m => m.delete({
+						timeout: 5000
+					}));
+				await $.message.channel.bulkDelete(travMessages);
+			}
 		})
 	}
 });
