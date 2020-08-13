@@ -11,6 +11,13 @@ function getLogBuffer(type: string)
 	}]};
 }
 
+const activities: { [type: string]: string } = {
+	playing: "",
+	listening: "",
+	streaming: "",
+	watching: ""
+};
+
 export default new Command({
 	description: "An all-in-one command to do admin stuff. You need to be either an admin of the server or one of the bot's mechanics to use this command.",
 	async run($: CommonLibrary): Promise<any>
@@ -139,66 +146,25 @@ export default new Command({
 			usage: "<type> <string>",
 			async run($: CommonLibrary): Promise<any>
 			{
-				// if ($.args[0]) {
-				// 	$.message.delete();
-				// 	$.client.user?.setActivity($.args.join(" "));
-				// } else {
-				// 	$.message.delete();
-				// 	$.client.user?.setActivity(".help", {
-				// 		type: "LISTENING"
-				// 	});
-				// }
 				$.client.user?.setActivity(".help", {
 					type: "LISTENING"
 				});
+				$.channel.send("Activity set to default.")
 			},
-			subcommands:
-			{
-				playing: new Command({
-					description: "Set the \`Playing\` status for the bot.",
-					usage: "<string>",
-					async run($: CommonLibrary): Promise<any>
-					{
-						$.client.user?.setActivity($.args.join(" "), {
-							type: "PLAYING"
-						})
-						$.channel.send(`Set status to \`Playing ${$.args.join(" ")}\``)
+			any: new Command({
+				description: `Select an activity type to set. Available levels: \`[${Object.keys(activities)}]\``,
+				async run($: CommonLibrary): Promise<any>
+				{
+					const type = $.args[0];
+					
+					if(type in activities) {
+						$.client.user?.setActivity($.args.slice(1).join(" "), {type: $.args[0].toUpperCase()})
+						$.channel.send(`Set activity to \`${$.args[0].toUpperCase()}\` \`${$.args.slice(1).join(" ")}\`.`)
 					}
-				}),
-				streaming: new Command({
-					description: "Set the \`Streaming\` status for the bot.",
-					usage: "<string>",
-					async run($: CommonLibrary): Promise<any>
-					{
-						$.client.user?.setActivity($.args.join(" "), {
-							type: "STREAMING"
-						})
-						$.channel.send(`Set status to \`Streaming ${$.args.join(" ")}\``)
-					}
-				}),
-				listening: new Command({
-					description: "Set the \`Listening to\` status for the bot.",
-					usage: "<string>",
-					async run($: CommonLibrary): Promise<any>
-					{
-						$.client.user?.setActivity($.args.join(" "), {
-							type: "LISTENING"
-						})
-						$.channel.send(`Set status to \`Listening to ${$.args.join(" ")}\``)
-					}
-				}),
-				watching: new Command({
-					description: "Set the \`Watching\` status for the bot.",
-					usage: "<string>",
-					async run($: CommonLibrary): Promise<any>
-					{
-						$.client.user?.setActivity($.args.join(" "), {
-							type: "WATCHING"
-						})
-						$.channel.send(`Set status to \`Watching ${$.args.join(" ")}\``)
-					}
-				})
-			}
+					else
+						$.channel.send(`Couldn't find an activity type named \`${type}\`! The available types are \`[${Object.keys(activities)}]\`.`);
+				}
+			})
 		})
 	}
 });
