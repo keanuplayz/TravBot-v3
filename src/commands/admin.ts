@@ -132,6 +132,73 @@ export default new Command({
 					.map(e => e.name);
 				$.channel.send(guildList);
 			}
+		}),
+		activity: new Command({
+			description: "Set the activity of the bot.",
+			permission: Command.PERMISSIONS.BOT_SUPPORT,
+			usage: "<type> <string>",
+			async run($: CommonLibrary): Promise<any>
+			{
+				// if ($.args[0]) {
+				// 	$.message.delete();
+				// 	$.client.user?.setActivity($.args.join(" "));
+				// } else {
+				// 	$.message.delete();
+				// 	$.client.user?.setActivity(".help", {
+				// 		type: "LISTENING"
+				// 	});
+				// }
+				$.client.user?.setActivity(".help", {
+					type: "LISTENING"
+				});
+			},
+			subcommands:
+			{
+				playing: new Command({
+					description: "Set the \`Playing\` status for the bot.",
+					usage: "<string>",
+					async run($: CommonLibrary): Promise<any>
+					{
+						$.client.user?.setActivity($.args.join(" "), {
+							type: "PLAYING"
+						})
+						$.channel.send(`Set status to \`Playing ${$.args.join(" ")}\``)
+					}
+				}),
+				streaming: new Command({
+					description: "Set the \`Streaming\` status for the bot.",
+					usage: "<string>",
+					async run($: CommonLibrary): Promise<any>
+					{
+						$.client.user?.setActivity($.args.join(" "), {
+							type: "STREAMING"
+						})
+						$.channel.send(`Set status to \`Streaming ${$.args.join(" ")}\``)
+					}
+				}),
+				listening: new Command({
+					description: "Set the \`Listening to\` status for the bot.",
+					usage: "<string>",
+					async run($: CommonLibrary): Promise<any>
+					{
+						$.client.user?.setActivity($.args.join(" "), {
+							type: "LISTENING"
+						})
+						$.channel.send(`Set status to \`Listening to ${$.args.join(" ")}\``)
+					}
+				}),
+				watching: new Command({
+					description: "Set the \`Watching\` status for the bot.",
+					usage: "<string>",
+					async run($: CommonLibrary): Promise<any>
+					{
+						$.client.user?.setActivity($.args.join(" "), {
+							type: "WATCHING"
+						})
+						$.channel.send(`Set status to \`Watching ${$.args.join(" ")}\``)
+					}
+				})
+			}
 		})
 	}
 });
