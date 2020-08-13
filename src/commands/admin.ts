@@ -105,6 +105,23 @@ export default new Command({
 					}));
 				await $.message.channel.bulkDelete(travMessages);
 			}
+		}),
+		nick: new Command({
+			description: "Change the bot's nickname.",
+			permission: Command.PERMISSIONS.BOT_SUPPORT,
+			async run($: CommonLibrary): Promise<any>
+			{
+				try {
+					const nickName = $.args.join(" ");
+					const trav = $.guild?.members.cache.find(member => member.id === $.client.user?.id);
+					await trav?.setNickname(nickName);
+					$.message.delete({timeout: 5000});
+					$.channel.send(`Nickname set to \`${nickName}\``)
+						.then(m => m.delete({timeout: 5000}));
+				} catch (e) {
+					console.log(e);
+				}
+			}
 		})
 	}
 });
