@@ -122,6 +122,16 @@ export default new Command({
 					console.log(e);
 				}
 			}
+		}),
+		guilds: new Command({
+			description: "Shows a list of all guilds the bot is a member of.",
+			permission: Command.PERMISSIONS.BOT_SUPPORT,
+			async run($: CommonLibrary): Promise<any>
+			{
+				const guildList = $.client.guilds.cache.array()
+					.map(e => e.name);
+				$.channel.send(guildList);
+			}
 		})
 	}
 });
