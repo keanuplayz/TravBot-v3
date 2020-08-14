@@ -3,7 +3,7 @@ import {Client, Message, TextChannel, DMChannel, NewsChannel, Guild, User, Guild
 import chalk from "chalk";
 import FileManager from "./storage";
 import {eventListeners} from "../events/messageReactionRemove";
-import {client} from "../index";
+import {botHasPermission} from "../index";
 
 /** A type that describes what the library module does. */
 export interface CommonLibrary
@@ -170,10 +170,10 @@ $.paginate = async(message: Message, senderID: string, total: number, callback: 
 	await message.awaitReactions((reaction, user) => {
 		// The reason this is inside the call is because it's possible to switch a user's permissions halfway and suddenly throw an error.
 		// This will dynamically adjust for that, switching modes depending on whether it currently has the "Manage Messages" permission.
-		const canDeleteEmotes = !!(client.user && message.guild?.members.resolve(client.user)?.hasPermission(Permissions.FLAGS.MANAGE_MESSAGES));
+		const canDeleteEmotes = botHasPermission(message.guild, Permissions.FLAGS.MANAGE_MESSAGES);
 		handle(reaction.emoji.name, user.id);
 		
-		if(canDeleteEmotes && user.id !== client.user?.id)
+		if(canDeleteEmotes)
 			reaction.users.remove(user);
 		
 		return false;
@@ -258,7 +258,7 @@ export function parseArgs(line: string): string[]
  * - `%%` = `%`
  * - If the invalid token is null/undefined, nothing is changed.
  */
-export function parseVars(line: string, definitions: {[key: string]: string}, invalid: string|null|undefined = ""): string
+export function parseVars(line: string, definitions: {[key: string]: string}, invalid: string|null = ""): string
 {
 	let result = "";
 	let inVariable = false;
@@ -276,7 +276,7 @@ export function parseVars(line: string, definitions: {[key: string]: string}, in
 				{
 					if(token in definitions)
 						result += definitions[token];
-					else if(invalid === undefined || invalid === null)
+					else if(invalid === null)
 						result += `%${token}%`;
 					else
 						result += invalid;
@@ -352,7 +352,7 @@ export interface GenericJSON
 
 export abstract class GenericStructure
 {
-	protected __meta__ = "generic";
+	private __meta__ = "generic";
 	
 	constructor(tag?: string)
 	{

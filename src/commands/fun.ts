@@ -41,7 +41,7 @@ export default new Command({
 				async run($: CommonLibrary): Promise<any>
 				{
 					const sender = $.message.author;
-					$.channel.send(responses[Math.floor(Math.random() * responses.length)] + ` <@${sender.id}>`);
+					$.channel.send($(responses).random() + ` <@${sender.id}>`);
 				}
 			})
 		}),

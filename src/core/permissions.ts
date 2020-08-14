@@ -38,30 +38,17 @@ const length = Object.keys(PERMISSIONS).length / 2;
 
 export function hasPermission(member: GuildMember, permission: PERMISSIONS): boolean
 {
-	if(permission === PERMISSIONS.NONE)
-		return true;
-	
 	for(let i = length-1; i >= permission; i--)
-	{
-		const condition = PermissionChecker[i](member);
-		
-		if(condition)
+		if(PermissionChecker[i](member))
 			return true;
-	}
-	
 	return false;
 }
 
 export function getPermissionLevel(member: GuildMember): number
 {
 	for(let i = length-1; i >= 0; i--)
-	{
-		const condition = PermissionChecker[i](member);
-		
-		if(condition)
+		if(PermissionChecker[i](member))
 			return i;
-	}
-	
 	return 0;
 }
 

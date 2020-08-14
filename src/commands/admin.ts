@@ -2,6 +2,8 @@ import Command from "../core/command";
 import {CommonLibrary, logs} from "../core/lib";
 import {Config, Storage} from "../core/structures";
 import {PermissionNames, getPermissionLevel} from "../core/permissions";
+import {botHasPermission} from "../index";
+import {Permissions} from "discord.js";
 
 function getLogBuffer(type: string)
 {
@@ -11,12 +13,7 @@ function getLogBuffer(type: string)
 	}]};
 }
 
-const activities: { [type: string]: string } = {
-	playing: "",
-	listening: "",
-	streaming: "",
-	watching: ""
-};
+const activities = ["playing", "listening", "streaming", "watching"];
 
 export default new Command({
 	description: "An all-in-one command to do admin stuff. You need to be either an admin of the server or one of the bot's mechanics to use this command.",
@@ -63,7 +60,7 @@ export default new Command({
 				$.channel.send(getLogBuffer("info"));
 			},
 			any: new Command({
-				description: `Select a verbosity to listen to. Available levels: \`[${Object.keys(logs)}]\``,
+				description: `Select a verbosity to listen to. Available levels: \`[${Object.keys(logs).join(", ")}]\``,
 				async run($: CommonLibrary): Promise<any>
 				{
 					const type = $.args[0];
@@ -71,7 +68,7 @@ export default new Command({
 					if(type in logs)
 						$.channel.send(getLogBuffer(type));
 					else
-						$.channel.send(`Couldn't find a verbosity level named \`${type}\`! The available types are \`[${Object.keys(logs)}]\`.`);
+						$.channel.send(`Couldn't find a verbosity level named \`${type}\`! The available types are \`[${Object.keys(logs).join(", ")}]\`.`);
 				}
 			})
 		}),
@@ -118,16 +115,13 @@ export default new Command({
 			permission: Command.PERMISSIONS.BOT_SUPPORT,
 			async run($: CommonLibrary): Promise<any>
 			{
-				try {
-					const nickName = $.args.join(" ");
-					const trav = $.guild?.members.cache.find(member => member.id === $.client.user?.id);
-					await trav?.setNickname(nickName);
-					$.message.delete({timeout: 5000});
-					$.channel.send(`Nickname set to \`${nickName}\``)
-						.then(m => m.delete({timeout: 5000}));
-				} catch (e) {
-					console.log(e);
-				}
+				const nickName = $.args.join(" ");
+				const trav = $.guild?.members.cache.find(member => member.id === $.client.user?.id);
+				await trav?.setNickname(nickName);
+				if(botHasPermission($.guild, Permissions.FLAGS.MANAGE_MESSAGES))
+					$.message.delete({timeout: 5000}).catch($.handler.bind($));
+				$.channel.send(`Nickname set to \`${nickName}\``)
+					.then(m => m.delete({timeout: 5000}));
 			}
 		}),
 		guilds: new Command({
@@ -152,17 +146,17 @@ export default new Command({
 				$.channel.send("Activity set to default.")
 			},
 			any: new Command({
-				description: `Select an activity type to set. Available levels: \`[${Object.keys(activities)}]\``,
+				description: `Select an activity type to set. Available levels: \`[${activities.join(", ")}]\``,
 				async run($: CommonLibrary): Promise<any>
 				{
 					const type = $.args[0];
 					
-					if(type in activities) {
+					if(activities.includes(type)) {
 						$.client.user?.setActivity($.args.slice(1).join(" "), {type: $.args[0].toUpperCase()})
 						$.channel.send(`Set activity to \`${$.args[0].toUpperCase()}\` \`${$.args.slice(1).join(" ")}\`.`)
 					}
 					else
-						$.channel.send(`Couldn't find an activity type named \`${type}\`! The available types are \`[${Object.keys(activities)}]\`.`);
+						$.channel.send(`Couldn't find an activity type named \`${type}\`! The available types are \`[${activities.join(", ")}]\`.`);
 				}
 			})
 		})

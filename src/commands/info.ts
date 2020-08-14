@@ -6,7 +6,7 @@ import { verificationLevels, filterLevels, regions, flags } from "../defs/info";
 
 export default new Command({
 	description: "Command to provide all sorts of info about the current server, a user, etc.",
-	run: "Please provide an argument.\nFor help, run `.help info`.",
+	run: "Please provide an argument.\nFor help, run `%prefix%help info`.",
 	subcommands:
 	{
 		avatar: new Command({

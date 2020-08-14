@@ -3,7 +3,7 @@ import {client} from "../index";
 import $ from "../core/lib";
 import {Config} from "../core/structures";
 
-export default new Event({
+export default new Event<"ready">({
 	once()
 	{
 		if(client.user)

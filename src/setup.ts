@@ -44,7 +44,7 @@ export default {
 			Config.admins = admins !== "" ? admins.split(" ") : [];
 			const support = (answers.support as string);
 			Config.support = support !== "" ? support.split(" ") : [];
-			Config.save();
+			Config.save(false);
 		}
 	},
 	/** Prompt the user to set their token again. */

@@ -1,34 +1,31 @@
-import {Client} from "discord.js";
+import {Client, ClientEvents, Constants} from "discord.js";
 import Storage from "./storage";
 import $ from "./lib";
 
-// Last Updated: Discord.js v12.2.0
-const EVENTS = ["channelCreate", "channelDelete", "channelPinsUpdate", "channelUpdate", "debug", "warn", "disconnect", "emojiCreate", "emojiDelete", "emojiUpdate", "error", "guildBanAdd", "guildBanRemove", "guildCreate", "guildDelete", "guildUnavailable", "guildIntegrationsUpdate", "guildMemberAdd", "guildMemberAvailable", "guildMemberRemove", "guildMembersChunk", "guildMemberSpeaking", "guildMemberUpdate", "guildUpdate", "inviteCreate", "inviteDelete", "message", "messageDelete", "messageReactionRemoveAll", "messageReactionRemoveEmoji", "messageDeleteBulk", "messageReactionAdd", "messageReactionRemove", "messageUpdate", "presenceUpdate", "rateLimit", "ready", "invalidated", "roleCreate", "roleDelete", "roleUpdate", "typingStart", "userUpdate", "voiceStateUpdate", "webhookUpdate", "shardDisconnect", "shardError", "shardReady", "shardReconnecting", "shardResume"];
-
-interface EventOptions
+interface EventOptions<K extends keyof ClientEvents>
 {
-	readonly on?: Function;
-	readonly once?: Function;
+	readonly on?: (...args: ClientEvents[K]) => void;
+	readonly once?: (...args: ClientEvents[K]) => void;
 }
 
-export default class Event
+export default class Event<K extends keyof ClientEvents>
 {
-	private readonly on: Function|null;
-	private readonly once: Function|null;
+	private readonly on?: (...args: ClientEvents[K]) => void;
+	private readonly once?: (...args: ClientEvents[K]) => void;
 	
-	constructor(options: EventOptions)
+	constructor(options: EventOptions<K>)
 	{
-		this.on = options.on || null;
-		this.once = options.once || null;
+		this.on = options.on;
+		this.once = options.once;
 	}
 	
 	// For this function, I'm going to assume that the event is used with the correct arguments and that the event tag is checked in "storage.ts".
-	public attach(client: Client, event: string)
+	public attach(client: Client, event: K)
 	{
 		if(this.on)
-			client.on(event as any, this.on as any);
+			client.on(event, this.on);
 		if(this.once)
-			client.once(event as any, this.once as any);
+			client.once(event, this.once);
 	}
 }
 
@@ -39,7 +36,7 @@ export async function loadEvents(client: Client)
 		const header = file.substring(0, file.indexOf(".js"));
 		const event = (await import(`../events/${header}`)).default;
 		
-		if(EVENTS.includes(header))
+		if((Object.values(Constants.Events) as string[]).includes(header))
 		{
 			event.attach(client, header);
 			$.log(`Loading Event: ${header}`);
