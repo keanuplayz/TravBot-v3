@@ -41,6 +41,24 @@ export class NumberWrapper extends GenericWrapper<number>
 	}
 }
 
+export class StringWrapper extends GenericWrapper<string>
+{
+	public replaceAll(before: string, after: string): string
+	{
+		let result = this.value;
+		
+		while(result.indexOf(before) !== -1)
+			result = result.replace(before, after);
+		
+		return result;
+	}
+	
+	public toTitleCase(): string
+	{
+		return this.value.replace(/([^\W_]+[^\s-]*) */g, txt => txt.charAt(0).toUpperCase() + txt.substr(1).toLowerCase());
+	}
+}
+
 export class ArrayWrapper<T> extends GenericWrapper<T[]>
 {
 	/** Returns a random element from this array. */

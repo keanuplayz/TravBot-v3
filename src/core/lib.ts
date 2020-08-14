@@ -1,4 +1,4 @@
-import {GenericWrapper, NumberWrapper, ArrayWrapper} from "./wrappers";
+import {GenericWrapper, NumberWrapper, StringWrapper, ArrayWrapper} from "./wrappers";
 import {Client, Message, TextChannel, DMChannel, NewsChannel, Guild, User, GuildMember, Permissions} from "discord.js";
 import chalk from "chalk";
 import FileManager from "./storage";
@@ -11,6 +11,7 @@ export interface CommonLibrary
 	// Wrapper Object //
 	/** Wraps the value you enter with an object that provides extra functionality and provides common utility functions. */
 	(value: number): NumberWrapper;
+	(value: string): StringWrapper;
 	<T>(value: T[]): ArrayWrapper<T>;
 	<T>(value: T): GenericWrapper<T>;
 	
@@ -36,12 +37,15 @@ export interface CommonLibrary
 }
 
 export default function $(value: number): NumberWrapper;
+export default function $(value: string): StringWrapper;
 export default function $<T>(value: T[]): ArrayWrapper<T>;
 export default function $<T>(value: T): GenericWrapper<T>;
 export default function $(value: any)
 {
 	if(isType(value, Number))
 		return new NumberWrapper(value);
+	else if(isType(value, String))
+		return new StringWrapper(value);
 	else if(isType(value, Array))
 		return new ArrayWrapper(value);
 	else
@@ -311,7 +315,7 @@ export function perforate<T>(list: T[], lengthOfEachSection: number): T[][]
 	return sections;
 }
 
-export function isType(value: any, type: Function): boolean
+export function isType(value: any, type: any): boolean
 {
 	if(value === undefined && type === undefined)
 		return true;

@@ -32,6 +32,7 @@ export default new Event<"message">({
 		
 		if(!commands.has(header))
 			return;
+		
 		if(message.channel.type === "text" && !message.channel.permissionsFor(message.client.user || "")?.has(Permissions.FLAGS.SEND_MESSAGES))
 		{
 			let status;
@@ -57,7 +58,7 @@ export default new Event<"message">({
 		{
 			if(command.endpoint)
 			{
-				if(command.subcommands || command.user || command.number || command.any)
+				if(command.subcommands.size > 0 || command.user || command.number || command.any)
 					$.warn(`An endpoint cannot have subcommands! Check ${prefix}${header} again.`);
 				isEndpoint = true;
 				break;
@@ -81,11 +82,13 @@ export default new Event<"message">({
 		
 		if(!message.member)
 			return $.warn("This command was likely called from a DM channel meaning the member object is null.");
+		
 		if(!hasPermission(message.member, permLevel))
 		{
 			const userPermLevel = getPermissionLevel(message.member);
 			return message.channel.send(`You don't have access to this command! Your permission level is \`${PermissionNames[userPermLevel]}\` (${userPermLevel}), but this command requires a permission level of \`${PermissionNames[permLevel]}\` (${permLevel}).`);
 		}
+		
 		if(isEndpoint)
 			return message.channel.send("Too many arguments!");
 		
