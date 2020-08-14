@@ -66,4 +66,19 @@ export class ArrayWrapper<T> extends GenericWrapper<T[]>
 	{
 		return this.value[Math.floor(Math.random() * this.value.length)];
 	}
+	
+	/**
+	* Splits up this array into a specified length.
+	* `$([1,2,3,4,5,6,7,8,9,10]).split(3)` = `[[1,2,3],[4,5,6],[7,8,9],[10]]`
+	*/
+	public split(lengthOfEachSection: number): T[][]
+	{
+		const amountOfSections = Math.ceil(this.value.length / lengthOfEachSection);
+		const sections: T[][] = new Array(amountOfSections);
+		
+		for(let index = 0; index < amountOfSections; index++)
+			sections[index] = this.value.slice(index * lengthOfEachSection, (index + 1) * lengthOfEachSection);
+		
+		return sections;
+	}
 }

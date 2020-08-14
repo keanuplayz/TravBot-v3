@@ -300,21 +300,6 @@ export function parseVars(line: string, definitions: {[key: string]: string}, in
 	return result;
 }
 
-/**
- * Split up an array into a specified length.
- * [1,2,3,4,5,6,7,8,9,10] split by 3 = [[1,2,3],[4,5,6],[7,8,9],[10]]
- */
-export function perforate<T>(list: T[], lengthOfEachSection: number): T[][]
-{
-	const sections: T[][] = [];
-	const amountOfSections = Math.ceil(list.length / lengthOfEachSection);
-	
-	for(let index = 0; index < amountOfSections; index++)
-		sections.push(list.slice(index * lengthOfEachSection, (index + 1) * lengthOfEachSection));
-	
-	return sections;
-}
-
 export function isType(value: any, type: any): boolean
 {
 	if(value === undefined && type === undefined)
