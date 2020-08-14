@@ -3,7 +3,7 @@ import Command, {loadCommands} from "../core/command";
 import {hasPermission, getPermissionLevel, PermissionNames} from "../core/permissions";
 import $ from "../core/lib";
 import {Message, Permissions, Collection} from "discord.js";
-import {Config, Storage} from "../core/structures";
+import {getPrefix} from "../core/structures";
 
 // It's a rather hacky solution, but since there's no top-level await, I just have to make the loading conditional.
 let commands: Collection<string, Command>|null = null;
@@ -19,10 +19,14 @@ export default new Event({
 		if(message.author.bot)
 			return;
 		
-		const prefix = Storage.getGuild(message.guild?.id || "N/A").prefix || Config.prefix;
+		const prefix = getPrefix(message.guild);
 		
 		if(!message.content.startsWith(prefix))
+		{
+			if(message.client.user && message.mentions.has(message.client.user))
+				message.channel.send(`${message.author.toString()}, my prefix on this guild is \`${prefix}\`.`);
 			return;
+		}
 		
 		const [header, ...args] = message.content.substring(prefix.length).split(/ +/);
 		

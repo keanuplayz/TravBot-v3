@@ -1,6 +1,7 @@
 import FileManager from "./storage";
 import $, {select, GenericJSON, GenericStructure} from "./lib";
 import {watch} from "fs";
+import {Guild as DiscordGuild} from "discord.js";
 
 class ConfigStructure extends GenericStructure
 {
@@ -114,4 +115,9 @@ if(process.argv[2] === "dev")
 			case "storage": Storage = new StorageStructure(FileManager.read("storage")); break;
 		}
 	});
+}
+
+export function getPrefix(guild: DiscordGuild|null): string
+{
+	return Storage.getGuild(guild?.id || "N/A").prefix ?? Config.prefix;
 }

@@ -3,6 +3,7 @@ import {Collection} from "discord.js";
 import {generateHandler} from "./storage";
 import {promises as ffs, existsSync, writeFile} from "fs";
 import {PERMISSIONS} from "./permissions";
+import {getPrefix} from "../core/structures";
 
 interface CommandOptions
 {
@@ -52,7 +53,8 @@ export default class Command
 		if(isType(this.run, String))
 		{
 			$.channel.send(parseVars(this.run as string, {
-				author: $.author.toString()
+				author: $.author.toString(),
+				prefix: getPrefix($.guild)
 			}, "???"));
 		}
 		else

@@ -28,7 +28,7 @@ const responses = [
 export default new Command({
 	description: "Fun commands.",
 	endpoint: false,
-	run: "Please provide an argument.\nFor help, run `.help fun`.",
+	run: "Please provide an argument.\nFor help, run `%prefix%help fun`.",
 	subcommands:
 	{
 		"8ball": new Command({
