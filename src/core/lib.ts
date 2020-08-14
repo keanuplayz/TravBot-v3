@@ -1,8 +1,9 @@
 import {GenericWrapper, NumberWrapper, ArrayWrapper} from "./wrappers";
-import {Client, Message, TextChannel, DMChannel, NewsChannel, Guild, User, GuildMember} from "discord.js";
+import {Client, Message, TextChannel, DMChannel, NewsChannel, Guild, User, GuildMember, Permissions} from "discord.js";
 import chalk from "chalk";
 import FileManager from "./storage";
 import {eventListeners} from "../events/messageReactionRemove";
+import {client} from "../index";
 
 /** A type that describes what the library module does. */
 export interface CommonLibrary
@@ -141,7 +142,6 @@ export function formatUTCTimestamp(now = new Date())
 // Define your own pages outside the function because this only manages the actual turning of pages.
 $.paginate = async(message: Message, senderID: string, total: number, callback: (page: number) => void, duration = 60000) => {
 	let page = 0;
-	
 	const turn = (amount: number) => {
 		page += amount;
 		
@@ -168,7 +168,14 @@ $.paginate = async(message: Message, senderID: string, total: number, callback: 
 	await message.react('➡️');
 	eventListeners.set(message.id, handle);
 	await message.awaitReactions((reaction, user) => {
+		// The reason this is inside the call is because it's possible to switch a user's permissions halfway and suddenly throw an error.
+		// This will dynamically adjust for that, switching modes depending on whether it currently has the "Manage Messages" permission.
+		const canDeleteEmotes = !!(client.user && message.guild?.members.resolve(client.user)?.hasPermission(Permissions.FLAGS.MANAGE_MESSAGES));
 		handle(reaction.emoji.name, user.id);
+		
+		if(canDeleteEmotes && user.id !== client.user?.id)
+			reaction.users.remove(user);
+		
 		return false;
 	}, {time: duration});
 	

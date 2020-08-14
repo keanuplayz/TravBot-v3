@@ -1,5 +1,6 @@
 import Event from "../core/event";
-import {MessageReaction, User, PartialUser} from "discord.js";
+import {MessageReaction, User, PartialUser, Permissions} from "discord.js";
+import {client} from "../index";
 
 // A list of message ID and callback pairs. You get the emote name and ID of the user reacting.
 export const eventListeners: Map<string, (emote: string, id: string) => void> = new Map();
@@ -8,7 +9,12 @@ export const eventListeners: Map<string, (emote: string, id: string) => void> = 
 export default new Event({
 	on(reaction: MessageReaction, user: User|PartialUser)
 	{
-		const callback = eventListeners.get(reaction.message.id);
-		callback && callback(reaction.emoji.name, user.id);
+		const canDeleteEmotes = !!(client.user && reaction.message.guild?.members.resolve(client.user)?.hasPermission(Permissions.FLAGS.MANAGE_MESSAGES));
+		
+		if(!canDeleteEmotes)
+		{
+			const callback = eventListeners.get(reaction.message.id);
+			callback && callback(reaction.emoji.name, user.id);
+		}
 	}
 });
