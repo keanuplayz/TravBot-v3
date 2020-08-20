@@ -7,7 +7,6 @@ on:
     branches: [typescript]
   schedule:
     - cron: '0 5 * * 1'
-  workflow_dispatch:
 
 jobs:
   analyze:
@@ -36,7 +35,7 @@ jobs:
       uses: github/codeql-action/init@v1
       with:
         config-file: ./.github/codeql/codeql-config.yml
-        languages: typescript
+        languages: javascript
 
     - name: Perform CodeQL Analysis
       uses: github/codeql-action/analyze@v1
