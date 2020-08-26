@@ -11,17 +11,20 @@
   },
   "devDependencies": {
     "@types/inquirer": "^6.5.0",
+    "@types/mocha": "^8.0.3",
     "@types/node": "^14.0.22",
     "@types/ws": "^7.2.6",
+    "mocha": "^8.1.2",
+    "ts-node": "^9.0.0",
     "tsc-watch": "^4.2.9",
     "typescript": "^3.9.6"
   },
   "scripts": {
-    "build": "tsc",
-    "watch": "tsc --watch",
-    "autobuild": "tsc && npm start",
+    "build": "tsc && npm prune --production",
     "start": "node dist/index.js",
-    "dev": "tsc-watch --onSuccess \"node dist/index.js dev\""
+    "once": "tsc && npm start",
+    "dev": "tsc-watch --onSuccess \"node dist/index.js dev\"",
+    "test": "mocha --require ts-node/register --extension ts --recursive"
   },
   "keywords": [
     "discord.js",

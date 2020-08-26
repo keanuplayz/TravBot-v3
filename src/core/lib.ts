@@ -105,6 +105,8 @@ $.error = (...args: any[]) => {
 	logs.verbose += text;
 };
 // Be as verbose as possible. If anything might help when debugging an error, then include it. This only shows in your console if you run this with "dev", but you can still get it from "logs.verbose".
+// $.debug(`core/lib::parseArgs("testing \"in progress\"") = ["testing", "in progress"]`) --> <path>/::(<object>.)<function>(<args>) = <value>
+// Would probably be more suited for debugging program logic rather than function logic, which can be checked using unit tests.
 $.debug = (...args: any[]) => {
 	if(process.argv[2] === "dev" && enabled)
 		console.debug(chalk.white.bgGray(formatTimestamp()), chalk.white.bgBlue("DEBUG"), ...args);

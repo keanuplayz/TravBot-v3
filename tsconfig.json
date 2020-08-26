@@ -13,5 +13,6 @@
 		"strictFunctionTypes": true,
 		"strictPropertyInitialization": true,
 		"removeComments": true
-	}
+	},
+	"exclude": ["test"]
 }
