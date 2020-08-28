@@ -25,6 +25,8 @@ export interface CommonLibrary
 	ready: (...args: any[]) => void;
 	paginate: (message: Message, senderID: string, total: number, callback: (page: number) => void, duration?: number) => void;
 	prompt: (message: Message, senderID: string, onConfirm: () => void, duration?: number) => void;
+	getMemberByUsername: (guild: Guild, username: string) => Promise<GuildMember|undefined>;
+	callMemberByUsername: (message: Message, username: string, onSuccess: (member: GuildMember) => void) => Promise<void>;
 	
 	// Dynamic Properties //
 	args: any[];
@@ -214,6 +216,31 @@ $.prompt = async(message: Message, senderID: string, onConfirm: () => void, dura
 	
 	if(!isDeleted)
 		message.delete();
+};
+
+$.getMemberByUsername = async(guild: Guild, username: string) => {
+	return (await guild.members.fetch({
+		query: username,
+		limit: 1
+	})).first();
+};
+
+/** Convenience function to handle false cases automatically. */
+$.callMemberByUsername = async(message: Message, username: string, onSuccess: (member: GuildMember) => void) => {
+	const guild = message.guild;
+	const send = message.channel.send;
+	
+	if(guild)
+	{
+		const member = await $.getMemberByUsername(guild, username);
+		
+		if(member)
+			onSuccess(member);
+		else
+			send(`Couldn't find a user by the name of \`${username}\`!`);
+	}
+	else
+		send("You must execute this command in a server!");
 };
 
 /**
