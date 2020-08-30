@@ -11,26 +11,26 @@ const PermissionChecker: ((member: GuildMember) => boolean)[] = [
 	() => true,
 	
 	// MOD //
-	(member: GuildMember) => 
+	member => 
 		member.hasPermission(Permissions.FLAGS.MANAGE_ROLES) ||
 		member.hasPermission(Permissions.FLAGS.MANAGE_MESSAGES) ||
 		member.hasPermission(Permissions.FLAGS.KICK_MEMBERS) ||
 		member.hasPermission(Permissions.FLAGS.BAN_MEMBERS),
 	
 	// ADMIN //
-	(member: GuildMember) => member.hasPermission(Permissions.FLAGS.ADMINISTRATOR),
+	member => member.hasPermission(Permissions.FLAGS.ADMINISTRATOR),
 	
 	// OWNER //
-	(member: GuildMember) => member.guild.ownerID === member.id,
+	member => member.guild.ownerID === member.id,
 	
 	// BOT_SUPPORT //
-	(member: GuildMember) => Config.support.includes(member.id),
+	member => Config.support.includes(member.id),
 	
 	// BOT_ADMIN //
-	(member: GuildMember) => Config.admins.includes(member.id),
+	member => Config.admins.includes(member.id),
 	
 	// BOT_OWNER //
-	(member: GuildMember) => Config.owner === member.id
+	member => Config.owner === member.id
 ];
 
 // After checking the lengths of these three objects, use this as the length for consistency.

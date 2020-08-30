@@ -1,4 +1,4 @@
-import {Client, Guild} from "discord.js";
+import {Client} from "discord.js";
 import setup from "./setup";
 import {Config} from "./core/structures";
 import {loadCommands} from "./core/command";
@@ -14,8 +14,3 @@ setup.init().then(() => {
 	loadEvents(client);
 	client.login(Config.token).catch(setup.again);
 });
-
-export function botHasPermission(guild: Guild|null, permission: number): boolean
-{
-	return !!(client.user && guild?.members.resolve(client.user)?.hasPermission(permission))
-}

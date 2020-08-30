@@ -1,6 +1,6 @@
 import Event from "../core/event";
 import {Permissions} from "discord.js";
-import {botHasPermission} from "../index";
+import {botHasPermission} from "../core/lib";
 
 // A list of message ID and callback pairs. You get the emote name and ID of the user reacting.
 export const eventListeners: Map<string, (emote: string, id: string) => void> = new Map();

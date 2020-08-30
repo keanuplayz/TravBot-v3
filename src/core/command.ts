@@ -12,7 +12,7 @@ interface CommandOptions
 	usage?: string;
 	permission?: PERMISSIONS|null;
 	aliases?: string[];
-	run?: Function|string;
+	run?: (($: CommonLibrary) => Promise<any>)|string;
 	subcommands?: {[key: string]: Command};
 	user?: Command;
 	number?: Command;
@@ -29,7 +29,7 @@ export default class Command
 	public readonly permission: PERMISSIONS|null;
 	public readonly aliases: string[]; // This is to keep the array intact for parent Command instances to use. It'll also be used when loading top-level aliases.
 	public originalCommandName: string|null; // If the command is an alias, what's the original name?
-	private run: Function|string;
+	public run: (($: CommonLibrary) => Promise<any>)|string;
 	public readonly subcommands: Collection<string, Command>; // This is the final data structure you'll actually use to work with the commands the aliases point to.
 	public user: Command|null;
 	public number: Command|null;

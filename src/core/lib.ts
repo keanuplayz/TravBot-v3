@@ -3,7 +3,7 @@ import {Client, Message, TextChannel, DMChannel, NewsChannel, Guild, User, Guild
 import chalk from "chalk";
 import FileManager from "./storage";
 import {eventListeners} from "../events/messageReactionRemove";
-import {botHasPermission} from "../index";
+import {client} from "../index";
 
 /** A type that describes what the library module does. */
 export interface CommonLibrary
@@ -144,6 +144,11 @@ export function formatUTCTimestamp(now = new Date())
 	const minute = now.getUTCMinutes().toString().padStart(2, '0');
 	const second = now.getUTCSeconds().toString().padStart(2, '0');
 	return `${year}-${month}-${day} ${hour}:${minute}:${second}`;
+}
+
+export function botHasPermission(guild: Guild|null, permission: number): boolean
+{
+	return !!(client.user && guild?.members.resolve(client.user)?.hasPermission(permission))
 }
 
 // Pagination function that allows for customization via a callback.
