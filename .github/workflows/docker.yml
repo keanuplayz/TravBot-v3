@@ -12,7 +12,7 @@ jobs:
         uses: docker/build-push-action@v1
         with:
           username: keanucode
-          password: ${{ secrets.DOCKER_PASS }}
+          password: ${{ secrets.GH_TOKEN }}
           registry: docker.pkg.github.com
           repository: keanucode/travbot-v3/travbot-v3
           tags: latest
