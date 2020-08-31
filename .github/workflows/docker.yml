@@ -14,5 +14,5 @@ jobs:
           username: keanucode
           password: ${{ secrets.DOCKER_PASS }}
           registry: docker.pkg.github.com
-          repository: keanucode/travbot-v3
+          repository: keanucode/travbot-v3/travbot-v3
           tags: latest
