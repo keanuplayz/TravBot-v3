@@ -1,8 +1,9 @@
 name: Build Docker Image + Push
-
 on:
   push:
-    branches: master
+    branches: 
+      - typescript
+      - docker
 
 jobs:
   build:
@@ -16,9 +17,9 @@ jobs:
         with:
           version: latest
       - name: Login to Docker Hub
-	run: echo "${{ secrets.DOCKER_PASSWORD }}" | docker login -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
+        run: echo "${{ secrets.DOCKER_PASSWORD }}" | docker login -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
       - name: Build the image
-      run: |
-        docker buildx build \
+        run: |
+          docker buildx build \
           --tag keanucode/travbot-v3:latest \
           --platform linux/amd64,linux/arm/v8,linux/arm64 .
