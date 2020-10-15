@@ -1,4 +1,4 @@
-name: "CodeQL"
+name: 'CodeQL'
 
 on:
   push:
@@ -14,28 +14,28 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - name: Checkout repository
-      uses: actions/checkout@v2
-      with:
-        fetch-depth: 2
+      - name: Checkout repository
+        uses: actions/checkout@v2
+        with:
+          fetch-depth: 2
 
-    - run: git checkout HEAD^2
-      if: ${{ github.event_name == 'pull_request' }}
+      - run: git checkout HEAD^2
+        if: ${{ github.event_name == 'pull_request' }}
 
-    - name: Setup Node.JS
-      uses: actions/setup-node@v2-beta
-      with:
-        node-version: '12'
-    - run: npm ci
+      - name: Setup Node.JS
+        uses: actions/setup-node@v2-beta
+        with:
+          node-version: '12'
+      - run: npm ci
 
-    - name: Build codebase
-      run: npm run build
+      - name: Build codebase
+        run: npm run build
 
-    - name: Initialize CodeQL
-      uses: github/codeql-action/init@v1
-      with:
-        config-file: ./.github/codeql/codeql-config.yml
-        languages: javascript
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@v1
+        with:
+          config-file: ./.github/codeql/codeql-config.yml
+          languages: javascript
 
-    - name: Perform CodeQL Analysis
-      uses: github/codeql-action/analyze@v1
+      - name: Perform CodeQL Analysis
+        uses: github/codeql-action/analyze@v1

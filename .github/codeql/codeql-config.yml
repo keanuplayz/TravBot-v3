@@ -1,4 +1,4 @@
-name: "CodeQL Config"
+name: 'CodeQL Config'
 
 queries:
   - uses: security-and-quality
