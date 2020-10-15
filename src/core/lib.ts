@@ -166,34 +166,30 @@ $.paginate = async(message: Message, senderID: string, total: number, callback: 
 		callback(page);
 	}
 	const handle = (emote: string, reacterID: string) => {
-    switch(emote)
-    {
-        case '⬅️': turn(-1); break;
-        case '➡️': turn(1); break;
-    }
-};
+    	switch(emote)
+    	{
+        	case '⬅️': turn(-1); break;
+        	case '➡️': turn(1); break;
+    	}
+	};
 
-// Listen for reactions and call the handler.
-await message.react('⬅️');
-await message.react('➡️');
-eventListeners.set(message.id, handle);
-await message.awaitReactions((reaction, user) => {
-    if(user.id === senderID)
-    {
-        // The reason this is inside the call is because it's possible to switch a user's permissions halfway and suddenly throw an error.
-        // This will dynamically adjust for that, switching modes depending on whether it currently has the "Manage Messages" permission.
-        const canDeleteEmotes = botHasPermission(message.guild, Permissions.FLAGS.MANAGE_MESSAGES);
-        handle(reaction.emoji.name, user.id);
+	// Listen for reactions and call the handler.
+	await message.react('⬅️');
+	await message.react('➡️');
+	eventListeners.set(message.id, handle);
+	await message.awaitReactions((reaction, user) => {
+    	if(user.id === senderID)
+    	{
+        	// The reason this is inside the call is because it's possible to switch a user's permissions halfway and suddenly throw an error.
+        	// This will dynamically adjust for that, switching modes depending on whether it currently has the "Manage Messages" permission.
+        	const canDeleteEmotes = botHasPermission(message.guild, Permissions.FLAGS.MANAGE_MESSAGES);
+        	handle(reaction.emoji.name, user.id);
         
-        if(canDeleteEmotes)
-            reaction.users.remove(user);
-    }
-    
-    return false;
-}, {time: duration});
-
-	$.log("removal")
-	
+        	if(canDeleteEmotes)
+            	reaction.users.remove(user);
+    	}
+    	return false;
+	}, {time: duration});
 	// When time's up, remove the bot's own reactions.
 	eventListeners.delete(message.id);
 	message.reactions.cache.get('⬅️')?.users.remove(message.author);
@@ -387,6 +383,7 @@ export abstract class GenericStructure
 	public save(asynchronous = true)
 	{
 		const tag = this.__meta__;
+		/// @ts-ignore
 		delete this.__meta__;
 		FileManager.write(tag, this, asynchronous);
 		this.__meta__ = tag;
