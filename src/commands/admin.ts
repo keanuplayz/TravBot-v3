@@ -3,6 +3,7 @@ import { CommonLibrary, logs, botHasPermission } from '../core/lib';
 import { Config, Storage } from '../core/structures';
 import { PermissionNames, getPermissionLevel } from '../core/permissions';
 import { Permissions } from 'discord.js';
+import * as discord from 'discord.js';
 
 function getLogBuffer(type: string) {
   return {
@@ -107,6 +108,9 @@ export default new Command({
       description: 'Purges bot messages.',
       permission: Command.PERMISSIONS.BOT_SUPPORT,
       async run($: CommonLibrary): Promise<any> {
+        if ($.message.channel instanceof discord.DMChannel) {
+          return;
+        }
         $.message.delete();
         const msgs = await $.channel.messages.fetch({
           limit: 100,
