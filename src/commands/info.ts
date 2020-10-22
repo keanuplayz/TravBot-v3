@@ -4,6 +4,15 @@ import Command from '../core/command';
 import { CommonLibrary } from '../core/lib';
 import { verificationLevels, filterLevels, regions, flags } from '../defs/info';
 
+function trimArray(arr: any, maxLen = 10) {
+  if (arr.length > maxLen) {
+    const len = arr.length - maxLen;
+    arr = arr.slice(0, maxLen);
+    arr.push(`${len} more...`);
+  }
+  return arr;
+}
+
 export default new Command({
   description:
     'Command to provide all sorts of info about the current server, a user, etc.',
@@ -117,7 +126,7 @@ export default new Command({
                 roles.length < 10
                   ? roles.join(', ')
                   : roles.length > 10
-                  ? this.client.utils.trimArray(roles)
+                  ? trimArray(roles)
                   : 'None',
               )
               .setTimestamp();
