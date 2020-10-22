@@ -1,5 +1,5 @@
 import Command from '../core/command';
-import { CommonLibrary, logs, botHasPermission } from '../core/lib';
+import { CommonLibrary, logs, botHasPermission, clean } from '../core/lib';
 import { Config, Storage } from '../core/structures';
 import { PermissionNames, getPermissionLevel } from '../core/permissions';
 import { Permissions } from 'discord.js';
@@ -17,6 +17,7 @@ function getLogBuffer(type: string) {
 }
 
 const activities = ['playing', 'listening', 'streaming', 'watching'];
+const statuses = ['online', 'idle', 'dnd', 'invisible'];
 
 export default new Command({
   description:
@@ -92,9 +93,10 @@ export default new Command({
         $.channel.send('Setting status to `online`...');
       },
       any: new Command({
-        description: `Select a status to set to. Available statuses: \`online\`, \`idle\`, \`dnd\`, \`invisible\``,
+        description: `Select a status to set to. Available statuses: \`[${statuses.join(
+          ', ',
+        )}]\`.`,
         async run($: CommonLibrary): Promise<any> {
-          let statuses = ['online', 'idle', 'dnd', 'invisible'];
           if (!statuses.includes($.args[0]))
             return $.channel.send("That status doesn't exist!");
           else {
@@ -127,6 +129,23 @@ export default new Command({
             }),
           );
         await $.message.channel.bulkDelete(travMessages);
+      },
+    }),
+    eval: new Command({
+      description: 'Evaluate code.',
+      usage: '<code>',
+      permission: Command.PERMISSIONS.BOT_OWNER,
+      async run($: CommonLibrary): Promise<any> {
+        try {
+          const code = $.args.join(' ');
+          let evaled = eval(code);
+
+          if (typeof evaled !== 'string')
+            evaled = require('util').inspect(evaled);
+          $.channel.send(clean(evaled), { code: 'x1' });
+        } catch (err) {
+          $.channel.send(`\`ERROR\` \`\`\`x1\n${clean(err)}\n\`\`\``);
+        }
       },
     }),
     nick: new Command({
