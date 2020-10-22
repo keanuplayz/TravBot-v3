@@ -131,6 +131,23 @@ export default new Command({
         await $.message.channel.bulkDelete(travMessages);
       },
     }),
+    clear: new Command({
+      description: "Clears a given amount of messages.",
+      usage: "<amount>",
+      run: "A number was not provided.",
+      number: new Command({
+        description: "Amount of messages to delete.",
+        async run($: CommonLibrary): Promise<any> {
+          $.message.delete();
+          const fetched = await $.channel.messages.fetch({
+            limit: $.args[0],
+          });
+          /// @ts-ignore
+          $.channel.bulkDelete(fetched)
+            .catch((error: any) => $.channel.send(`Error: ${error}`));
+        }
+      })
+    }),
     eval: new Command({
       description: 'Evaluate code.',
       usage: '<code>',

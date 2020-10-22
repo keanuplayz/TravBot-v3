@@ -16,6 +16,7 @@ import {
   Permissions,
 } from 'discord.js';
 import chalk from 'chalk';
+import { get } from 'https';
 import FileManager from './storage';
 import { eventListeners } from '../events/messageReactionRemove';
 import { client } from '../index';
@@ -436,6 +437,41 @@ export function formatBytes(bytes: any) {
   const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB', 'PB', 'EB', 'ZB', 'YB'];
   const i = Math.floor(Math.log(bytes) / Math.log(1024));
   return `${parseFloat((bytes / Math.pow(1024, i)).toFixed(2))} ${sizes[i]}`;
+}
+
+export function getContent(url: any) {
+  return new Promise((resolve, reject) => {
+    get(
+      url,
+      (res: {
+        resume?: any;
+        setEncoding?: any;
+        on?: any;
+        statusCode?: any;
+      }) => {
+        const { statusCode } = res;
+        if (statusCode !== 200) {
+          res.resume();
+          reject(`Request failed. Status code: ${statusCode}`);
+        }
+        res.setEncoding('utf8');
+        let rawData = '';
+        res.on('data', (chunk: string) => {
+          rawData += chunk;
+        });
+        res.on('end', () => {
+          try {
+            const parsedData = JSON.parse(rawData);
+            resolve(parsedData);
+          } catch (e) {
+            reject(`Error: ${e.message}`);
+          }
+        });
+      },
+    ).on('error', (err: { message: any }) => {
+      reject(`Error: ${err.message}`);
+    });
+  });
 }
 
 export interface GenericJSON {
