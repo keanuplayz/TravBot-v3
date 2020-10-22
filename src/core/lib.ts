@@ -16,6 +16,7 @@ import {
   Permissions,
 } from 'discord.js';
 import chalk from 'chalk';
+import { get } from 'https';
 import FileManager from './storage';
 import { eventListeners } from '../events/messageReactionRemove';
 import { client } from '../index';
@@ -412,6 +413,65 @@ export function select<T>(
     if (isType(value, type)) return value;
     else return fallback;
   }
+}
+
+export function clean(text: any) {
+  if (typeof text === 'string')
+    return text
+      .replace(/`/g, '`' + String.fromCharCode(8203))
+      .replace(/@/g, '@' + String.fromCharCode(8203));
+  else return text;
+}
+
+export function trimArray(arr: any, maxLen = 10) {
+  if (arr.length > maxLen) {
+    const len = arr.length - maxLen;
+    arr = arr.slice(0, maxLen);
+    arr.push(`${len} more...`);
+  }
+  return arr;
+}
+
+export function formatBytes(bytes: any) {
+  if (bytes === 0) return '0 Bytes';
+  const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB', 'PB', 'EB', 'ZB', 'YB'];
+  const i = Math.floor(Math.log(bytes) / Math.log(1024));
+  return `${parseFloat((bytes / Math.pow(1024, i)).toFixed(2))} ${sizes[i]}`;
+}
+
+export function getContent(url: any) {
+  return new Promise((resolve, reject) => {
+    get(
+      url,
+      (res: {
+        resume?: any;
+        setEncoding?: any;
+        on?: any;
+        statusCode?: any;
+      }) => {
+        const { statusCode } = res;
+        if (statusCode !== 200) {
+          res.resume();
+          reject(`Request failed. Status code: ${statusCode}`);
+        }
+        res.setEncoding('utf8');
+        let rawData = '';
+        res.on('data', (chunk: string) => {
+          rawData += chunk;
+        });
+        res.on('end', () => {
+          try {
+            const parsedData = JSON.parse(rawData);
+            resolve(parsedData);
+          } catch (e) {
+            reject(`Error: ${e.message}`);
+          }
+        });
+      },
+    ).on('error', (err: { message: any }) => {
+      reject(`Error: ${err.message}`);
+    });
+  });
 }
 
 export interface GenericJSON {

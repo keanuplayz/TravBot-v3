@@ -1,8 +1,13 @@
-import { Guild, MessageEmbed } from 'discord.js';
-import moment from 'moment';
+import { MessageEmbed, version as djsversion } from 'discord.js';
+/// @ts-ignore
+import { version } from '../../package.json';
+import ms from 'ms';
+import os from 'os';
 import Command from '../core/command';
-import { CommonLibrary } from '../core/lib';
+import { CommonLibrary, formatBytes, trimArray } from '../core/lib';
 import { verificationLevels, filterLevels, regions, flags } from '../defs/info';
+import moment from 'moment';
+import utc from 'moment';
 
 export default new Command({
   description:
@@ -25,6 +30,47 @@ export default new Command({
           );
         },
       }),
+    }),
+
+    bot: new Command({
+      description: 'Displays info about the bot.',
+      async run($: CommonLibrary): Promise<any> {
+        const core = os.cpus()[0];
+        const embed = new MessageEmbed()
+          .setThumbnail(
+            /// @ts-ignore
+            $.client.user?.displayAvatarURL({ dynamic: true, size: 2048 }),
+          )
+          .setColor($.guild?.me?.displayHexColor || 'BLUE')
+          .addField('General', [
+            `**❯ Client:** ${$.client.user?.tag} (${$.client.user?.id})`,
+            `**❯ Servers:** ${$.client.guilds.cache.size.toLocaleString()}`,
+            `**❯ Users:** ${$.client.guilds.cache
+              .reduce((a: any, b: { memberCount: any }) => a + b.memberCount, 0)
+              .toLocaleString()}`,
+            `**❯ Channels:** ${$.client.channels.cache.size.toLocaleString()}`,
+            `**❯ Creation Date:** ${utc($.client.user?.createdTimestamp).format(
+              'Do MMMM YYYY HH:mm:ss',
+            )}`,
+            `**❯ Node.JS:** ${process.version}`,
+            `**❯ Version:** v${version}`,
+            `**❯ Discord.JS:** ${djsversion}`,
+            '\u200b',
+          ])
+          .addField('System', [
+            `**❯ Platform:** ${process.platform}`,
+            `**❯ Uptime:** ${ms(os.uptime() * 1000, { long: true })}`,
+            `**❯ CPU:**`,
+            `\u3000 • Cores: ${os.cpus().length}`,
+            `\u3000 • Model: ${core.model}`,
+            `\u3000 • Speed: ${core.speed}MHz`,
+            `**❯ Memory:**`,
+            `\u3000 • Total: ${formatBytes(process.memoryUsage().heapTotal)}`,
+            `\u3000 • Used: ${formatBytes(process.memoryUsage().heapTotal)}`,
+          ])
+          .setTimestamp();
+        $.channel.send(embed);
+      },
     }),
 
     guild: new Command({
@@ -117,7 +163,7 @@ export default new Command({
                 roles.length < 10
                   ? roles.join(', ')
                   : roles.length > 10
-                  ? this.client.utils.trimArray(roles)
+                  ? trimArray(roles)
                   : 'None',
               )
               .setTimestamp();
