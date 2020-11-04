@@ -30,7 +30,8 @@
     "start": "node dist/index.js",
     "once": "tsc && npm start",
     "dev": "tsc-watch --onSuccess \"node dist/index.js dev\"",
-    "test": "mocha --require ts-node/register --extension ts --recursive"
+    "test": "mocha --require ts-node/register --extension ts --recursive",
+    "format": "prettier --write **/*"
   },
   "keywords": [
     "discord.js",
