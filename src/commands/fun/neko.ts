@@ -15,7 +15,7 @@ export default new Command({
   any: new Command({
     description: "Image type to send.",
     async run($: CommonLibrary): Promise<any> {
-      if (!$.args[0] in endpoints.sfw)
+      if (!($.args[0] in endpoints.sfw))
         return $.channel.send("Couldn't find that endpoint!");
       let baseURL = 'https://nekos.life/api/v2';
       let url = new URL(`${baseURL}${endpoints.sfw[$.args[0]]}`);
