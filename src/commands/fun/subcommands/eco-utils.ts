@@ -70,7 +70,8 @@ export function isAuthorized(
   guild: Guild | null,
   channel: TextChannel | DMChannel | NewsChannel,
 ): boolean {
-  if (guild?.id !== '637512823676600330') return true;
+  if (guild?.id === '637512823676600330' || process.argv[2] === 'dev')
+    return true;
   else {
     channel.send(
       "Sorry, this command can only be used in Monika's emote server.",
