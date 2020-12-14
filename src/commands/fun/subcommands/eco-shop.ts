@@ -82,6 +82,7 @@ export const BuyCommand = new Command({
             channel.send('Not enough Mons!');
           } else {
             user.money -= cost;
+            Storage.save();
             item.run(message, cost, amount);
           }
 
