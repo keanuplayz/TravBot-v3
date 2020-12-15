@@ -5,6 +5,7 @@ import {isAuthorized, getMoneyEmbed, getSendEmbed, ECO_EMBED_COLOR} from "./eco-
 
 export const DailyCommand = new Command({
     description: "Pick up your daily Mons. The cooldown is per user and every 22 hours to allow for some leeway.",
+    aliases: ["get"],
     async run({author, channel, guild}) {
         if (isAuthorized(guild, channel)) {
             const user = Storage.getUser(author.id);
@@ -75,6 +76,7 @@ export const GuildCommand = new Command({
 
 export const LeaderboardCommand = new Command({
     description: "See the richest players.",
+    aliases: ["top"],
     async run({guild, channel, client}) {
         if (isAuthorized(guild, channel)) {
             const users = Storage.users;

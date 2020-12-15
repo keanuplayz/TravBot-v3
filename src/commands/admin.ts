@@ -139,15 +139,16 @@ export default new Command({
             description: "Evaluate code.",
             usage: "<code>",
             permission: Command.PERMISSIONS.BOT_OWNER,
-            async run($: CommonLibrary): Promise<any> {
+            // You have to bring everything into scope to use them. AFAIK, there isn't a more maintainable way to do this, but at least TS will let you know if anything gets removed.
+            async run({args, author, channel, client, guild, member, message}): Promise<any> {
                 try {
-                    const code = $.args.join(" ");
+                    const code = args.join(" ");
                     let evaled = eval(code);
 
                     if (typeof evaled !== "string") evaled = require("util").inspect(evaled);
-                    $.channel.send(clean(evaled), {code: "x1"});
+                    channel.send(clean(evaled), {code: "js", split: true});
                 } catch (err) {
-                    $.channel.send(`\`ERROR\` \`\`\`x1\n${clean(err)}\n\`\`\``);
+                    channel.send(`\`ERROR\` \`\`\`js\n${clean(err)}\n\`\`\``);
                 }
             }
         }),
