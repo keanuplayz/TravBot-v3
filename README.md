@@ -12,9 +12,9 @@ Thank you for coming on this journey with me, but it is time to put the big chan
 
 Special thanks to:
 
-- Lexi Sother (TravBot v2, structural overhaul. Reviewing PRs.)
-- WatDuhHekBro (a _lot_ of contributions to TravBot v2)
-- Zeehondie (Ideas for various commands.)
+-   Lexi Sother (TravBot v2, structural overhaul. Reviewing PRs.)
+-   WatDuhHekBro (a _lot_ of contributions to TravBot v2)
+-   Zeehondie (Ideas for various commands.)
 
 ### License
 
