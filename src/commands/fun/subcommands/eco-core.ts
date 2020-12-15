@@ -138,7 +138,7 @@ export const PayCommand = new Command({
         })
     }),
     number: new Command({
-        run: "You must use the format `money send <user> <amount>`!"
+        run: "You must use the format `eco pay <user> <amount>`!"
     }),
     any: new Command({
         async run({args, author, channel, guild, prompt}) {
@@ -153,9 +153,9 @@ export const PayCommand = new Command({
 
                 if (amount <= 0) return channel.send("You must send at least one Mon!");
                 else if (sender.money < amount)
-                    return channel.send("You don't have enough money to do that!", getMoneyEmbed(author));
+                    return channel.send("You don't have enough Mons to do that!", getMoneyEmbed(author));
                 else if (!guild)
-                    return channel.send("You have to use this in a server if you want to send money with a username!");
+                    return channel.send("You have to use this in a server if you want to send Mons with a username!");
 
                 const username = args.join(" ");
                 const member = (
@@ -167,11 +167,11 @@ export const PayCommand = new Command({
 
                 if (!member)
                     return channel.send(
-                        `Couldn't find a user by the name of \`${username}\`! If you want to send money to someone in a different server, you have to use their user ID!`
+                        `Couldn't find a user by the name of \`${username}\`! If you want to send Mons to someone in a different server, you have to use their user ID!`
                     );
-                else if (member.user.id === author.id) return channel.send("You can't send money to yourself!");
+                else if (member.user.id === author.id) return channel.send("You can't send Mons to yourself!");
                 else if (member.user.bot && process.argv[2] !== "dev")
-                    return channel.send("You can't send money to a bot!");
+                    return channel.send("You can't send Mons to a bot!");
 
                 const target = member.user;
 
