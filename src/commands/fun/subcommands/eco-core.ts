@@ -1,7 +1,7 @@
 import Command from "../../../core/command";
 import $ from "../../../core/lib";
 import {Storage} from "../../../core/structures";
-import {isAuthorized, getMoneyEmbed, getSendEmbed} from "./eco-utils";
+import {isAuthorized, getMoneyEmbed, getSendEmbed, ECO_EMBED_COLOR} from "./eco-utils";
 
 export const DailyCommand = new Command({
     description: "Pick up your daily Mons. The cooldown is per user and every 22 hours to allow for some leeway.",
@@ -18,18 +18,18 @@ export const DailyCommand = new Command({
                     embed: {
                         title: "Daily Reward",
                         description: "You received 1 Mon!",
-                        color: 0xf1c40f
+                        color: ECO_EMBED_COLOR
                     }
                 });
             } else
                 channel.send({
                     embed: {
                         title: "Daily Reward",
-                        description: `It's too soon to pick up your daily credits. You have about ${(
+                        description: `It's too soon to pick up your daily Mons. You have about ${(
                             (user.lastReceived + 79200000 - now) /
                             3600000
                         ).toFixed(1)} hours to go.`,
-                        color: 0xf1c40f
+                        color: ECO_EMBED_COLOR
                     }
                 });
         }
@@ -37,6 +37,43 @@ export const DailyCommand = new Command({
 });
 
 export const GuildCommand = new Command({
+    description: "Get info on the guild's economy as a whole.",
+    async run({guild, channel}) {
+        if (isAuthorized(guild, channel)) {
+            const users = Storage.users;
+            let totalAmount = 0;
+
+            for (const ID in users) {
+                const user = users[ID];
+                totalAmount += user.money;
+            }
+
+            channel.send({
+                embed: {
+                    title: `The Bank of ${guild!.name}`,
+                    color: ECO_EMBED_COLOR,
+                    fields: [
+                        {
+                            name: "Accounts",
+                            value: Object.keys(users).length,
+                            inline: true
+                        },
+                        {
+                            name: "Total Mons",
+                            value: totalAmount,
+                            inline: true
+                        }
+                    ],
+                    thumbnail: {
+                        url: guild?.iconURL() ?? ""
+                    }
+                }
+            });
+        }
+    }
+});
+
+export const LeaderboardCommand = new Command({
     description: "See the richest players.",
     async run({guild, channel, client}) {
         if (isAuthorized(guild, channel)) {
@@ -51,15 +88,18 @@ export const GuildCommand = new Command({
 
                 fields.push({
                     name: `#${i + 1}. ${user.username}#${user.discriminator}`,
-                    value: $(users[id].money).pluralise("credit", "s")
+                    value: $(users[id].money).pluralise("Mon", "s")
                 });
             }
 
             channel.send({
                 embed: {
                     title: "Top 10 Richest Players",
-                    color: "#ffff00",
-                    fields: fields
+                    color: ECO_EMBED_COLOR,
+                    fields: fields,
+                    thumbnail: {
+                        url: guild?.iconURL() ?? ""
+                    }
                 }
             });
         }
@@ -109,7 +149,7 @@ export const PayCommand = new Command({
                 const amount = Math.floor(last);
                 const sender = Storage.getUser(author.id);
 
-                if (amount <= 0) return channel.send("You must send at least one credit!");
+                if (amount <= 0) return channel.send("You must send at least one Mon!");
                 else if (sender.money < amount)
                     return channel.send("You don't have enough money to do that!", getMoneyEmbed(author));
                 else if (!guild)
@@ -136,12 +176,12 @@ export const PayCommand = new Command({
                 return prompt(
                     await channel.send(
                         `Are you sure you want to send ${$(amount).pluralise(
-                            "credit",
+                            "Mon",
                             "s"
                         )} to this person?\n*(This message will automatically be deleted after 10 seconds.)*`,
                         {
                             embed: {
-                                color: "#ffff00",
+                                color: ECO_EMBED_COLOR,
                                 author: {
                                     name: `${target.username}#${target.discriminator}`,
                                     icon_url: target.displayAvatarURL({

@@ -1,6 +1,6 @@
 import Command from "../../core/command";
 import {isAuthorized, getMoneyEmbed} from "./subcommands/eco-utils";
-import {DailyCommand, PayCommand, GuildCommand} from "./subcommands/eco-core";
+import {DailyCommand, PayCommand, GuildCommand, LeaderboardCommand} from "./subcommands/eco-core";
 import {BuyCommand, ShopCommand} from "./subcommands/eco-shop";
 
 export default new Command({
@@ -12,6 +12,7 @@ export default new Command({
         daily: DailyCommand,
         pay: PayCommand,
         guild: GuildCommand,
+        leaderboard: LeaderboardCommand,
         buy: BuyCommand,
         shop: ShopCommand
     },

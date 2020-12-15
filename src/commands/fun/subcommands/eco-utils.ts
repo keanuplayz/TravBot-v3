@@ -2,12 +2,14 @@ import $ from "../../../core/lib";
 import {Storage} from "../../../core/structures";
 import {User, Guild, TextChannel, DMChannel, NewsChannel} from "discord.js";
 
+export const ECO_EMBED_COLOR = 0xf1c40f;
+
 export function getMoneyEmbed(user: User): object {
     const profile = Storage.getUser(user.id);
 
     return {
         embed: {
-            color: 0xffff00,
+            color: ECO_EMBED_COLOR,
             author: {
                 name: user.username,
                 icon_url: user.displayAvatarURL({
@@ -18,7 +20,7 @@ export function getMoneyEmbed(user: User): object {
             fields: [
                 {
                     name: "Balance",
-                    value: $(profile.money).pluralise("credit", "s")
+                    value: $(profile.money).pluralise("Mon", "s")
                 }
             ]
         }
@@ -28,7 +30,7 @@ export function getMoneyEmbed(user: User): object {
 export function getSendEmbed(sender: User, receiver: User, amount: number): object {
     return {
         embed: {
-            color: 0xffff00,
+            color: ECO_EMBED_COLOR,
             author: {
                 name: sender.username,
                 icon_url: sender.displayAvatarURL({
@@ -37,18 +39,15 @@ export function getSendEmbed(sender: User, receiver: User, amount: number): obje
                 })
             },
             title: "Transaction",
-            description: `${sender.toString()} has sent ${$(amount).pluralise(
-                "credit",
-                "s"
-            )} to ${receiver.toString()}!`,
+            description: `${sender.toString()} has sent ${$(amount).pluralise("Mon", "s")} to ${receiver.toString()}!`,
             fields: [
                 {
                     name: `Sender: ${sender.username}#${sender.discriminator}`,
-                    value: $(Storage.getUser(sender.id).money).pluralise("credit", "s")
+                    value: $(Storage.getUser(sender.id).money).pluralise("Mon", "s")
                 },
                 {
                     name: `Receiver: ${receiver.username}#${receiver.discriminator}`,
-                    value: $(Storage.getUser(receiver.id).money).pluralise("credit", "s")
+                    value: $(Storage.getUser(receiver.id).money).pluralise("Mon", "s")
                 }
             ],
             footer: {

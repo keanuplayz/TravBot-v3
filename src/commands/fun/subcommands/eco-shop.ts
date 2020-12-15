@@ -1,7 +1,7 @@
 import Command from "../../../core/command";
 import $ from "../../../core/lib";
 import {Storage, getPrefix} from "../../../core/structures";
-import {isAuthorized} from "./eco-utils";
+import {isAuthorized, ECO_EMBED_COLOR} from "./eco-utils";
 import {ShopItems, ShopItem} from "./eco-shop-items";
 import {EmbedField} from "discord.js";
 
@@ -21,7 +21,7 @@ export const ShopCommand = new Command({
 
                 return {
                     embed: {
-                        color: 0xf1c40f,
+                        color: ECO_EMBED_COLOR,
                         title: title,
                         fields: fields,
                         footer: {
