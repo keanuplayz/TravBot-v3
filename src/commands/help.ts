@@ -4,8 +4,7 @@ import {loadCommands, categories} from "../core/command";
 import {PermissionNames} from "../core/permissions";
 
 export default new Command({
-    description:
-        "Lists all commands. If a command is specified, their arguments are listed as well.",
+    description: "Lists all commands. If a command is specified, their arguments are listed as well.",
     usage: "([command, [subcommand/type], ...])",
     aliases: ["h"],
     async run($: CommonLibrary): Promise<any> {
@@ -20,9 +19,7 @@ export default new Command({
                     const command = commands.get(header);
 
                     if (!command)
-                        return $.warn(
-                            `Command "${header}" of category "${category}" unexpectedly doesn't exist!`
-                        );
+                        return $.warn(`Command "${header}" of category "${category}" unexpectedly doesn't exist!`);
 
                     output += `\n- \`${header}\`: ${command.description}`;
                 }
@@ -37,13 +34,9 @@ export default new Command({
             let header = $.args.shift() as string;
             let command = commands.get(header);
 
-            if (!command || header === "test")
-                return $.channel.send(
-                    `No command found by the name \`${header}\`!`
-                );
+            if (!command || header === "test") return $.channel.send(`No command found by the name \`${header}\`!`);
 
-            if (command.originalCommandName)
-                header = command.originalCommandName;
+            if (command.originalCommandName) header = command.originalCommandName;
             else $.warn(`originalCommandName isn't defined for ${header}?!`);
 
             let permLevel = command.permission ?? Command.PERMISSIONS.NONE;
@@ -91,10 +84,7 @@ export default new Command({
                 }
             }
 
-            if (invalid)
-                return $.channel.send(
-                    `No command found by the name \`${header}\`!`
-                );
+            if (invalid) return $.channel.send(`No command found by the name \`${header}\`!`);
 
             let append = "";
 
@@ -104,21 +94,15 @@ export default new Command({
                 command.subcommands.forEach((subcmd, subtag) => {
                     // Don't capture duplicates generated from aliases.
                     if (subcmd.originalCommandName === subtag) {
-                        const customUsage = subcmd.usage
-                            ? ` ${subcmd.usage}`
-                            : "";
-                        list.push(
-                            `- \`${header} ${subtag}${customUsage}\` - ${subcmd.description}`
-                        );
+                        const customUsage = subcmd.usage ? ` ${subcmd.usage}` : "";
+                        list.push(`- \`${header} ${subtag}${customUsage}\` - ${subcmd.description}`);
                     }
                 });
 
                 const addDynamicType = (cmd: Command | null, type: string) => {
                     if (cmd) {
                         const customUsage = cmd.usage ? ` ${cmd.usage}` : "";
-                        list.push(
-                            `- \`${header} <${type}>${customUsage}\` - ${cmd.description}`
-                        );
+                        list.push(`- \`${header} <${type}>${customUsage}\` - ${cmd.description}`);
                     }
                 };
 
@@ -126,9 +110,7 @@ export default new Command({
                 addDynamicType(command.number, "number");
                 addDynamicType(command.any, "any");
 
-                append =
-                    "Usages:" +
-                    (list.length > 0 ? `\n${list.join("\n")}` : " None.");
+                append = "Usages:" + (list.length > 0 ? `\n${list.join("\n")}` : " None.");
             } else append = `Usage: \`${header} ${usage}\``;
 
             let aliases = "None";

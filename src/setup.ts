@@ -27,14 +27,12 @@ const prompts = [
     {
         type: "input",
         name: "admins",
-        message:
-            "Enter a list of bot admins (by their IDs) separated by spaces."
+        message: "Enter a list of bot admins (by their IDs) separated by spaces."
     },
     {
         type: "input",
         name: "support",
-        message:
-            "Enter a list of bot troubleshooters (by their IDs) separated by spaces."
+        message: "Enter a list of bot troubleshooters (by their IDs) separated by spaces."
     }
 ];
 

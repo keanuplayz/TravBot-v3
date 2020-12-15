@@ -9,8 +9,7 @@ export default new Command({
     description:
         "Scans all text channels in the current guild and returns the number of times each emoji specific to the guild has been used. Has a cooldown of 24 hours per guild.",
     async run($: CommonLibrary): Promise<any> {
-        if (!$.guild)
-            return $.channel.send(`You must use this command on a server!`);
+        if (!$.guild) return $.channel.send(`You must use this command on a server!`);
 
         // Test if the command is on cooldown. This isn't the strictest cooldown possible, because in the event that the bot crashes, the cooldown will be reset. But for all intends and purposes, it's a good enough cooldown. It's a per-server cooldown.
         const startTime = Date.now();
@@ -53,9 +52,7 @@ export default new Command({
             // If you don't include the "a" for animated emotes, it'll not only not show up, but also cause all other emotes in the same message to not show up. The emote name is self-correcting but it's better to keep the right value since it'll be used to calculate message lengths that fit.
             stats[emote.id] = {
                 name: emote.name,
-                formatted: `<${emote.animated ? "a" : ""}:${emote.name}:${
-                    emote.id
-                }>`,
+                formatted: `<${emote.animated ? "a" : ""}:${emote.name}:${emote.id}>`,
                 users: 0,
                 bots: 0
             };
@@ -133,10 +130,7 @@ export default new Command({
                                         // Then halt the loop and send warnings of any inconsistencies.
                                         continueReactionLoop = false;
 
-                                        if (
-                                            reaction.count !==
-                                            userReactions + botReactions
-                                        ) {
+                                        if (reaction.count !== userReactions + botReactions) {
                                             $.warn(
                                                 `[Channel: ${channel.id}, Message: ${msg.id}] A reaction count of ${reaction.count} was expected but was given ${userReactions} user reactions and ${botReactions} bot reactions.`
                                             );
@@ -161,9 +155,7 @@ export default new Command({
         const finishTime = Date.now();
         clearInterval(interval);
         statusMessage.edit(
-            `Finished operation in ${moment
-                .duration(finishTime - startTime)
-                .humanize()} with ${$(warnings).pluralise(
+            `Finished operation in ${moment.duration(finishTime - startTime).humanize()} with ${$(warnings).pluralise(
                 "inconsistenc",
                 "ies",
                 "y"
@@ -174,9 +166,7 @@ export default new Command({
 
         // Display stats on emote usage.
         // This can work outside the loop now that it's synchronous, and now it's clearer what code is meant to execute at the end.
-        let sortedEmoteIDs = Object.keys(stats).sort(
-            (a, b) => stats[b].users - stats[a].users
-        );
+        let sortedEmoteIDs = Object.keys(stats).sort((a, b) => stats[b].users - stats[a].users);
         const lines: string[] = [];
         let rank = 1;
 

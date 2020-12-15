@@ -53,18 +53,13 @@ const PermissionChecker: ((member: GuildMember) => boolean)[] = [
 // After checking the lengths of these three objects, use this as the length for consistency.
 const length = Object.keys(PERMISSIONS).length / 2;
 
-export function hasPermission(
-    member: GuildMember,
-    permission: PERMISSIONS
-): boolean {
-    for (let i = length - 1; i >= permission; i--)
-        if (PermissionChecker[i](member)) return true;
+export function hasPermission(member: GuildMember, permission: PERMISSIONS): boolean {
+    for (let i = length - 1; i >= permission; i--) if (PermissionChecker[i](member)) return true;
     return false;
 }
 
 export function getPermissionLevel(member: GuildMember): number {
-    for (let i = length - 1; i >= 0; i--)
-        if (PermissionChecker[i](member)) return i;
+    for (let i = length - 1; i >= 0; i--) if (PermissionChecker[i](member)) return i;
     return 0;
 }
 

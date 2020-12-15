@@ -10,9 +10,7 @@ export default new Command({
         usage: "<emote>",
         async run($: CommonLibrary): Promise<any> {
             const search = $.args[0].toLowerCase();
-            const emote = $.client.emojis.cache.find((emote) =>
-                emote.name.toLowerCase().includes(search)
-            );
+            const emote = $.client.emojis.cache.find((emote) => emote.name.toLowerCase().includes(search));
             if (!emote) return $.channel.send("That's not a valid emote name!");
             $.message.delete();
             $.channel.send(`${emote}`);

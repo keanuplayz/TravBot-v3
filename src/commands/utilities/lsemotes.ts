@@ -7,14 +7,10 @@ export default new Command({
     endpoint: true,
     async run($: CommonLibrary): Promise<any> {
         const nsfw: string | string[] = [];
-        const pages = $.client.emojis.cache
-            .filter((x) => !nsfw.includes(x.guild.id), this)
-            .array();
+        const pages = $.client.emojis.cache.filter((x) => !nsfw.includes(x.guild.id), this).array();
         const pagesSplit = $(pages).split(20);
         $.log(pagesSplit);
-        var embed = new MessageEmbed()
-            .setTitle("**Emoji list!**")
-            .setColor("AQUA");
+        var embed = new MessageEmbed().setTitle("**Emoji list!**").setColor("AQUA");
         let desc = "";
 
         for (const emote of pagesSplit[0]) {

@@ -62,8 +62,6 @@ export default new Command({
             "large man"
         ];
 
-        $.channel.send(
-            "ok " + responses[Math.floor(Math.random() * responses.length)]
-        );
+        $.channel.send("ok " + responses[Math.floor(Math.random() * responses.length)]);
     }
 });

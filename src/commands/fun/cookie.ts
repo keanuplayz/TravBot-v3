@@ -7,8 +7,7 @@ export default new Command({
     run: ":cookie: Here's a cookie!",
     any: new Command({
         async run($: CommonLibrary): Promise<any> {
-            if ($.args[0] == "all")
-                return $.channel.send(`${$.author} gave everybody a cookie!`);
+            if ($.args[0] == "all") return $.channel.send(`${$.author} gave everybody a cookie!`);
         }
     }),
     user: new Command({
@@ -42,13 +41,9 @@ export default new Command({
                 `bakes <@${mention.id}> fresh cookies, it smells amazing.`
             ];
 
-            if (mention.id == sender.id)
-                return $.channel.send("You can't give yourself cookies!");
+            if (mention.id == sender.id) return $.channel.send("You can't give yourself cookies!");
 
-            $.channel.send(
-                `:cookie: <@${sender.id}> ` +
-                    cookies[Math.floor(Math.random() * cookies.length)]
-            );
+            $.channel.send(`:cookie: <@${sender.id}> ` + cookies[Math.floor(Math.random() * cookies.length)]);
         }
     })
 });

@@ -25,11 +25,7 @@ export function getMoneyEmbed(user: User): object {
     };
 }
 
-export function getSendEmbed(
-    sender: User,
-    receiver: User,
-    amount: number
-): object {
+export function getSendEmbed(sender: User, receiver: User, amount: number): object {
     return {
         embed: {
             color: 0xffff00,
@@ -48,17 +44,11 @@ export function getSendEmbed(
             fields: [
                 {
                     name: `Sender: ${sender.username}#${sender.discriminator}`,
-                    value: $(Storage.getUser(sender.id).money).pluralise(
-                        "credit",
-                        "s"
-                    )
+                    value: $(Storage.getUser(sender.id).money).pluralise("credit", "s")
                 },
                 {
                     name: `Receiver: ${receiver.username}#${receiver.discriminator}`,
-                    value: $(Storage.getUser(receiver.id).money).pluralise(
-                        "credit",
-                        "s"
-                    )
+                    value: $(Storage.getUser(receiver.id).money).pluralise("credit", "s")
                 }
             ],
             footer: {
@@ -72,16 +62,10 @@ export function getSendEmbed(
     };
 }
 
-export function isAuthorized(
-    guild: Guild | null,
-    channel: TextChannel | DMChannel | NewsChannel
-): boolean {
-    if (guild?.id === "637512823676600330" || process.argv[2] === "dev")
-        return true;
+export function isAuthorized(guild: Guild | null, channel: TextChannel | DMChannel | NewsChannel): boolean {
+    if (guild?.id === "637512823676600330" || process.argv[2] === "dev") return true;
     else {
-        channel.send(
-            "Sorry, this command can only be used in Monika's emote server."
-        );
+        channel.send("Sorry, this command can only be used in Monika's emote server.");
         return false;
     }
 }

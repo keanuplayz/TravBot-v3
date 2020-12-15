@@ -1,10 +1,6 @@
 import Event from "../core/event";
 import Command, {loadCommands} from "../core/command";
-import {
-    hasPermission,
-    getPermissionLevel,
-    PermissionNames
-} from "../core/permissions";
+import {hasPermission, getPermissionLevel, PermissionNames} from "../core/permissions";
 import {Permissions, Collection} from "discord.js";
 import {getPrefix} from "../core/structures";
 import $ from "../core/lib";
@@ -23,27 +19,18 @@ export default new Event<"message">({
         const prefix = getPrefix(message.guild);
 
         if (!message.content.startsWith(prefix)) {
-            if (
-                message.client.user &&
-                message.mentions.has(message.client.user)
-            )
-                message.channel.send(
-                    `${message.author.toString()}, my prefix on this guild is \`${prefix}\`.`
-                );
+            if (message.client.user && message.mentions.has(message.client.user))
+                message.channel.send(`${message.author.toString()}, my prefix on this guild is \`${prefix}\`.`);
             return;
         }
 
-        const [header, ...args] = message.content
-            .substring(prefix.length)
-            .split(/ +/);
+        const [header, ...args] = message.content.substring(prefix.length).split(/ +/);
 
         if (!commands.has(header)) return;
 
         if (
             message.channel.type === "text" &&
-            !message.channel
-                .permissionsFor(message.client.user || "")
-                ?.has(Permissions.FLAGS.SEND_MESSAGES)
+            !message.channel.permissionsFor(message.client.user || "")?.has(Permissions.FLAGS.SEND_MESSAGES)
         ) {
             let status;
 
@@ -65,25 +52,15 @@ export default new Event<"message">({
 
         // Subcommand Recursion //
         let command = commands.get(header);
-        if (!command)
-            return $.warn(
-                `Command "${header}" was called but for some reason it's still undefined!`
-            );
+        if (!command) return $.warn(`Command "${header}" was called but for some reason it's still undefined!`);
         const params: any[] = [];
         let isEndpoint = false;
         let permLevel = command.permission ?? Command.PERMISSIONS.NONE;
 
         for (let param of args) {
             if (command.endpoint) {
-                if (
-                    command.subcommands.size > 0 ||
-                    command.user ||
-                    command.number ||
-                    command.any
-                )
-                    $.warn(
-                        `An endpoint cannot have subcommands! Check ${prefix}${header} again.`
-                    );
+                if (command.subcommands.size > 0 || command.user || command.number || command.any)
+                    $.warn(`An endpoint cannot have subcommands! Check ${prefix}${header} again.`);
                 isEndpoint = true;
                 break;
             }
@@ -97,19 +74,14 @@ export default new Event<"message">({
                 try {
                     params.push(await message.client.users.fetch(id));
                 } catch (error) {
-                    return message.channel.send(
-                        `No user found by the ID \`${id}\`!`
-                    );
+                    return message.channel.send(`No user found by the ID \`${id}\`!`);
                 }
-            } else if (type === Command.TYPES.NUMBER)
-                params.push(Number(param));
+            } else if (type === Command.TYPES.NUMBER) params.push(Number(param));
             else if (type !== Command.TYPES.SUBCOMMAND) params.push(param);
         }
 
         if (!message.member)
-            return $.warn(
-                "This command was likely called from a DM channel meaning the member object is null."
-            );
+            return $.warn("This command was likely called from a DM channel meaning the member object is null.");
 
         if (!hasPermission(message.member, permLevel)) {
             const userPermLevel = getPermissionLevel(message.member);

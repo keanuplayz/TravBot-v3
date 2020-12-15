@@ -1,20 +1,5 @@
-import {
-    GenericWrapper,
-    NumberWrapper,
-    StringWrapper,
-    ArrayWrapper
-} from "./wrappers";
-import {
-    Client,
-    Message,
-    TextChannel,
-    DMChannel,
-    NewsChannel,
-    Guild,
-    User,
-    GuildMember,
-    Permissions
-} from "discord.js";
+import {GenericWrapper, NumberWrapper, StringWrapper, ArrayWrapper} from "./wrappers";
+import {Client, Message, TextChannel, DMChannel, NewsChannel, Guild, User, GuildMember, Permissions} from "discord.js";
 import chalk from "chalk";
 import {get} from "https";
 import FileManager from "./storage";
@@ -45,16 +30,8 @@ export interface CommonLibrary {
         callback: (page: number) => void,
         duration?: number
     ) => void;
-    prompt: (
-        message: Message,
-        senderID: string,
-        onConfirm: () => void,
-        duration?: number
-    ) => void;
-    getMemberByUsername: (
-        guild: Guild,
-        username: string
-    ) => Promise<GuildMember | undefined>;
+    prompt: (message: Message, senderID: string, onConfirm: () => void, duration?: number) => void;
+    getMemberByUsername: (guild: Guild, username: string) => Promise<GuildMember | undefined>;
     callMemberByUsername: (
         message: Message,
         username: string,
@@ -88,9 +65,7 @@ export default function $(value: any) {
 $.handler = function (this: CommonLibrary, error: Error) {
     if (this)
         this.channel.send(
-            `There was an error while trying to execute that command!\`\`\`${
-                error.stack ?? error
-            }\`\`\``
+            `There was an error while trying to execute that command!\`\`\`${error.stack ?? error}\`\`\``
         );
     else
         $.warn(
@@ -117,12 +92,7 @@ export function setConsoleActivated(activated: boolean) {
 // The custom console. In order of verbosity, error, warn, log, and debug. Ready is a variation of log.
 // General Purpose Logger
 $.log = (...args: any[]) => {
-    if (enabled)
-        console.log(
-            chalk.white.bgGray(formatTimestamp()),
-            chalk.black.bgWhite("INFO"),
-            ...args
-        );
+    if (enabled) console.log(chalk.white.bgGray(formatTimestamp()), chalk.black.bgWhite("INFO"), ...args);
 
     const text = `[${formatUTCTimestamp()}] [INFO] ${args.join(" ")}\n`;
     logs.info += text;
@@ -130,12 +100,7 @@ $.log = (...args: any[]) => {
 };
 // "It'll still work, but you should really check up on this."
 $.warn = (...args: any[]) => {
-    if (enabled)
-        console.warn(
-            chalk.white.bgGray(formatTimestamp()),
-            chalk.black.bgYellow("WARN"),
-            ...args
-        );
+    if (enabled) console.warn(chalk.white.bgGray(formatTimestamp()), chalk.black.bgYellow("WARN"), ...args);
 
     const text = `[${formatUTCTimestamp()}] [WARN] ${args.join(" ")}\n`;
     logs.warn += text;
@@ -144,12 +109,7 @@ $.warn = (...args: any[]) => {
 };
 // Used for anything which prevents the program from actually running.
 $.error = (...args: any[]) => {
-    if (enabled)
-        console.error(
-            chalk.white.bgGray(formatTimestamp()),
-            chalk.white.bgRed("ERROR"),
-            ...args
-        );
+    if (enabled) console.error(chalk.white.bgGray(formatTimestamp()), chalk.white.bgRed("ERROR"), ...args);
 
     const text = `[${formatUTCTimestamp()}] [ERROR] ${args.join(" ")}\n`;
     logs.error += text;
@@ -162,23 +122,14 @@ $.error = (...args: any[]) => {
 // Would probably be more suited for debugging program logic rather than function logic, which can be checked using unit tests.
 $.debug = (...args: any[]) => {
     if (process.argv[2] === "dev" && enabled)
-        console.debug(
-            chalk.white.bgGray(formatTimestamp()),
-            chalk.white.bgBlue("DEBUG"),
-            ...args
-        );
+        console.debug(chalk.white.bgGray(formatTimestamp()), chalk.white.bgBlue("DEBUG"), ...args);
 
     const text = `[${formatUTCTimestamp()}] [DEBUG] ${args.join(" ")}\n`;
     logs.verbose += text;
 };
 // Used once at the start of the program when the bot loads.
 $.ready = (...args: any[]) => {
-    if (enabled)
-        console.log(
-            chalk.white.bgGray(formatTimestamp()),
-            chalk.black.bgGreen("READY"),
-            ...args
-        );
+    if (enabled) console.log(chalk.white.bgGray(formatTimestamp()), chalk.black.bgGreen("READY"), ...args);
 
     const text = `[${formatUTCTimestamp()}] [READY] ${args.join(" ")}\n`;
     logs.info += text;
@@ -205,14 +156,8 @@ export function formatUTCTimestamp(now = new Date()) {
     return `${year}-${month}-${day} ${hour}:${minute}:${second}`;
 }
 
-export function botHasPermission(
-    guild: Guild | null,
-    permission: number
-): boolean {
-    return !!(
-        client.user &&
-        guild?.members.resolve(client.user)?.hasPermission(permission)
-    );
+export function botHasPermission(guild: Guild | null, permission: number): boolean {
+    return !!(client.user && guild?.members.resolve(client.user)?.hasPermission(permission));
 }
 
 // Pagination function that allows for customization via a callback.
@@ -253,10 +198,7 @@ $.paginate = async (
             if (user.id === senderID) {
                 // The reason this is inside the call is because it's possible to switch a user's permissions halfway and suddenly throw an error.
                 // This will dynamically adjust for that, switching modes depending on whether it currently has the "Manage Messages" permission.
-                const canDeleteEmotes = botHasPermission(
-                    message.guild,
-                    Permissions.FLAGS.MANAGE_MESSAGES
-                );
+                const canDeleteEmotes = botHasPermission(message.guild, Permissions.FLAGS.MANAGE_MESSAGES);
                 handle(reaction.emoji.name, user.id);
 
                 if (canDeleteEmotes) reaction.users.remove(user);
@@ -273,12 +215,7 @@ $.paginate = async (
 };
 
 // Waits for the sender to either confirm an action or let it pass (and delete the message).
-$.prompt = async (
-    message: Message,
-    senderID: string,
-    onConfirm: () => void,
-    duration = 10000
-) => {
+$.prompt = async (message: Message, senderID: string, onConfirm: () => void, duration = 10000) => {
     let isDeleted = false;
 
     message.react("✅");
@@ -312,11 +249,7 @@ $.getMemberByUsername = async (guild: Guild, username: string) => {
 };
 
 /** Convenience function to handle false cases automatically. */
-$.callMemberByUsername = async (
-    message: Message,
-    username: string,
-    onSuccess: (member: GuildMember) => void
-) => {
+$.callMemberByUsername = async (message: Message, username: string, onSuccess: (member: GuildMember) => void) => {
     const guild = message.guild;
     const send = message.channel.send;
 
@@ -364,11 +297,7 @@ export function parseArgs(line: string): string[] {
  * - `%%` = `%`
  * - If the invalid token is null/undefined, nothing is changed.
  */
-export function parseVars(
-    line: string,
-    definitions: {[key: string]: string},
-    invalid: string | null = ""
-): string {
+export function parseVars(line: string, definitions: {[key: string]: string}, invalid: string | null = ""): string {
     let result = "";
     let inVariable = false;
     let token = "";
@@ -397,10 +326,7 @@ export function parseVars(
 export function isType(value: any, type: any): boolean {
     if (value === undefined && type === undefined) return true;
     else if (value === null && type === null) return true;
-    else
-        return (
-            value !== undefined && value !== null && value.constructor === type
-        );
+    else return value !== undefined && value !== null && value.constructor === type;
 }
 
 /**
@@ -409,12 +335,7 @@ export function isType(value: any, type: any): boolean {
  * If at any point the value doesn't match the data structure provided, the fallback is returned.
  * Warning: Type checking is based on the fallback's type. Be sure that the "type" parameter is accurate to this!
  */
-export function select<T>(
-    value: any,
-    fallback: T,
-    type: Function,
-    isArray = false
-): T {
+export function select<T>(value: any, fallback: T, type: Function, isArray = false): T {
     if (isArray && isType(value, Array)) {
         for (let item of value) if (!isType(item, type)) return fallback;
         return value;
@@ -426,9 +347,7 @@ export function select<T>(
 
 export function clean(text: any) {
     if (typeof text === "string")
-        return text
-            .replace(/`/g, "`" + String.fromCharCode(8203))
-            .replace(/@/g, "@" + String.fromCharCode(8203));
+        return text.replace(/`/g, "`" + String.fromCharCode(8203)).replace(/@/g, "@" + String.fromCharCode(8203));
     else return text;
 }
 
@@ -450,34 +369,26 @@ export function formatBytes(bytes: any) {
 
 export function getContent(url: any) {
     return new Promise((resolve, reject) => {
-        get(
-            url,
-            (res: {
-                resume?: any;
-                setEncoding?: any;
-                on?: any;
-                statusCode?: any;
-            }) => {
-                const {statusCode} = res;
-                if (statusCode !== 200) {
-                    res.resume();
-                    reject(`Request failed. Status code: ${statusCode}`);
-                }
-                res.setEncoding("utf8");
-                let rawData = "";
-                res.on("data", (chunk: string) => {
-                    rawData += chunk;
-                });
-                res.on("end", () => {
-                    try {
-                        const parsedData = JSON.parse(rawData);
-                        resolve(parsedData);
-                    } catch (e) {
-                        reject(`Error: ${e.message}`);
-                    }
-                });
+        get(url, (res: {resume?: any; setEncoding?: any; on?: any; statusCode?: any}) => {
+            const {statusCode} = res;
+            if (statusCode !== 200) {
+                res.resume();
+                reject(`Request failed. Status code: ${statusCode}`);
             }
-        ).on("error", (err: {message: any}) => {
+            res.setEncoding("utf8");
+            let rawData = "";
+            res.on("data", (chunk: string) => {
+                rawData += chunk;
+            });
+            res.on("end", () => {
+                try {
+                    const parsedData = JSON.parse(rawData);
+                    resolve(parsedData);
+                } catch (e) {
+                    reject(`Error: ${e.message}`);
+                }
+            });
+        }).on("error", (err: {message: any}) => {
             reject(`Error: ${err.message}`);
         });
     });
@@ -510,6 +421,5 @@ export const Random = {
     int: (min: number, max: number) => Math.floor(Random.num(min, max)),
     chance: (decimal: number) => Math.random() < decimal,
     sign: (number = 1) => number * (Random.chance(0.5) ? -1 : 1),
-    deviation: (base: number, deviation: number) =>
-        Random.num(base - deviation, base + deviation)
+    deviation: (base: number, deviation: number) => Random.num(base - deviation, base + deviation)
 };

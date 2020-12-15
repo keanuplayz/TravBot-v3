@@ -4,8 +4,7 @@ import {Storage} from "../../../core/structures";
 import {isAuthorized, getMoneyEmbed, getSendEmbed} from "./eco-utils";
 
 export const DailyCommand = new Command({
-    description:
-        "Pick up your daily Mons. The cooldown is per user and every 22 hours to allow for some leeway.",
+    description: "Pick up your daily Mons. The cooldown is per user and every 22 hours to allow for some leeway.",
     async run({author, channel, guild}) {
         if (isAuthorized(guild, channel)) {
             const user = Storage.getUser(author.id);
@@ -81,15 +80,10 @@ export const PayCommand = new Command({
                     const target = args[0];
                     const receiver = Storage.getUser(target.id);
 
-                    if (amount <= 0)
-                        return channel.send("You must send at least one Mon!");
+                    if (amount <= 0) return channel.send("You must send at least one Mon!");
                     else if (sender.money < amount)
-                        return channel.send(
-                            "You don't have enough Mons for that.",
-                            getMoneyEmbed(author)
-                        );
-                    else if (target.id === author.id)
-                        return channel.send("You can't send Mons to yourself!");
+                        return channel.send("You don't have enough Mons for that.", getMoneyEmbed(author));
+                    else if (target.id === author.id) return channel.send("You can't send Mons to yourself!");
                     else if (target.bot && process.argv[2] !== "dev")
                         return channel.send("You can't send Mons to a bot!");
 
@@ -110,24 +104,16 @@ export const PayCommand = new Command({
                 const last = args.pop();
 
                 if (!/\d+/g.test(last) && args.length === 0)
-                    return channel.send(
-                        "You need to enter an amount you're sending!"
-                    );
+                    return channel.send("You need to enter an amount you're sending!");
 
                 const amount = Math.floor(last);
                 const sender = Storage.getUser(author.id);
 
-                if (amount <= 0)
-                    return channel.send("You must send at least one credit!");
+                if (amount <= 0) return channel.send("You must send at least one credit!");
                 else if (sender.money < amount)
-                    return channel.send(
-                        "You don't have enough money to do that!",
-                        getMoneyEmbed(author)
-                    );
+                    return channel.send("You don't have enough money to do that!", getMoneyEmbed(author));
                 else if (!guild)
-                    return channel.send(
-                        "You have to use this in a server if you want to send money with a username!"
-                    );
+                    return channel.send("You have to use this in a server if you want to send money with a username!");
 
                 const username = args.join(" ");
                 const member = (
@@ -141,8 +127,7 @@ export const PayCommand = new Command({
                     return channel.send(
                         `Couldn't find a user by the name of \`${username}\`! If you want to send money to someone in a different server, you have to use their user ID!`
                     );
-                else if (member.user.id === author.id)
-                    return channel.send("You can't send money to yourself!");
+                else if (member.user.id === author.id) return channel.send("You can't send money to yourself!");
                 else if (member.user.bot && process.argv[2] !== "dev")
                     return channel.send("You can't send money to a bot!");
 

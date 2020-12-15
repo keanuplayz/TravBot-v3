@@ -8,9 +8,7 @@ export default new Event<"channelCreate">({
         const botGuilds = client.guilds;
         if (channel instanceof discord.GuildChannel) {
             const createdGuild = await botGuilds.fetch(channel.guild.id);
-            $.log(
-                `Channel created in '${createdGuild.name}' called '#${channel.name}'`
-            );
+            $.log(`Channel created in '${createdGuild.name}' called '#${channel.name}'`);
         }
     }
 });

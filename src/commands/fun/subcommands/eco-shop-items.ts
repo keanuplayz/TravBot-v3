@@ -16,9 +16,7 @@ export const ShopItems: ShopItem[] = [
         description: "Hug Monika.",
         usage: "hug",
         run(message, cost) {
-            message.channel.send(
-                `Transaction of ${cost} Mon completed successfully. <@394808963356688394>`
-            );
+            message.channel.send(`Transaction of ${cost} Mon completed successfully. <@394808963356688394>`);
         }
     },
     {
@@ -27,9 +25,7 @@ export const ShopItems: ShopItem[] = [
         description: "Hold Monika's hand.",
         usage: "handhold",
         run(message, cost) {
-            message.channel.send(
-                `Transaction of ${cost} Mons completed successfully. <@394808963356688394>`
-            );
+            message.channel.send(`Transaction of ${cost} Mons completed successfully. <@394808963356688394>`);
         }
     },
     {

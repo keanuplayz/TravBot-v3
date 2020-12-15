@@ -29,9 +29,7 @@ export default new Command({
             );
         const permLevel = getPermissionLevel($.member);
         $.channel.send(
-            `${$.author.toString()}, your permission level is \`${
-                PermissionNames[permLevel]
-            }\` (${permLevel}).`
+            `${$.author.toString()}, your permission level is \`${PermissionNames[permLevel]}\` (${permLevel}).`
         );
     },
     subcommands: {
@@ -41,8 +39,7 @@ export default new Command({
             permission: Command.PERMISSIONS.ADMIN,
             subcommands: {
                 prefix: new Command({
-                    description:
-                        "Set a custom prefix for your guild. Removes your custom prefix if none is provided.",
+                    description: "Set a custom prefix for your guild. Removes your custom prefix if none is provided.",
                     usage: "(<prefix>)",
                     async run($: CommonLibrary): Promise<any> {
                         Storage.getGuild($.guild?.id || "N/A").prefix = null;
@@ -53,28 +50,22 @@ export default new Command({
                     },
                     any: new Command({
                         async run($: CommonLibrary): Promise<any> {
-                            Storage.getGuild($.guild?.id || "N/A").prefix =
-                                $.args[0];
+                            Storage.getGuild($.guild?.id || "N/A").prefix = $.args[0];
                             Storage.save();
-                            $.channel.send(
-                                `The custom prefix for this guild is now \`${$.args[0]}\`.`
-                            );
+                            $.channel.send(`The custom prefix for this guild is now \`${$.args[0]}\`.`);
                         }
                     })
                 })
             }
         }),
         diag: new Command({
-            description:
-                'Requests a debug log with the "info" verbosity level.',
+            description: 'Requests a debug log with the "info" verbosity level.',
             permission: Command.PERMISSIONS.BOT_SUPPORT,
             async run($: CommonLibrary): Promise<any> {
                 $.channel.send(getLogBuffer("info"));
             },
             any: new Command({
-                description: `Select a verbosity to listen to. Available levels: \`[${Object.keys(
-                    logs
-                ).join(", ")}]\``,
+                description: `Select a verbosity to listen to. Available levels: \`[${Object.keys(logs).join(", ")}]\``,
                 async run($: CommonLibrary): Promise<any> {
                     const type = $.args[0];
 
@@ -95,12 +86,9 @@ export default new Command({
                 $.channel.send("Setting status to `online`...");
             },
             any: new Command({
-                description: `Select a status to set to. Available statuses: \`[${statuses.join(
-                    ", "
-                )}]\`.`,
+                description: `Select a status to set to. Available statuses: \`[${statuses.join(", ")}]\`.`,
                 async run($: CommonLibrary): Promise<any> {
-                    if (!statuses.includes($.args[0]))
-                        return $.channel.send("That status doesn't exist!");
+                    if (!statuses.includes($.args[0])) return $.channel.send("That status doesn't exist!");
                     else {
                         $.client.user?.setStatus($.args[0]);
                         $.channel.send(`Setting status to \`${$.args[0]}\`...`);
@@ -119,17 +107,13 @@ export default new Command({
                 const msgs = await $.channel.messages.fetch({
                     limit: 100
                 });
-                const travMessages = msgs.filter(
-                    (m) => m.author.id === $.client.user?.id
-                );
+                const travMessages = msgs.filter((m) => m.author.id === $.client.user?.id);
 
-                await $.message.channel
-                    .send(`Found ${travMessages.size} messages to delete.`)
-                    .then((m) =>
-                        m.delete({
-                            timeout: 5000
-                        })
-                    );
+                await $.message.channel.send(`Found ${travMessages.size} messages to delete.`).then((m) =>
+                    m.delete({
+                        timeout: 5000
+                    })
+                );
                 await $.message.channel.bulkDelete(travMessages);
             }
         }),
@@ -147,9 +131,7 @@ export default new Command({
                     $.channel
                         /// @ts-ignore
                         .bulkDelete(fetched)
-                        .catch((error: any) =>
-                            $.channel.send(`Error: ${error}`)
-                        );
+                        .catch((error: any) => $.channel.send(`Error: ${error}`));
                 }
             })
         }),
@@ -162,8 +144,7 @@ export default new Command({
                     const code = $.args.join(" ");
                     let evaled = eval(code);
 
-                    if (typeof evaled !== "string")
-                        evaled = require("util").inspect(evaled);
+                    if (typeof evaled !== "string") evaled = require("util").inspect(evaled);
                     $.channel.send(clean(evaled), {code: "x1"});
                 } catch (err) {
                     $.channel.send(`\`ERROR\` \`\`\`x1\n${clean(err)}\n\`\`\``);
@@ -175,26 +156,18 @@ export default new Command({
             permission: Command.PERMISSIONS.BOT_SUPPORT,
             async run($: CommonLibrary): Promise<any> {
                 const nickName = $.args.join(" ");
-                const trav = $.guild?.members.cache.find(
-                    (member) => member.id === $.client.user?.id
-                );
+                const trav = $.guild?.members.cache.find((member) => member.id === $.client.user?.id);
                 await trav?.setNickname(nickName);
-                if (
-                    botHasPermission($.guild, Permissions.FLAGS.MANAGE_MESSAGES)
-                )
+                if (botHasPermission($.guild, Permissions.FLAGS.MANAGE_MESSAGES))
                     $.message.delete({timeout: 5000}).catch($.handler.bind($));
-                $.channel
-                    .send(`Nickname set to \`${nickName}\``)
-                    .then((m) => m.delete({timeout: 5000}));
+                $.channel.send(`Nickname set to \`${nickName}\``).then((m) => m.delete({timeout: 5000}));
             }
         }),
         guilds: new Command({
             description: "Shows a list of all guilds the bot is a member of.",
             permission: Command.PERMISSIONS.BOT_SUPPORT,
             async run($: CommonLibrary): Promise<any> {
-                const guildList = $.client.guilds.cache
-                    .array()
-                    .map((e) => e.name);
+                const guildList = $.client.guilds.cache.array().map((e) => e.name);
                 $.channel.send(guildList);
             }
         }),
@@ -209,9 +182,7 @@ export default new Command({
                 $.channel.send("Activity set to default.");
             },
             any: new Command({
-                description: `Select an activity type to set. Available levels: \`[${activities.join(
-                    ", "
-                )}]\``,
+                description: `Select an activity type to set. Available levels: \`[${activities.join(", ")}]\``,
                 async run($: CommonLibrary): Promise<any> {
                     const type = $.args[0];
 
@@ -220,9 +191,7 @@ export default new Command({
                             type: $.args[0].toUpperCase()
                         });
                         $.channel.send(
-                            `Set activity to \`${$.args[0].toUpperCase()}\` \`${$.args
-                                .slice(1)
-                                .join(" ")}\`.`
+                            `Set activity to \`${$.args[0].toUpperCase()}\` \`${$.args.slice(1).join(" ")}\`.`
                         );
                     } else
                         $.channel.send(

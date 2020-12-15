@@ -24,9 +24,7 @@ export default class Event<K extends keyof ClientEvents> {
 }
 
 export async function loadEvents(client: Client) {
-    for (const file of Storage.open("dist/events", (filename: string) =>
-        filename.endsWith(".js")
-    )) {
+    for (const file of Storage.open("dist/events", (filename: string) => filename.endsWith(".js"))) {
         const header = file.substring(0, file.indexOf(".js"));
         const event = (await import(`../events/${header}`)).default;
 

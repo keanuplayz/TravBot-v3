@@ -11,16 +11,13 @@ export default new Command({
     async run($: CommonLibrary): Promise<any> {
         console.log(endpoints.sfw);
         $.channel.send(
-            `Please provide an image type. Available arguments:\n\`[${Object.keys(
-                endpoints.sfw
-            ).join(", ")}]\`.`
+            `Please provide an image type. Available arguments:\n\`[${Object.keys(endpoints.sfw).join(", ")}]\`.`
         );
     },
     any: new Command({
         description: "Image type to send.",
         async run($: CommonLibrary): Promise<any> {
-            if (!($.args[0] in endpoints.sfw))
-                return $.channel.send("Couldn't find that endpoint!");
+            if (!($.args[0] in endpoints.sfw)) return $.channel.send("Couldn't find that endpoint!");
 
             let baseURL = "https://nekos.life/api/v2";
             let url = new URL(`${baseURL}${endpoints.sfw[$.args[0]]}`);

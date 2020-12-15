@@ -14,12 +14,8 @@ export const ShopCommand = new Command({
 
                 for (const item of selection)
                     fields.push({
-                        name: `**${item.title}** (${getPrefix(guild)}eco buy ${
-                            item.usage
-                        })`,
-                        value: `${item.description} Costs ${$(
-                            item.cost
-                        ).pluralise("Mon", "s")}.`,
+                        name: `**${item.title}** (${getPrefix(guild)}eco buy ${item.usage})`,
+                        value: `${item.description} Costs ${$(item.cost).pluralise("Mon", "s")}.`,
                         inline: false
                     });
 
@@ -40,17 +36,10 @@ export const ShopCommand = new Command({
             else {
                 const shopPages = $(ShopItems).split(5);
                 const pageAmount = shopPages.length;
-                const msg = await channel.send(
-                    getShopEmbed(shopPages[0], `Shop (Page 1 of ${pageAmount})`)
-                );
+                const msg = await channel.send(getShopEmbed(shopPages[0], `Shop (Page 1 of ${pageAmount})`));
 
                 $.paginate(msg, author.id, pageAmount, (page) => {
-                    msg.edit(
-                        getShopEmbed(
-                            shopPages[page],
-                            `Shop (Page ${page + 1} of ${pageAmount})`
-                        )
-                    );
+                    msg.edit(getShopEmbed(shopPages[page], `Shop (Page ${page + 1} of ${pageAmount})`));
                 });
             }
         }
@@ -90,10 +79,7 @@ export const BuyCommand = new Command({
                 }
             }
 
-            if (!found)
-                channel.send(
-                    `There's no item in the shop that goes by \`${requested}\`!`
-                );
+            if (!found) channel.send(`There's no item in the shop that goes by \`${requested}\`!`);
         }
     }
 });

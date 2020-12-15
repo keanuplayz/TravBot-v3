@@ -58,8 +58,7 @@ export default class Command {
             const baseSubcommands = Object.keys(options.subcommands);
 
             // Loop once to set the base subcommands.
-            for (const name in options.subcommands)
-                this.subcommands.set(name, options.subcommands[name]);
+            for (const name in options.subcommands) this.subcommands.set(name, options.subcommands[name]);
 
             // Then loop again to make aliases point to the base subcommands and warn if something's not right.
             // This shouldn't be a problem because I'm hoping that JS stores these as references that point to the same object.
@@ -118,12 +117,7 @@ export default class Command {
         // Any Discord ID format will automatically format to a user ID.
         else if (this.user && /\d{17,19}/.test(param)) return TYPES.USER;
         // Disallow infinity and allow for 0.
-        else if (
-            this.number &&
-            (Number(param) || param === "0") &&
-            !param.includes("Infinity")
-        )
-            return TYPES.NUMBER;
+        else if (this.number && (Number(param) || param === "0") && !param.includes("Infinity")) return TYPES.NUMBER;
         else if (this.any) return TYPES.ANY;
         else return TYPES.NONE;
     }
@@ -166,9 +160,7 @@ export async function loadCommands(): Promise<Collection<string, Command>> {
         writeFile(
             "src/commands/test.ts",
             template,
-            generateHandler(
-                '"test.ts" (testing/template command) successfully generated.'
-            )
+            generateHandler('"test.ts" (testing/template command) successfully generated.')
         );
 
     commands = new Collection();
@@ -189,10 +181,7 @@ export async function loadCommands(): Promise<Collection<string, Command>> {
             while ((cmd = await subdir.read())) {
                 if (cmd.isDirectory()) {
                     if (cmd.name === "subcommands") continue;
-                    else
-                        $.warn(
-                            `You can't have multiple levels of directories! From: "dist/commands/${cmd.name}"`
-                        );
+                    else $.warn(`You can't have multiple levels of directories! From: "dist/commands/${cmd.name}"`);
                 } else loadCommand(cmd.name, list, selected.name);
             }
 
@@ -207,25 +196,14 @@ export async function loadCommands(): Promise<Collection<string, Command>> {
     return commands;
 }
 
-async function loadCommand(
-    filename: string,
-    list: string[],
-    category?: string
-) {
-    if (!commands)
-        return $.error(
-            `Function "loadCommand" was called without first initializing commands!`
-        );
+async function loadCommand(filename: string, list: string[], category?: string) {
+    if (!commands) return $.error(`Function "loadCommand" was called without first initializing commands!`);
 
     const prefix = category ?? "";
     const header = filename.substring(0, filename.indexOf(".js"));
-    const command = (await import(`../commands/${prefix}/${header}`))
-        .default as Command | undefined;
+    const command = (await import(`../commands/${prefix}/${header}`)).default as Command | undefined;
 
-    if (!command)
-        return $.warn(
-            `Command "${header}" has no default export which is a Command instance!`
-        );
+    if (!command) return $.warn(`Command "${header}" has no default export which is a Command instance!`);
 
     command.originalCommandName = header;
     list.push(header);
@@ -238,17 +216,11 @@ async function loadCommand(
 
     for (const alias of command.aliases) {
         if (commands.has(alias))
-            $.warn(
-                `Top-level alias "${alias}" from command "${header}" already exists either as a command or alias!`
-            );
+            $.warn(`Top-level alias "${alias}" from command "${header}" already exists either as a command or alias!`);
         else commands.set(alias, command);
     }
 
-    $.log(
-        `Loading Command: ${header} (${
-            category ? $(category).toTitleCase() : "Miscellaneous"
-        })`
-    );
+    $.log(`Loading Command: ${header} (${category ? $(category).toTitleCase() : "Miscellaneous"})`);
 }
 
 // The template should be built with a reductionist mentality.

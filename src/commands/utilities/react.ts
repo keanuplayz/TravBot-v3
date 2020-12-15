@@ -16,9 +16,7 @@ export default new Command({
                 try {
                     target = await $.channel.messages.fetch(last);
                 } catch {
-                    return $.channel.send(
-                        `No valid message found by the ID \`${last}\`!`
-                    );
+                    return $.channel.send(`No valid message found by the ID \`${last}\`!`);
                 }
 
                 $.args.pop();
@@ -28,10 +26,7 @@ export default new Command({
                 distance = parseInt(last);
 
                 if (distance >= 0 && distance <= 99) $.args.pop();
-                else
-                    return $.channel.send(
-                        "Your distance must be between 0 and 99!"
-                    );
+                else return $.channel.send("Your distance must be between 0 and 99!");
             }
         }
 
@@ -48,9 +43,7 @@ export default new Command({
         let anyEmoteIsValid = false;
 
         for (const search of $.args) {
-            const emoji = $.client.emojis.cache.find(
-                (emoji) => emoji.name === search
-            );
+            const emoji = $.client.emojis.cache.find((emoji) => emoji.name === search);
 
             if (emoji) {
                 // Call the delete function only once to avoid unnecessary errors.
