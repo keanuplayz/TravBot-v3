@@ -23,10 +23,12 @@ class ConfigStructure extends GenericStructure {
 class User {
     public money: number;
     public lastReceived: number;
+    public lastMonday: number;
 
     constructor(data?: GenericJSON) {
         this.money = select(data?.money, 0, Number);
         this.lastReceived = select(data?.lastReceived, -1, Number);
+        this.lastMonday = select(data?.lastMonday, -1, Number);
     }
 }
 
