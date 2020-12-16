@@ -1,25 +1,25 @@
 name: Build Docker Image + Push
 on:
-  push:
-    branches:
-      - typescript
-      - docker
+    push:
+        branches:
+            - typescript
+            - docker
 
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v2
-      - name: Install Docker BuildX
-        id: buildx
-        uses: crazy-max/ghaction-docker-buildx@v1
-        with:
-          buildx-version: latest
-      - name: Login to Docker Hub
-        run: echo "${{ secrets.DOCKER_PASSWORD }}" | docker login -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
-      - name: Build the image
-        run: |
-          docker buildx build \
-          --tag keanucode/travbot-v3:latest \
-          --platform linux/amd64,linux/arm/v7,linux/arm64 --push .
+    build:
+        runs-on: ubuntu-latest
+        steps:
+            - name: Checkout code
+              uses: actions/checkout@v2
+            - name: Install Docker BuildX
+              id: buildx
+              uses: crazy-max/ghaction-docker-buildx@v1
+              with:
+                  buildx-version: latest
+            - name: Login to Docker Hub
+              run: echo "${{ secrets.DOCKER_PASSWORD }}" | docker login -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
+            - name: Build the image
+              run: |
+                  docker buildx build \
+                  --tag keanucode/travbot-v3:latest \
+                  --platform linux/amd64,linux/arm/v7,linux/arm64 --push .
