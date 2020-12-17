@@ -21,11 +21,11 @@ function compareEmoteNames(emote: string, query: string) {
         const q = query[i];
 
         // If they're the exact same character
-        if (c === q) likeness += 3;
-        // If the query is uppercase but the emote is lowercase
-        else if (c === q.toLowerCase()) likeness += 2;
-        // If the query is lowercase but the emote is uppercase
+        if (c === q) likeness += 1.5;
+        // If the emote is uppercase but the query is lowercase
         else if (c === q.toUpperCase()) likeness += 1;
+        // If the emote is lowercase but the query is uppercase
+        else if (c === q.toLowerCase()) likeness += 0.5;
         // Otherwise, if they're different characters, don't add anything (this isn't a spellchecker)
     }
 
