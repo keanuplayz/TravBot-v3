@@ -1,19 +1,19 @@
-import {MessageEmbed} from "discord.js";
 import Command from "../../core/command";
-import {CommonLibrary} from "../../core/lib";
+import {queryClosestEmoteByName} from "./subcommands/emote-utils";
+import {botHasPermission} from "../../core/lib";
+import {Permissions} from "discord.js";
 
 export default new Command({
     description: "Send the specified emote.",
     run: "Please provide a command name.",
     any: new Command({
-        description: "The emote to send.",
-        usage: "<emote>",
-        async run($: CommonLibrary): Promise<any> {
-            const search = $.args[0].toLowerCase();
-            const emote = $.client.emojis.cache.find((emote) => emote.name.toLowerCase().includes(search));
-            if (!emote) return $.channel.send("That's not a valid emote name!");
-            $.message.delete();
-            $.channel.send(`${emote}`);
+        description: "The emote(s) to send.",
+        usage: "<emotes...>",
+        async run({guild, channel, message, args}) {
+            let output = "";
+            for (const query of args) output += queryClosestEmoteByName(query).toString();
+            if (botHasPermission(guild, Permissions.FLAGS.MANAGE_MESSAGES)) message.delete();
+            channel.send(output);
         }
     })
 });

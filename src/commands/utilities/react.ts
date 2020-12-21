@@ -1,6 +1,7 @@
 import Command from "../../core/command";
 import {CommonLibrary} from "../../core/lib";
 import {Message, Channel, TextChannel} from "discord.js";
+import {queryClosestEmoteByName} from "./subcommands/emote-utils";
 
 export default new Command({
     description:
@@ -94,26 +95,16 @@ export default new Command({
             ).last();
         }
 
-        let anyEmoteIsValid = false;
-
         for (const search of $.args) {
-            const emoji = $.client.emojis.cache.find((emoji) => emoji.name === search);
+            // Even though the bot will always grab *some* emote, the user can choose not to keep that emote there if it isn't what they want
+            const emote = queryClosestEmoteByName(search);
+            const reaction = await target!.react(emote);
 
-            if (emoji) {
-                // Call the delete function only once to avoid unnecessary errors.
-                if (!anyEmoteIsValid && distance !== 0) $.message.delete();
-                anyEmoteIsValid = true;
-                const reaction = await target?.react(emoji);
-
-                // This part is called with a promise because you don't want to wait 5 seconds between each reaction.
-
-                setTimeout(() => {
-                    /// @ts-ignore
-                    reaction.users.remove($.client.user);
-                }, 5000);
-            }
+            // This part is called with a promise because you don't want to wait 5 seconds between each reaction.
+            setTimeout(() => {
+                // This reason for this null assertion is that by the time you use this command, the client is going to be loaded.
+                reaction.users.remove($.client.user!);
+            }, 5000);
         }
-
-        if (!anyEmoteIsValid && !$.message.deleted) $.message.react("❓");
     }
 });
