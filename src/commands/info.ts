@@ -145,7 +145,7 @@ export default new Command({
         description: "Displays info about mentioned user.",
         async run($: CommonLibrary): Promise<any> {
             // Transforms the User object into a GuildMember object of the current guild.
-            const member = $.guild?.members.resolve($.args[0]);
+            const member = $.guild?.members.resolve($.args[0]) ?? (await $.guild?.members.fetch($.args[0]));
 
             if (!member)
                 return $.channel.send(
