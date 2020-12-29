@@ -1,4 +1,4 @@
-name: Build Docker Image + Push
+name: CodeQL + Docker Image
 on:
     push:
         branches:
@@ -7,9 +7,8 @@ on:
 
 jobs:
     analyze:
-        name: Analyze
+        name: CodeQL Analysis
         runs-on: ubuntu-latest
-
         steps:
             - name: Checkout repository
               uses: actions/checkout@v2
@@ -35,18 +34,24 @@ jobs:
               uses: github/codeql-action/analyze@v1
 
     build:
+        name: Build Docker Image
         needs: analyze
         runs-on: ubuntu-latest
         steps:
-            - name: Checkout code
+            - name: Checkout repository
               uses: actions/checkout@v2
+              with:
+                  fetch-depth: 2
+
             - name: Install Docker BuildX
               id: buildx
               uses: crazy-max/ghaction-docker-buildx@v1
               with:
                   buildx-version: latest
+
             - name: Login to Docker Hub
               run: echo "${{ secrets.DOCKER_PASSWORD }}" | docker login -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
+
             - name: Build the image
               run: |
                   docker buildx build \
