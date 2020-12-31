@@ -1,3 +1,4 @@
+import {writeFileSync} from "fs";
 import {GenericWrapper, NumberWrapper, StringWrapper, ArrayWrapper} from "./wrappers";
 import {Client, Message, TextChannel, DMChannel, NewsChannel, Guild, User, GuildMember, Permissions} from "discord.js";
 import chalk from "chalk";
@@ -5,6 +6,7 @@ import {get} from "https";
 import FileManager from "./storage";
 import {eventListeners} from "../events/messageReactionRemove";
 import {client} from "../index";
+import {EmoteRegistryDump, EmoteRegistryDumpEntry} from "./structures";
 
 /** A type that describes what the library module does. */
 export interface CommonLibrary {
@@ -158,6 +160,31 @@ export function formatUTCTimestamp(now = new Date()) {
 
 export function botHasPermission(guild: Guild | null, permission: number): boolean {
     return !!(client.user && guild?.members.resolve(client.user)?.hasPermission(permission));
+}
+
+export function updateGlobalEmoteRegistry(): void {
+    const data: EmoteRegistryDump = {version: 1, list: []};
+    for (const guild of client.guilds.cache.values()) {
+        $.debug(client.guilds.cache.size);
+        for (const emote of guild.emojis.cache.values()) {
+            $.debug(client.emojis.cache.size);
+            console.log("HELLO?!");
+            data.list.push({
+                ref: emote.name,
+                id: emote.id,
+                name: emote.name,
+                requires_colons: emote.requiresColons || false,
+                animated: emote.animated,
+                url: emote.url,
+                guild_id: emote.guild.name,
+                guild_name: emote.guild.name
+            });
+        }
+    }
+    const sData = JSON.stringify(data);
+    $.debug(data);
+    $.debug(sData);
+    writeFileSync("emote-registry.json", sData);
 }
 
 // Pagination function that allows for customization via a callback.
