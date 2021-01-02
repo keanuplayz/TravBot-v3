@@ -7,7 +7,6 @@ test*
 !test/
 *.bat
 desktop.ini
-emote-registry.json
 
 # Logs
 logs
