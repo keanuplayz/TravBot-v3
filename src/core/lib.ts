@@ -162,22 +162,24 @@ export function botHasPermission(guild: Guild | null, permission: number): boole
 }
 
 export function updateGlobalEmoteRegistry(): void {
-    const list: EmoteRegistryDumpEntry[] = [];
+    const data: EmoteRegistryDump = {version: 1, list: []};
 
     for (const guild of client.guilds.cache.values()) {
         for (const emote of guild.emojis.cache.values()) {
-            list.push({
+            data.list.push({
+                ref: emote.name,
                 id: emote.id,
                 name: emote.name,
                 requires_colons: emote.requiresColons || false,
                 animated: emote.animated,
                 url: emote.url,
+                guild_id: emote.guild.name,
                 guild_name: emote.guild.name
             });
         }
     }
 
-    FileManager.write("emote-registry", {version: 1, list}, true);
+    FileManager.write("emote-registry", data, true);
 }
 
 // Pagination function that allows for customization via a callback.
