@@ -1,7 +1,7 @@
 import FileManager from "./storage";
 import $, {select, GenericJSON, GenericStructure} from "./lib";
 import {watch} from "fs";
-import {Guild as DiscordGuild} from "discord.js";
+import {Guild as DiscordGuild, Snowflake} from "discord.js";
 
 class ConfigStructure extends GenericStructure {
     public token: string;
@@ -105,4 +105,20 @@ if (process.argv[2] === "dev") {
 
 export function getPrefix(guild: DiscordGuild | null): string {
     return Storage.getGuild(guild?.id || "N/A").prefix ?? Config.prefix;
+}
+
+export interface EmoteRegistryDumpEntry {
+    ref: string;
+    id: Snowflake;
+    name: string;
+    requires_colons: boolean;
+    animated: boolean;
+    url: string;
+    guild_id: Snowflake;
+    guild_name: string;
+}
+
+export interface EmoteRegistryDump {
+    version: number;
+    list: EmoteRegistryDumpEntry[];
 }
