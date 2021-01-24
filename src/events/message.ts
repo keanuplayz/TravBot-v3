@@ -3,7 +3,7 @@ import Command, {loadCommands} from "../core/command";
 import {hasPermission, getPermissionLevel, PermissionNames} from "../core/permissions";
 import {Permissions, Collection} from "discord.js";
 import {getPrefix} from "../core/structures";
-import $ from "../core/lib";
+import $, {replyEventListeners} from "../core/lib";
 
 // It's a rather hacky solution, but since there's no top-level await, I just have to make the loading conditional.
 let commands: Collection<string, Command> | null = null;
@@ -16,9 +16,15 @@ export default new Event<"message">({
         // Message Setup //
         if (message.author.bot) return;
 
+        // If there's an inline reply, fire off that event listener (if it exists).
+        if (message.reference) {
+            const reference = message.reference;
+            replyEventListeners.get(`${reference.channelID}-${reference.messageID}`)?.(message);
+        }
+
         const prefix = getPrefix(message.guild);
 
-        if (!message.content.startsWith(prefix)) {
+        if (!message.content.startsWith(prefix) && !message.reference) {
             if (message.client.user && message.mentions.has(message.client.user))
                 message.channel.send(`${message.author.toString()}, my prefix on this guild is \`${prefix}\`.`);
             return;

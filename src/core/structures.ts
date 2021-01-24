@@ -24,11 +24,17 @@ class User {
     public money: number;
     public lastReceived: number;
     public lastMonday: number;
+    public timezone: number | null; // This is for the standard timezone only, not the daylight savings timezone
+    public daylightSavingsRegion: "na" | "eu" | "sh" | null;
 
     constructor(data?: GenericJSON) {
         this.money = select(data?.money, 0, Number);
         this.lastReceived = select(data?.lastReceived, -1, Number);
         this.lastMonday = select(data?.lastMonday, -1, Number);
+        this.timezone = data?.timezone ?? null;
+        this.daylightSavingsRegion = /^((na)|(eu)|(sh))$/.test(data?.daylightSavingsRegion)
+            ? data?.daylightSavingsRegion
+            : null;
     }
 }
 
