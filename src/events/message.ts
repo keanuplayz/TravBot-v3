@@ -22,15 +22,40 @@ export default new Event<"message">({
             replyEventListeners.get(`${reference.channelID}-${reference.messageID}`)?.(message);
         }
 
-        const prefix = getPrefix(message.guild);
+        let prefix = getPrefix(message.guild);
+        const originalPrefix = prefix;
+        let exitEarly = !message.content.startsWith(prefix);
+        const clientUser = message.client.user;
+        let usesBotSpecificPrefix = false;
 
-        if (!message.content.startsWith(prefix) && !message.reference) {
-            if (message.client.user && message.mentions.has(message.client.user))
-                message.channel.send(`${message.author.toString()}, my prefix on this guild is \`${prefix}\`.`);
-            return;
+        // If the client user exists, check if it starts with the bot-specific prefix.
+        if (clientUser) {
+            // If the prefix starts with the bot-specific prefix, go off that instead (these two options must mutually exclude each other).
+            // The pattern here has an optional space at the end to capture that and make it not mess with the header and args.
+            const matches = message.content.match(new RegExp(`^<@!?${clientUser.id}> ?`));
+
+            if (matches) {
+                prefix = matches[0];
+                exitEarly = false;
+                usesBotSpecificPrefix = true;
+            }
         }
 
+        // If it doesn't start with the current normal prefix or the bot-specific unique prefix, exit the thread of execution early.
+        // Inline replies should still be captured here because if it doesn't exit early, two characters for a two-length prefix would still trigger commands.
+        if (exitEarly) return;
+
         const [header, ...args] = message.content.substring(prefix.length).split(/ +/);
+
+        // If the message is just the prefix itself, move onto this block.
+        if (header === "" && args.length === 0) {
+            // I moved the bot-specific prefix to a separate conditional block to separate the logic.
+            // And because it listens for the mention as a prefix instead of a free-form mention, inline replies (probably) shouldn't ever trigger this unintentionally.
+            if (usesBotSpecificPrefix) {
+                message.channel.send(`${message.author.toString()}, my prefix on this guild is \`${originalPrefix}\`.`);
+                return;
+            }
+        }
 
         if (!commands.has(header)) return;
 
@@ -66,7 +91,7 @@ export default new Event<"message">({
         for (let param of args) {
             if (command.endpoint) {
                 if (command.subcommands.size > 0 || command.user || command.number || command.any)
-                    $.warn(`An endpoint cannot have subcommands! Check ${prefix}${header} again.`);
+                    $.warn(`An endpoint cannot have subcommands! Check ${originalPrefix}${header} again.`);
                 isEndpoint = true;
                 break;
             }

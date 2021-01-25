@@ -110,7 +110,18 @@ if (process.argv[2] === "dev") {
 }
 
 export function getPrefix(guild: DiscordGuild | null): string {
-    return Storage.getGuild(guild?.id || "N/A").prefix ?? Config.prefix;
+    let prefix = Config.prefix;
+
+    if (guild) {
+        const possibleGuildPrefix = Storage.getGuild(guild.id).prefix;
+
+        // Here, lossy comparison works in our favor because you wouldn't want an empty string to trigger the prefix.
+        if (possibleGuildPrefix) {
+            prefix = possibleGuildPrefix;
+        }
+    }
+
+    return prefix;
 }
 
 export interface EmoteRegistryDumpEntry {
