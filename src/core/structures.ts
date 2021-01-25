@@ -24,11 +24,17 @@ class User {
     public money: number;
     public lastReceived: number;
     public lastMonday: number;
+    public timezone: number | null; // This is for the standard timezone only, not the daylight savings timezone
+    public daylightSavingsRegion: "na" | "eu" | "sh" | null;
 
     constructor(data?: GenericJSON) {
         this.money = select(data?.money, 0, Number);
         this.lastReceived = select(data?.lastReceived, -1, Number);
         this.lastMonday = select(data?.lastMonday, -1, Number);
+        this.timezone = data?.timezone ?? null;
+        this.daylightSavingsRegion = /^((na)|(eu)|(sh))$/.test(data?.daylightSavingsRegion)
+            ? data?.daylightSavingsRegion
+            : null;
     }
 }
 
@@ -104,7 +110,18 @@ if (process.argv[2] === "dev") {
 }
 
 export function getPrefix(guild: DiscordGuild | null): string {
-    return Storage.getGuild(guild?.id || "N/A").prefix ?? Config.prefix;
+    let prefix = Config.prefix;
+
+    if (guild) {
+        const possibleGuildPrefix = Storage.getGuild(guild.id).prefix;
+
+        // Here, lossy comparison works in our favor because you wouldn't want an empty string to trigger the prefix.
+        if (possibleGuildPrefix) {
+            prefix = possibleGuildPrefix;
+        }
+    }
+
+    return prefix;
 }
 
 export interface EmoteRegistryDumpEntry {

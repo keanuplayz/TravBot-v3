@@ -38,6 +38,20 @@ export interface CommonLibrary {
         username: string,
         onSuccess: (member: GuildMember) => void
     ) => Promise<void>;
+    ask: (
+        message: Message,
+        senderID: string,
+        condition: (reply: string) => boolean,
+        onSuccess: () => void,
+        onReject: () => string,
+        timeout?: number
+    ) => void;
+    askYesOrNo: (message: Message, senderID: string, timeout?: number) => Promise<boolean>;
+    askMultipleChoice: (
+        message: Message,
+        senderID: string,
+        callbackStack: (() => void)[] | ((choice: number) => void)
+    ) => void;
 
     // Dynamic Properties //
     args: any[];
@@ -182,6 +196,8 @@ export function updateGlobalEmoteRegistry(): void {
     FileManager.write("emote-registry", data, true);
 }
 
+// Maybe promisify this section to reduce the potential for creating callback hell? Especially if multiple questions in a row are being asked.
+
 // Pagination function that allows for customization via a callback.
 // Define your own pages outside the function because this only manages the actual turning of pages.
 $.paginate = async (
@@ -237,6 +253,8 @@ $.paginate = async (
 };
 
 // Waits for the sender to either confirm an action or let it pass (and delete the message).
+// This should probably be renamed to "confirm" now that I think of it, "prompt" is better used elsewhere.
+// Append "\n*(This message will automatically be deleted after 10 seconds.)*" in the future?
 $.prompt = async (message: Message, senderID: string, onConfirm: () => void, duration = 10000) => {
     let isDeleted = false;
 
@@ -244,9 +262,11 @@ $.prompt = async (message: Message, senderID: string, onConfirm: () => void, dur
     await message.awaitReactions(
         (reaction, user) => {
             if (user.id === senderID) {
-                if (reaction.emoji.name === "✅") onConfirm();
-                isDeleted = true;
-                message.delete();
+                if (reaction.emoji.name === "✅") {
+                    onConfirm();
+                    isDeleted = true;
+                    message.delete();
+                }
             }
 
             // CollectorFilter requires a boolean to be returned.
@@ -256,6 +276,111 @@ $.prompt = async (message: Message, senderID: string, onConfirm: () => void, dur
             return false;
         },
         {time: duration}
+    );
+
+    if (!isDeleted) message.delete();
+};
+
+// A list of "channel-message" and callback pairs. Also, I imagine that the callback will be much more maintainable when discord.js v13 comes out with a dedicated message.referencedMessage property.
+// Also, I'm defining it here instead of the message event because the load order screws up if you export it from there. Yeah... I'm starting to notice just how much technical debt has been built up. The command handler needs to be modularized and refactored sooner rather than later. Define all constants in one area then grab from there.
+export const replyEventListeners = new Map<string, (message: Message) => void>();
+
+// Asks the user for some input using the inline reply feature. The message here is a message you send beforehand.
+// If the reply is rejected, reply with an error message (when stable support comes from discord.js).
+// Append "\n*(Note: Make sure to use Discord's inline reply feature or this won't work!)*" in the future? And also the "you can now reply to this message" edit.
+$.ask = async (
+    message: Message,
+    senderID: string,
+    condition: (reply: string) => boolean,
+    onSuccess: () => void,
+    onReject: () => string,
+    timeout = 60000
+) => {
+    const referenceID = `${message.channel.id}-${message.id}`;
+
+    replyEventListeners.set(referenceID, (reply) => {
+        if (reply.author.id === senderID) {
+            if (condition(reply.content)) {
+                onSuccess();
+                replyEventListeners.delete(referenceID);
+            } else {
+                reply.reply(onReject());
+            }
+        }
+    });
+
+    setTimeout(() => {
+        replyEventListeners.set(referenceID, (reply) => {
+            reply.reply("that action timed out, try using the command again");
+            replyEventListeners.delete(referenceID);
+        });
+    }, timeout);
+};
+
+$.askYesOrNo = (message: Message, senderID: string, timeout = 30000): Promise<boolean> => {
+    return new Promise(async (resolve, reject) => {
+        let isDeleted = false;
+
+        await message.react("✅");
+        message.react("❌");
+        await message.awaitReactions(
+            (reaction, user) => {
+                if (user.id === senderID) {
+                    const isCheckReacted = reaction.emoji.name === "✅";
+
+                    if (isCheckReacted || reaction.emoji.name === "❌") {
+                        resolve(isCheckReacted);
+                        isDeleted = true;
+                        message.delete();
+                    }
+                }
+
+                return false;
+            },
+            {time: timeout}
+        );
+
+        if (!isDeleted) {
+            message.delete();
+            reject("Prompt timed out.");
+        }
+    });
+};
+
+// This MUST be split into an array. These emojis are made up of several characters each, adding up to 29 in length.
+const multiNumbers = ["1️⃣", "2️⃣", "3️⃣", "4️⃣", "5️⃣", "6️⃣", "7️⃣", "8️⃣", "9️⃣", "🔟"];
+
+// This will bring up an option to let the user choose between one option out of many.
+// This definitely needs a single callback alternative, because using the numerical version isn't actually that uncommon of a pattern.
+$.askMultipleChoice = async (message: Message, senderID: string, callbackStack: (() => void)[], timeout = 90000) => {
+    if (callbackStack.length > multiNumbers.length) {
+        message.channel.send(
+            `\`ERROR: The amount of callbacks in "askMultipleChoice" must not exceed the total amount of allowed options (${multiNumbers.length})!\``
+        );
+        return;
+    }
+
+    let isDeleted = false;
+
+    for (let i = 0; i < callbackStack.length; i++) {
+        await message.react(multiNumbers[i]);
+    }
+
+    await message.awaitReactions(
+        (reaction, user) => {
+            if (user.id === senderID) {
+                const index = multiNumbers.indexOf(reaction.emoji.name);
+
+                if (index !== -1) {
+                    callbackStack[index]();
+                    isDeleted = true;
+                    message.delete();
+                }
+            }
+
+            return false;
+        },
+        {time: timeout}
     );
 
     if (!isDeleted) message.delete();
