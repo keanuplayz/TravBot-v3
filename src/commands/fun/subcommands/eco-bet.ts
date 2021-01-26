@@ -8,11 +8,46 @@ export const BetCommand = new Command({
     usage: "<user> <amount> <duration>",
     run: "Who are you betting with?",
     user: new Command({
-        run: "How much are you betting?",
+        // handles missing amount argument
+        async run({args, author, channel, guild}): Promise<any> {
+            if (isAuthorized(guild, channel)) {
+                const target = args[0];
+
+                // handle invalid target
+                if (target.id == author.id)
+                    return channel.send("You can't bet Mons with yourself!");
+                else if (target.bot && process.argv[2] !== "dev")
+                    return channel.send("You can't bet Mons with a bot!");
+
+                return channel.send("How much are you betting?");
+            }
+        },
         number: new Command({
-            run: "How long until the bet ends?",
+            // handles missing duration argument
+            async run({args, author, channel, guild}): Promise<any> {
+                if (isAuthorized(guild, channel)) {
+                    const sender = Storage.getUser(author.id);
+                    const target = args[0];
+                    const receiver = Storage.getUser(target);
+                    const amount = Math.floor(args[1]);
+
+                    // handle invalid target
+                    if (target.id == author.id)
+                        return channel.send("You can't bet Mons with yourself!");
+                    else if (target.bot && process.argv[2] !== "dev")
+                        return channel.send("You can't bet Mons with a bot!");
+
+                    // handle invalid amount
+                    if (amount <= 0)
+                        return channel.send("You must bet at least one Mon!");
+                    else if (sender.money < amount)
+                        return channel.send("You don't have enough Mons for that.", getMoneyEmbed(author));
+
+                    return channel.send("How long until the bet ends?");
+                }
+            },
             any: new Command({
-                async run({ client, args, author, channel, guild}): Promise<any> {
+                async run({client, args, author, channel, guild}): Promise<any> {
                     if (isAuthorized(guild, channel)) {
                         const sender = Storage.getUser(author.id);
                         const target = args[0];
@@ -20,13 +55,19 @@ export const BetCommand = new Command({
                         const amount = Math.floor(args[1]);
                         const duration = parseDuration(args[2].trim());
 
-                        if (amount <= 0) return channel.send("You must bet at least one Mon!");
-                        else if (sender.money < amount)
-                            return channel.send("You don't have enough Mons for that.", getMoneyEmbed(author));
-                        else if (target.id == author.id) return channel.send("You can't bet Mons with yourself!");
+                        // handle invalid target
+                        if (target.id == author.id)
+                            return channel.send("You can't bet Mons with yourself!");
                         else if (target.bot && process.argv[2] !== "dev")
                             return channel.send("You can't bet Mons with a bot!");
 
+                        // handle invalid amount
+                        if (amount <= 0)
+                            return channel.send("You must bet at least one Mon!");
+                        else if (sender.money < amount)
+                            return channel.send("You don't have enough Mons for that.", getMoneyEmbed(author));
+
+                        // handle invalid duration
                         if (duration <= 0)
                             return channel.send("Invalid duration");
                         // else if (duration <= {threshold})
@@ -34,72 +75,71 @@ export const BetCommand = new Command({
                         // else if (duration >= {threshold})
                         //     return channel.send("Too long idk");
 
-                        // SEND MESSAGE WITH 2 REACTIONS (OK / NO)
+                        // [Potential pertinence to use the ask later on?]
+                        // Ask target whether or not they want to take the bet.
                         const msg = await channel.send(`<@${target.id}>, do you want to take this bet of ${$(amount).pluralise("Mon", "s")}`);
                         await msg.react("✅");
                         await msg.react("⛔");
 
-                        // SET UP ACCEPT TIMEOUT
-                        // ON REACTION CHANGE, CHECK IF NEW REACTION IS FROM TARGET
-                        await msg.awaitReactions(
+                        // Wait for a reaction.
+                        msg.awaitReactions(
                             async (reaction, user) => {
-                        //   IF OK
+                                // If target accepts: set bet up.
                                 if (user.id === target.id && reaction.emoji.name === "✅") {
-                        //     REMOVE AMOUNT FROM AUTHOR
+                                    // [ISSUE: volatile storage]
+                                    // Remove amount money from both parts to avoid duplication of money.
                                     sender.money -= amount;
-                        //     REMOVE AMOUNT FROM TARGET
                                     receiver.money -= amount;
-                        //     SET BET POOL AS AMOUNT*2
-                        //     => BET POOL ALWAYS EVEN
-                                    const pool = amount * 2;
 
-                        //     SET UP BET TIMEOUT FROM DURATION
+                                    // Notify both users.
+                                    await channel.send(`<@${target.id}> has taken <@${author.id}>'s bet, the bet amount of ${$(amount).pluralise("Mon", "s")} has been deducted from each of them.`);
+
+                                    // Wait for the duration of the bet. 
                                     client.setTimeout(async () => {
-                        //     ON BET TIMEOUT
-                        //       GIVE VOTE WITH 2 REACTIONS (OK / NO)
-                                        const voteMsg = await channel.send(`VOTE: do you think that <@${target.id} has won the bet?`);
+                                        // [Pertinence to reference the invocation message to let people find the bet more easily]
+                                        // When bet is over, give a vote to ask people their thoughts.
+                                        const voteMsg = await channel.send(`VOTE: do you think that <@${target.id}> has won the bet?`);
                                         await voteMsg.react("✅");
                                         await voteMsg.react("⛔");
 
-                        //       SET UP VOTE TIMEOUT
+                                        // Filter reactions to only collect the pertinent ones.
                                         voteMsg.awaitReactions(
                                             (reaction, user) => {
                                                 return ["✅", "⛔"].includes(reaction.emoji.name);
                                             },
-                                            // waiting for a day for now, might need to make configurable
-                                            { time: 8640000 }
+                                            // [Pertinence to make configurable on the fly.]
+                                            { time: parseDuration("2m") }
                                         ).then(reactions => {
-                        //       ON VOTE TIMEOUT
-                        //         COUNT OK VOTES
-                                            const ok = 0;
-                        //         COUNT NO VOTES
-                                            const no = 0;
-                        //         IF OK > NO
-                        //           GIVE TARGET THE BET POOL
-                                            if (ok > no) receiver.money += pool;
-                        //         ELSE IF OK < NO
-                        //           GIVE AUTHOR BET POOL
-                                            else if (ok < no) sender.money += pool;
-                        //         ELSE
-                        //           GIVE TARGET BET POOL / 2
-                        //           GIVE AUTHOR BET POOL / 2
-                        //           => BET EFFECT CANCELLED
+                                            // Count votes 
+                                            const ok = reactions.filter(reaction => reaction.emoji.name === "✅").size;
+                                            const no = reactions.filter(reaction => reaction.emoji.name === "⛔").size;
+
+                                            if (ok > no) {
+                                                receiver.money += amount * 2;
+                                                channel.send(`By the people's votes, <@${target.id}> has won the bet that <@${author.id}> had sent them.`);
+                                            }
+                                            else if (ok < no) {
+                                                sender.money += amount * 2;
+                                                channel.send(`By the people's votes, <@${target.id}> has lost the bet that <@${author.id}> had sent them.`);
+                                            }
                                             else {
                                                 sender.money += amount;
                                                 receiver.money += amount;
+                                                channel.send(`By the people's votes, <@${target.id}> couldn't be determined to have won or lost the bet that <@${author.id}> had sent them.`);
                                             }
                                         });
                                     }, duration);
                                 }
-                        //   IF NO
-                        //     DROP
+                                // If target refuses: notify and stop.
+                                else if (user.id === target.id && reaction.emoji.name === "⛔") 
+                                    await channel.send(`<@${target.id}> has rejected your bet, <@${author.id}>`);
+
                                 return false;
                             },
-                            // waiting for a minute
+                            // [Lesser pertinence to make configurable on the fly.]
+                            // Wait for a minute, and delete the asking message after that.
                             { time: 60000 }
-                        );
-                        // ON ACCEPT TIMEOUT
-                        //   DROP
+                        ).then(() => msg.delete());
                     }
                 }
             })
@@ -111,9 +151,10 @@ export const BetCommand = new Command({
 /**
  * Parses a duration string into milliseconds
  * Examples:
- * - 3d -> 3 days -> 259200000ms
+ * - 3d -> 3 days    -> 259200000ms
+ * - 2h -> 2 hours   -> 7200000ms
+ * - 7m -> 7 minutes -> 420000ms
  * - 3s -> 3 seconds -> 3000ms
- * - 2h -> 2 hours -> 7200000ms
  */
 function parseDuration(duration: string): number {
     // extract last char as unit
