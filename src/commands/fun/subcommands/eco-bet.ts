@@ -75,73 +75,61 @@ export const BetCommand = new Command({
                         // else if (duration >= {threshold})
                         //     return channel.send("Too long idk");
 
-                        // [Potential pertinence to use the ask later on?]
                         // Ask target whether or not they want to take the bet.
-                        const msg = await channel.send(`<@${target.id}>, do you want to take this bet of ${$(amount).pluralise("Mon", "s")}`);
-                        await msg.react("✅");
-                        await msg.react("⛔");
+                        const takeBet = await askYesOrNo(
+                            await channel.send(`<@${target.id}>, do you want to take this bet of ${$(amount).pluralise("Mon", "s")}`),
+                            target.id
+                        );
 
-                        // Wait for a reaction.
-                        msg.awaitReactions(
-                            async (reaction, user) => {
-                                // If target accepts: set bet up.
-                                if (user.id === target.id && reaction.emoji.name === "✅") {
-                                    // [ISSUE: volatile storage]
-                                    // Remove amount money from both parts to avoid duplication of money.
-                                    sender.money -= amount;
-                                    receiver.money -= amount;
+                        if (takeBet) {
+                            // [ISSUE: volatile storage]
+                            // Remove amount money from both parts to avoid duplication of money.
+                            sender.money -= amount;
+                            receiver.money -= amount;
+                            Storage.save();
+
+                            // Notify both users.
+                            await channel.send(`<@${target.id}> has taken <@${author.id}>'s bet, the bet amount of ${$(amount).pluralise("Mon", "s")} has been deducted from each of them.`);
+
+                            // Wait for the duration of the bet. 
+                            client.setTimeout(async () => {
+                                // [Pertinence to reference the invocation message to let people find the bet more easily]
+                                // When bet is over, give a vote to ask people their thoughts.
+                                const voteMsg = await channel.send(`VOTE: do you think that <@${target.id}> has won the bet?`);
+                                await voteMsg.react("✅");
+                                await voteMsg.react("❌");
+
+                                // Filter reactions to only collect the pertinent ones.
+                                voteMsg.awaitReactions(
+                                    (reaction, user) => {
+                                        return ["✅", "❌"].includes(reaction.emoji.name);
+                                    },
+                                    // [Pertinence to make configurable on the fly.]
+                                    { time: parseDuration("2m") }
+                                ).then(reactions => {
+                                    // Count votes 
+                                    const ok = reactions.filter(reaction => reaction.emoji.name === "✅").size;
+                                    const no = reactions.filter(reaction => reaction.emoji.name === "❌").size;
+
+                                    if (ok > no) {
+                                        receiver.money += amount * 2;
+                                        channel.send(`By the people's votes, <@${target.id}> has won the bet that <@${author.id}> had sent them.`);
+                                    }
+                                    else if (ok < no) {
+                                        sender.money += amount * 2;
+                                        channel.send(`By the people's votes, <@${target.id}> has lost the bet that <@${author.id}> had sent them.`);
+                                    }
+                                    else {
+                                        sender.money += amount;
+                                        receiver.money += amount;
+                                        channel.send(`By the people's votes, <@${target.id}> couldn't be determined to have won or lost the bet that <@${author.id}> had sent them.`);
+                                    }
                                     Storage.save();
-
-                                    // Notify both users.
-                                    await channel.send(`<@${target.id}> has taken <@${author.id}>'s bet, the bet amount of ${$(amount).pluralise("Mon", "s")} has been deducted from each of them.`);
-
-                                    // Wait for the duration of the bet. 
-                                    client.setTimeout(async () => {
-                                        // [Pertinence to reference the invocation message to let people find the bet more easily]
-                                        // When bet is over, give a vote to ask people their thoughts.
-                                        const voteMsg = await channel.send(`VOTE: do you think that <@${target.id}> has won the bet?`);
-                                        await voteMsg.react("✅");
-                                        await voteMsg.react("⛔");
-
-                                        // Filter reactions to only collect the pertinent ones.
-                                        voteMsg.awaitReactions(
-                                            (reaction, user) => {
-                                                return ["✅", "⛔"].includes(reaction.emoji.name);
-                                            },
-                                            // [Pertinence to make configurable on the fly.]
-                                            { time: parseDuration("2m") }
-                                        ).then(reactions => {
-                                            // Count votes 
-                                            const ok = reactions.filter(reaction => reaction.emoji.name === "✅").size;
-                                            const no = reactions.filter(reaction => reaction.emoji.name === "⛔").size;
-
-                                            if (ok > no) {
-                                                receiver.money += amount * 2;
-                                                channel.send(`By the people's votes, <@${target.id}> has won the bet that <@${author.id}> had sent them.`);
-                                            }
-                                            else if (ok < no) {
-                                                sender.money += amount * 2;
-                                                channel.send(`By the people's votes, <@${target.id}> has lost the bet that <@${author.id}> had sent them.`);
-                                            }
-                                            else {
-                                                sender.money += amount;
-                                                receiver.money += amount;
-                                                channel.send(`By the people's votes, <@${target.id}> couldn't be determined to have won or lost the bet that <@${author.id}> had sent them.`);
-                                            }
-                                            Storage.save();
-                                        });
-                                    }, duration);
-                                }
-                                // If target refuses: notify and stop.
-                                else if (user.id === target.id && reaction.emoji.name === "⛔") 
-                                    await channel.send(`<@${target.id}> has rejected your bet, <@${author.id}>`);
-
-                                return false;
-                            },
-                            // [Lesser pertinence to make configurable on the fly.]
-                            // Wait for a minute, and delete the asking message after that.
-                            { time: 60000 }
-                        ).then(() => msg.delete());
+                                });
+                            }, duration);
+                        }
+                        else 
+                            await channel.send(`<@${target.id}> has rejected your bet, <@${author.id}>`);
                     }
                 }
             })
