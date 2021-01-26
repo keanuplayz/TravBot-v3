@@ -1,6 +1,6 @@
 import Command from "../core/command";
 import {CommonLibrary} from "../core/lib";
-import {loadCommands, categories} from "../core/command";
+import {loadableCommands, categories} from "../core/command";
 import {PermissionNames} from "../core/permissions";
 
 export default new Command({
@@ -8,11 +8,11 @@ export default new Command({
     usage: "([command, [subcommand/type], ...])",
     aliases: ["h"],
     async run($: CommonLibrary): Promise<any> {
-        const commands = await loadCommands();
+        const commands = await loadableCommands;
         let output = `Legend: \`<type>\`, \`[list/of/stuff]\`, \`(optional)\`, \`(<optional type>)\`, \`([optional/list/...])\``;
 
         for (const [category, headers] of categories) {
-            output += `\n\n===[ ${category} ]===`;
+            output += `\n\n===[ ${$(category).toTitleCase()} ]===`;
 
             for (const header of headers) {
                 if (header !== "test") {
@@ -30,7 +30,7 @@ export default new Command({
     },
     any: new Command({
         async run($: CommonLibrary): Promise<any> {
-            const commands = await loadCommands();
+            const commands = await loadableCommands;
             let header = $.args.shift() as string;
             let command = commands.get(header);
 
@@ -51,7 +51,7 @@ export default new Command({
                         $.warn(
                             `Command "${header}" is somehow in multiple categories. This means that the command loading stage probably failed in properly adding categories.`
                         );
-                    else selectedCategory = category;
+                    else selectedCategory = $(category).toTitleCase();
                 }
             }
 

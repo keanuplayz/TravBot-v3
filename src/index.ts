@@ -1,7 +1,6 @@
 import {Client} from "discord.js";
 import setup from "./setup";
 import {Config} from "./core/structures";
-import {loadCommands} from "./core/command";
 import {loadEvents} from "./core/event";
 import "discord.js-lavalink-lib";
 import LavalinkMusic from "discord.js-lavalink-lib";
@@ -30,9 +29,8 @@ export const client = new Client();
     admins: ["717352467280691331"]
 });
 
-// Begin the command loading here rather than when it's needed like in the message event.
+// Command loading will start as soon as an instance of "core/command" is loaded, which is loaded during "events/message".
 setup.init().then(() => {
-    loadCommands();
     loadEvents(client);
     client.login(Config.token).catch(setup.again);
 });

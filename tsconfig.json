@@ -11,7 +11,8 @@
         "strictNullChecks": true,
         "strictFunctionTypes": true,
         "strictPropertyInitialization": true,
-        "removeComments": true
+        "removeComments": true,
+        "sourceMap": true
     },
     "exclude": ["test"]
 }

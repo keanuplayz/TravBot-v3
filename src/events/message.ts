@@ -1,17 +1,13 @@
 import Event from "../core/event";
-import Command, {loadCommands} from "../core/command";
+import Command, {loadableCommands} from "../core/command";
 import {hasPermission, getPermissionLevel, PermissionNames} from "../core/permissions";
-import {Permissions, Collection} from "discord.js";
+import {Permissions} from "discord.js";
 import {getPrefix} from "../core/structures";
 import $, {replyEventListeners} from "../core/lib";
 
-// It's a rather hacky solution, but since there's no top-level await, I just have to make the loading conditional.
-let commands: Collection<string, Command> | null = null;
-
 export default new Event<"message">({
     async on(message) {
-        // Load commands if it hasn't already done so. Luckily, it's called once at most.
-        if (!commands) commands = await loadCommands();
+        const commands = await loadableCommands;
 
         // Message Setup //
         if (message.author.bot) return;

@@ -1,8 +1,19 @@
-import {existsSync as exists} from "fs";
+import {existsSync as exists, readFileSync as read, writeFile as write} from "fs";
 import inquirer from "inquirer";
-import Storage from "./core/storage";
+import Storage, {generateHandler} from "./core/storage";
 import {Config} from "./core/structures";
 import $, {setConsoleActivated} from "./core/lib";
+
+// The template should be built with a reductionist mentality.
+// Provide everything the user needs and then let them remove whatever they want.
+// That way, they aren't focusing on what's missing, but rather what they need for their command.
+if (process.argv[2] === "dev" && !exists("src/commands/test.ts")) {
+    write(
+        "src/commands/test.ts",
+        read("src/commands/template.ts"),
+        generateHandler('"test.ts" (testing/template command) successfully generated.')
+    );
+}
 
 // This file is called (or at least should be called) automatically as long as a config file doesn't exist yet.
 // And that file won't be written until the data is successfully initialized.
