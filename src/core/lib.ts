@@ -47,11 +47,7 @@ export interface CommonLibrary {
         timeout?: number
     ) => void;
     askYesOrNo: (message: Message, senderID: string, timeout?: number) => Promise<boolean>;
-    askMultipleChoice: (
-        message: Message,
-        senderID: string,
-        callbackStack: (() => void)[] | ((choice: number) => void)
-    ) => void;
+    askMultipleChoice: (message: Message, senderID: string, callbackStack: (() => void)[], timeout?: number) => void;
 
     // Dynamic Properties //
     args: any[];

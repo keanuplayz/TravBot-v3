@@ -148,7 +148,7 @@ export default new Command({
                     if (typeof evaled !== "string") evaled = require("util").inspect(evaled);
                     channel.send(clean(evaled), {code: "js", split: true});
                 } catch (err) {
-                    channel.send(`\`ERROR\` \`\`\`js\n${clean(err)}\n\`\`\``);
+                    channel.send(clean(err), {code: "js", split: true});
                 }
             }
         }),

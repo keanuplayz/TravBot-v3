@@ -17,24 +17,31 @@
     "devDependencies": {
         "@types/glob": "^7.1.3",
         "@types/inquirer": "^6.5.0",
-        "@types/mocha": "^8.2.0",
+        "@types/jest": "^26.0.20",
         "@types/ms": "^0.7.31",
         "@types/node": "^14.14.20",
         "@types/ws": "^7.4.0",
-        "mocha": "^8.2.1",
+        "jest": "^26.6.3",
+        "pre-commit": "^1.2.2",
         "prettier": "2.1.2",
-        "ts-node": "^9.1.1",
+        "ts-jest": "^26.4.4",
         "tsc-watch": "^4.2.9",
         "typescript": "^3.9.7"
     },
     "scripts": {
-        "build": "tsc && npm prune --production",
-        "start": "node dist/index.js",
+        "build": "tsc --project tsconfig.prod.json && npm prune --production",
+        "start": "node .",
         "once": "tsc && npm start",
-        "dev": "tsc-watch --onSuccess \"node dist/index.js dev\"",
-        "test": "mocha --require ts-node/register --extension ts --recursive",
-        "format": "prettier --write **/*"
+        "dev": "tsc-watch --onSuccess \"node . dev\"",
+        "test": "jest",
+        "format": "prettier --write **/*",
+        "precommit-message": "echo \"Running pre-commit formatting and testing...\""
     },
+    "pre-commit": [
+        "precommit-message",
+        "test",
+        "format"
+    ],
     "keywords": [
         "discord.js",
         "bot"

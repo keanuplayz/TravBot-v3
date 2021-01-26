@@ -1,6 +1,4 @@
 import {MessageEmbed, version as djsversion} from "discord.js";
-/// @ts-ignore
-import {version} from "../../package.json";
 import ms from "ms";
 import os from "os";
 import Command from "../core/command";
@@ -53,7 +51,7 @@ export default new Command({
                         `**❯ Channels:** ${$.client.channels.cache.size.toLocaleString()}`,
                         `**❯ Creation Date:** ${utc($.client.user?.createdTimestamp).format("Do MMMM YYYY HH:mm:ss")}`,
                         `**❯ Node.JS:** ${process.version}`,
-                        `**❯ Version:** v${version}`,
+                        `**❯ Version:** v${process.env.npm_package_version}`,
                         `**❯ Discord.JS:** ${djsversion}`,
                         "\u200b"
                     ])
@@ -183,10 +181,10 @@ export default new Command({
                     `**❯ Server Join Date:** ${moment(member.joinedAt).format("LL LTS")}`,
                     `**❯ Hoist Role:** ${member.roles.hoist ? member.roles.hoist.name : "None"}`,
                     `**❯ Roles:** [${roles.length}]: ${
-                        roles.length < 10
+                        roles.length < 10 && roles.length > 0
                             ? roles.join(", ")
-                            : roles.length > 10
-                            ? this.client.utils.trimArray(roles)
+                            : roles.length >= 10
+                            ? roles.slice(0, 10)
                             : "None"
                     }`
                 ]);

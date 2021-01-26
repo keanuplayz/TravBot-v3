@@ -1,5 +1,5 @@
 import {strict as assert} from "assert";
-import {NumberWrapper, StringWrapper, ArrayWrapper} from "../src/core/wrappers";
+import {NumberWrapper, StringWrapper, ArrayWrapper} from "./wrappers";
 
 // I can't figure out a way to run the test suite while running the bot.
 describe("Wrappers", () => {
