@@ -90,6 +90,7 @@ export const BetCommand = new Command({
                                     // Remove amount money from both parts to avoid duplication of money.
                                     sender.money -= amount;
                                     receiver.money -= amount;
+                                    Storage.save();
 
                                     // Notify both users.
                                     await channel.send(`<@${target.id}> has taken <@${author.id}>'s bet, the bet amount of ${$(amount).pluralise("Mon", "s")} has been deducted from each of them.`);
@@ -127,6 +128,7 @@ export const BetCommand = new Command({
                                                 receiver.money += amount;
                                                 channel.send(`By the people's votes, <@${target.id}> couldn't be determined to have won or lost the bet that <@${author.id}> had sent them.`);
                                             }
+                                            Storage.save();
                                         });
                                     }, duration);
                                 }
