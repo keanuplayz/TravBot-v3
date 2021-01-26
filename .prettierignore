@@ -2,6 +2,7 @@
 .dockerignore
 .gitignore
 .prettierignore
+.husky/
 Dockerfile
 LICENSE
 
