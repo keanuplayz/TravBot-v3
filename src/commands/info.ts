@@ -186,7 +186,7 @@ export default new Command({
                         roles.length < 10
                             ? roles.join(", ")
                             : roles.length > 10
-                            ? this.client.utils.trimArray(roles)
+                            ? trimArray(roles)
                             : "None"
                     }`
                 ]);
