@@ -76,10 +76,13 @@ export default new Command({
             description: "Displays info about the current guild.",
             async run($: CommonLibrary): Promise<any> {
                 if ($.guild) {
+                    const members = await $.guild.members.fetch({
+                        withPresences: true,
+                        force: true
+                    });
                     const roles = $.guild.roles.cache
                         .sort((a, b) => b.position - a.position)
                         .map((role) => role.toString());
-                    const members = $.guild.members.cache;
                     const channels = $.guild.channels.cache;
                     const emojis = $.guild.emojis.cache;
                     const iconURL = $.guild.iconURL({dynamic: true});
