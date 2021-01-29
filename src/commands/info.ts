@@ -68,7 +68,7 @@ export default new Command({
                         `\u3000 • Speed: ${core.speed}MHz`,
                         `**❯ Memory:**`,
                         `\u3000 • Total: ${formatBytes(process.memoryUsage().heapTotal)}`,
-                        `\u3000 • Used: ${formatBytes(process.memoryUsage().heapTotal)}`
+                        `\u3000 • Used: ${formatBytes(process.memoryUsage().heapUsed)}`
                     ])
                     .setTimestamp();
                 $.channel.send(embed);
