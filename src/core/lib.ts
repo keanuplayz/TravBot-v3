@@ -172,7 +172,7 @@ export function formatUTCTimestamp(now = new Date()) {
 }
 
 export function botHasPermission(guild: Guild | null, permission: number): boolean {
-    return !!(client.user && guild?.members.resolve(client.user)?.hasPermission(permission));
+    return !!(guild?.me?.hasPermission(permission));
 }
 
 export function updateGlobalEmoteRegistry(): void {
