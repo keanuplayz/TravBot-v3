@@ -554,7 +554,6 @@ export abstract class GenericStructure {
 
     public save(asynchronous = true) {
         const tag = this.__meta__;
-        /// @ts-ignore
         delete this.__meta__;
         FileManager.write(tag, this, asynchronous);
         this.__meta__ = tag;

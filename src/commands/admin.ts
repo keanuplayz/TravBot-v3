@@ -124,14 +124,15 @@ export default new Command({
             number: new Command({
                 description: "Amount of messages to delete.",
                 async run($: CommonLibrary): Promise<any> {
+                    if ($.channel.type === "dm") {
+                        await $.channel.send("Can't clear messages in the DMs!");
+                        return;
+                    }
                     $.message.delete();
                     const fetched = await $.channel.messages.fetch({
                         limit: $.args[0]
                     });
-                    $.channel
-                        /// @ts-ignore
-                        .bulkDelete(fetched)
-                        .catch((error: any) => $.channel.send(`Error: ${error}`));
+                    await $.channel.bulkDelete(fetched);
                 }
             })
         }),
