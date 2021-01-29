@@ -181,11 +181,7 @@ export default new Command({
                     `**❯ Server Join Date:** ${moment(member.joinedAt).format("LL LTS")}`,
                     `**❯ Hoist Role:** ${member.roles.hoist ? member.roles.hoist.name : "None"}`,
                     `**❯ Roles:** [${roles.length}]: ${
-                        roles.length < 10 && roles.length > 0
-                            ? roles.join(", ")
-                            : roles.length >= 10
-                            ? roles.slice(0, 10)
-                            : "None"
+                        roles.length == 0 ? "None" : roles.length <= 10 ? roles.join(", ") : trimArray(roles).join(", ")
                     }`
                 ]);
             $.channel.send(embed);
