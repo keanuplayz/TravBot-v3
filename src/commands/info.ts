@@ -1,6 +1,4 @@
 import {MessageEmbed, version as djsversion} from "discord.js";
-/// @ts-ignore
-import {version} from "../../package.json";
 import ms from "ms";
 import os from "os";
 import Command from "../core/command";
@@ -8,6 +6,8 @@ import {CommonLibrary, formatBytes, trimArray} from "../core/lib";
 import {verificationLevels, filterLevels, regions, flags} from "../defs/info";
 import moment from "moment";
 import utc from "moment";
+
+const {version} = require("../../package.json");
 
 export default new Command({
     description: "Command to provide all sorts of info about the current server, a user, etc.",
@@ -36,13 +36,6 @@ export default new Command({
             async run($: CommonLibrary): Promise<any> {
                 const core = os.cpus()[0];
                 const embed = new MessageEmbed()
-                    .setThumbnail(
-                        /// @ts-ignore
-                        $.client.user?.displayAvatarURL({
-                            dynamic: true,
-                            size: 2048
-                        })
-                    )
                     .setColor($.guild?.me?.displayHexColor || "BLUE")
                     .addField("General", [
                         `**❯ Client:** ${$.client.user?.tag} (${$.client.user?.id})`,
@@ -71,6 +64,11 @@ export default new Command({
                         `\u3000 • Used: ${formatBytes(process.memoryUsage().heapUsed)}`
                     ])
                     .setTimestamp();
+                const avatarURL = $.client.user?.displayAvatarURL({
+                    dynamic: true,
+                    size: 2048
+                });
+                if (avatarURL) embed.setThumbnail(avatarURL);
                 $.channel.send(embed);
             }
         }),
@@ -78,10 +76,13 @@ export default new Command({
             description: "Displays info about the current guild.",
             async run($: CommonLibrary): Promise<any> {
                 if ($.guild) {
+                    const members = await $.guild.members.fetch({
+                        withPresences: true,
+                        force: true
+                    });
                     const roles = $.guild.roles.cache
                         .sort((a, b) => b.position - a.position)
                         .map((role) => role.toString());
-                    const members = $.guild.members.cache;
                     const channels = $.guild.channels.cache;
                     const emojis = $.guild.emojis.cache;
                     const iconURL = $.guild.iconURL({dynamic: true});
@@ -145,7 +146,7 @@ export default new Command({
         description: "Displays info about mentioned user.",
         async run($: CommonLibrary): Promise<any> {
             // Transforms the User object into a GuildMember object of the current guild.
-            const member = $.guild?.members.resolve($.args[0]) ?? (await $.guild?.members.fetch($.args[0]));
+            const member = await $.guild?.members.fetch($.args[0]);
 
             if (!member)
                 return $.channel.send(
@@ -156,8 +157,7 @@ export default new Command({
                 .sort((a: {position: number}, b: {position: number}) => b.position - a.position)
                 .map((role: {toString: () => any}) => role.toString())
                 .slice(0, -1);
-            // @ts-ignore - Discord.js' typings seem to be outdated here. According to their v12 docs, it's User.fetchFlags() instead of User.flags.
-            const userFlags = ((await member.user.fetchFlags()) as UserFlags).toArray();
+            const userFlags = (await member.user.fetchFlags()).toArray();
 
             const embed = new MessageEmbed()
                 .setThumbnail(member.user.displayAvatarURL({dynamic: true, size: 512}))
@@ -183,10 +183,7 @@ export default new Command({
                     `**❯ Server Join Date:** ${moment(member.joinedAt).format("LL LTS")}`,
                     `**❯ Hoist Role:** ${member.roles.hoist ? member.roles.hoist.name : "None"}`,
                     `**❯ Roles:** [${roles.length}]: ${
-                        roles.length == 0 ? "None"
-                            : roles.length <= 10
-                                ? roles.join(", ")
-                                : trimArray(roles).join(", ")
+                        roles.length == 0 ? "None" : roles.length <= 10 ? roles.join(", ") : trimArray(roles).join(", ")
                     }`
                 ]);
             $.channel.send(embed);
