@@ -47,8 +47,12 @@ export const BetCommand = new Command({
                 }
             },
             any: new Command({
-                async run({client, args, author, channel, guild}): Promise<any> {
+                async run({client, args, author, message, channel, guild}): Promise<any> {
                     if (isAuthorized(guild, channel)) {
+                        // [Pertinence to make configurable on the fly.]
+                        // Lower and upper bounds for bet
+                        const durationBounds = { min:"1m", max:"1d" };
+
                         const sender = Storage.getUser(author.id);
                         const target = args[0];
                         const receiver = Storage.getUser(target);
@@ -69,11 +73,11 @@ export const BetCommand = new Command({
 
                         // handle invalid duration
                         if (duration <= 0)
-                            return channel.send("Invalid duration");
-                        // else if (duration <= {threshold})
-                        //     return channel.send("Too short idk");
-                        // else if (duration >= {threshold})
-                        //     return channel.send("Too long idk");
+                            return channel.send("Invalid bet duration");
+                        else if (duration <= parseDuration(durationBounds.min))
+                            return channel.send(`Bet duration is too short, maximum duration is ${durationBounds.min}`);
+                        else if (duration >= parseDuration(durationBounds.max))
+                            return channel.send(`Bet duration is too long, maximum duration is ${durationBounds.max}`);
 
                         // Ask target whether or not they want to take the bet.
                         const takeBet = await askYesOrNo(
@@ -82,8 +86,8 @@ export const BetCommand = new Command({
                         );
 
                         if (takeBet) {
-                            // [ISSUE: volatile storage]
-                            // Remove amount money from both parts to avoid duplication of money.
+                            // [MEDIUM PRIORITY: bet persistence to prevent losses in case of shutdown.]
+                            // Remove amount money from both parts at the start to avoid duplication of money.
                             sender.money -= amount;
                             receiver.money -= amount;
                             Storage.save();
@@ -93,9 +97,9 @@ export const BetCommand = new Command({
 
                             // Wait for the duration of the bet. 
                             client.setTimeout(async () => {
-                                // [Pertinence to reference the invocation message to let people find the bet more easily]
+                                // [TODO: when D.JSv13 comes out, inline reply to clean up.]
                                 // When bet is over, give a vote to ask people their thoughts.
-                                const voteMsg = await channel.send(`VOTE: do you think that <@${target.id}> has won the bet?`);
+                                const voteMsg = await channel.send(`VOTE: do you think that <@${target.id}> has won the bet?\nhttps://discord.com/channels/${guild.id}/${channel.id}/${message.id}`);
                                 await voteMsg.react("✅");
                                 await voteMsg.react("❌");
 
