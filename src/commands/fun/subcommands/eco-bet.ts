@@ -42,6 +42,8 @@ export const BetCommand = new Command({
                         return channel.send("You must bet at least one Mon!");
                     else if (sender.money < amount)
                         return channel.send("You don't have enough Mons for that.", getMoneyEmbed(author));
+                    else if (receiver.money < amount)
+                        return channel.send("They don't have enough Mons for that.", getMoneyEmbed(target));
 
                     return channel.send("How long until the bet ends?");
                 }
@@ -70,6 +72,8 @@ export const BetCommand = new Command({
                             return channel.send("You must bet at least one Mon!");
                         else if (sender.money < amount)
                             return channel.send("You don't have enough Mons for that.", getMoneyEmbed(author));
+                        else if (receiver.money < amount)
+                            return channel.send("They don't have enough Mons for that.", getMoneyEmbed(target));
 
                         // handle invalid duration
                         if (duration <= 0)
