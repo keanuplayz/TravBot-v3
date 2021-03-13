@@ -9,15 +9,14 @@ export default new Command({
 
         if (!voiceChannel) return $.channel.send("You are not in a voice channel.");
 
-        if (!$.guild?.me?.hasPermission("MANAGE_CHANNELS"))
+        if (!voiceChannel.guild.me?.hasPermission("MANAGE_CHANNELS"))
             return $.channel.send("I am lacking the required permissions to perform this action.");
 
         if ($.args.length === 0) return $.channel.send("Please provide a new voice channel name.");
 
-        const changeVC = $.guild.channels.resolve(voiceChannel.id);
-        $.channel
-            .send(`Changed channel name from "${voiceChannel}" to "${$.args.join(" ")}".`)
-            /// @ts-ignore
-            .then(changeVC?.setName($.args.join(" ")));
+        const prevName = voiceChannel.name;
+        const newName = $.args.join(" ");
+        await voiceChannel.setName(newName);
+        await $.channel.send(`Changed channel name from "${prevName}" to "${newName}".`);
     }
 });

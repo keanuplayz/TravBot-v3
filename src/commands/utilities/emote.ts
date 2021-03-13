@@ -12,7 +12,6 @@ export default new Command({
         async run({guild, channel, message, args}) {
             let output = "";
             for (const query of args) output += queryClosestEmoteByName(query).toString();
-            if (botHasPermission(guild, Permissions.FLAGS.MANAGE_MESSAGES)) message.delete();
             channel.send(output);
         }
     })
