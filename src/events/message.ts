@@ -10,6 +10,9 @@ let commands: Collection<string, Command> | null = null;
 
 export default new Event<"message">({
     async on(message) {
+        if (message.content.toLowerCase().includes("remember to drink water")) {
+            message.react("🚱");
+        }
         // Load commands if it hasn't already done so. Luckily, it's called once at most.
         if (!commands) commands = await loadCommands();
 
