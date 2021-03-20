@@ -4,6 +4,7 @@ import {hasPermission, getPermissionLevel, PermissionNames} from "../core/permis
 import {Permissions, Collection} from "discord.js";
 import {getPrefix} from "../core/structures";
 import $, {replyEventListeners} from "../core/lib";
+import quote from "../modules/message_embed";
 
 // It's a rather hacky solution, but since there's no top-level await, I just have to make the loading conditional.
 let commands: Collection<string, Command> | null = null;
@@ -30,6 +31,10 @@ export default new Event<"message">({
         let exitEarly = !message.content.startsWith(prefix);
         const clientUser = message.client.user;
         let usesBotSpecificPrefix = false;
+
+        if (!message.content.startsWith(prefix)) {
+            return quote(message);
+        }
 
         // If the client user exists, check if it starts with the bot-specific prefix.
         if (clientUser) {
