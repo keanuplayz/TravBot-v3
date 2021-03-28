@@ -2,6 +2,9 @@ import {GuildEmoji} from "discord.js";
 import {MessageEmbed} from "discord.js";
 import Command from "../../core/command";
 import {CommonLibrary} from "../../core/lib";
+import vm from "vm";
+
+const REGEX_TIMEOUT_MS = 1000;
 
 export default new Command({
     description: "Lists all emotes the bot has in it's registry,",
@@ -19,13 +22,52 @@ export default new Command({
 
                 displayEmoteList($, $.client.emojis.cache.filter((emote) => emote.guild.id === guildID).array());
             } else {
-                // Otherwise, by comparing inputs
-                const query = $.args.join(" ").toLowerCase();
+                // Otherwise, search via a regex pattern
+                let flags: string | undefined = undefined;
 
-                displayEmoteList(
-                    $,
-                    $.client.emojis.cache.filter((emote) => emote.name.toLowerCase().includes(query)).array()
-                );
+                if (/^-[dgimsuy]{1,7}$/.test($.args[$.args.length - 1])) {
+                    flags = $.args.pop().substring(1);
+                }
+
+                let emoteCollection = $.client.emojis.cache.array();
+                // Creates a sandbox to stop a regular expression if it takes too much time to search.
+                // To avoid passing in a giant data structure, I'll just pass in the structure {[id: string]: [name: string]}.
+                //let emotes: {[id: string]: string} = {};
+                let emotes = new Map<string, string>();
+
+                for (const emote of emoteCollection) {
+                    emotes.set(emote.id, emote.name);
+                }
+
+                // The result will be sandbox.emotes because it'll be modified in-place.
+                const sandbox = {
+                    regex: new RegExp($.args.join(" "), flags),
+                    emotes
+                };
+                const context = vm.createContext(sandbox);
+
+                if (vm.isContext(sandbox)) {
+                    // Restrict an entire query to the timeout specified.
+                    try {
+                        const script = new vm.Script(
+                            "for(const [id, name] of emotes.entries()) if(!regex.test(name)) emotes.delete(id);"
+                        );
+                        script.runInContext(context, {timeout: REGEX_TIMEOUT_MS});
+                        emotes = sandbox.emotes;
+                        emoteCollection = emoteCollection.filter((emote) => emote.id in emotes); // Only allow emotes that haven't been deleted.
+                        displayEmoteList($, emoteCollection);
+                    } catch (error) {
+                        if (error.code === "ERR_SCRIPT_EXECUTION_TIMEOUT") {
+                            $.channel.send(
+                                `The regular expression you entered exceeded the time limit of ${REGEX_TIMEOUT_MS} milliseconds.`
+                            );
+                        } else {
+                            throw new Error(error);
+                        }
+                    }
+                } else {
+                    $.channel.send("Failed to initialize sandbox.");
+                }
             }
         }
     })
