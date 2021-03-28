@@ -54,7 +54,7 @@ export default new Command({
                         );
                         script.runInContext(context, {timeout: REGEX_TIMEOUT_MS});
                         emotes = sandbox.emotes;
-                        emoteCollection = emoteCollection.filter((emote) => emote.id in emotes); // Only allow emotes that haven't been deleted.
+                        emoteCollection = emoteCollection.filter((emote) => emotes.has(emote.id)); // Only allow emotes that haven't been deleted.
                         displayEmoteList($, emoteCollection);
                     } catch (error) {
                         if (error.code === "ERR_SCRIPT_EXECUTION_TIMEOUT") {
