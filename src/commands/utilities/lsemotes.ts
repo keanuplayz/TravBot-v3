@@ -19,18 +19,12 @@ export default new Command({
 
                 displayEmoteList($, $.client.emojis.cache.filter((emote) => emote.guild.id === guildID).array());
             } else {
-                // Otherwise, search via a regex pattern
-                let flags: string | undefined = undefined;
-
-                if (/^-[dgimsuy]{1,7}$/.test($.args[$.args.length - 1])) {
-                    flags = $.args.pop().substring(1);
-                }
+                // Otherwise, by comparing inputs
+                const query = $.args.join(" ").toLowerCase();
 
                 displayEmoteList(
                     $,
-                    $.client.emojis.cache
-                        .filter((emote) => new RegExp($.args.join(" "), flags).test(emote.name))
-                        .array()
+                    $.client.emojis.cache.filter((emote) => emote.name.toLowerCase().includes(query)).array()
                 );
             }
         }
