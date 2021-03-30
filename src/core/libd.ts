@@ -1,5 +1,14 @@
 // Library for Discord-specific functions
-import {Message, Guild, GuildMember, Permissions} from "discord.js";
+import {
+    Message,
+    Guild,
+    GuildMember,
+    Permissions,
+    TextChannel,
+    DMChannel,
+    NewsChannel,
+    MessageOptions
+} from "discord.js";
 import {get} from "https";
 import FileManager from "./storage";
 import {eventListeners} from "../events/messageReactionRemove";
@@ -36,57 +45,69 @@ export function updateGlobalEmoteRegistry(): void {
 // Pagination function that allows for customization via a callback.
 // Define your own pages outside the function because this only manages the actual turning of pages.
 export async function paginate(
-    message: Message,
+    channel: TextChannel | DMChannel | NewsChannel,
     senderID: string,
     total: number,
-    callback: (page: number) => void,
+    callback: (page: number, hasMultiplePages: boolean) => MessageOptions & {split?: false},
     duration = 60000
 ) {
-    let page = 0;
-    const turn = (amount: number) => {
-        page += amount;
+    const hasMultiplePages = total > 1;
+    const message = await channel.send(callback(0, hasMultiplePages));
 
-        if (page < 0) page += total;
-        else if (page >= total) page -= total;
+    if (hasMultiplePages) {
+        let page = 0;
+        const turn = (amount: number) => {
+            page += amount;
 
-        callback(page);
-    };
-    const BACKWARDS_EMOJI = "⬅️";
-    const FORWARDS_EMOJI = "➡️";
-    const handle = (emote: string, reacterID: string) => {
-        switch (emote) {
-            case BACKWARDS_EMOJI:
-                turn(-1);
-                break;
-            case FORWARDS_EMOJI:
-                turn(1);
-                break;
-        }
-    };
+            if (page < 0) page += total;
+            else if (page >= total) page -= total;
 
-    // Listen for reactions and call the handler.
-    let backwardsReaction = await message.react(BACKWARDS_EMOJI);
-    let forwardsReaction = await message.react(FORWARDS_EMOJI);
-    eventListeners.set(message.id, handle);
-    await message.awaitReactions(
-        (reaction, user) => {
-            if (user.id === senderID) {
-                // The reason this is inside the call is because it's possible to switch a user's permissions halfway and suddenly throw an error.
-                // This will dynamically adjust for that, switching modes depending on whether it currently has the "Manage Messages" permission.
-                const canDeleteEmotes = botHasPermission(message.guild, Permissions.FLAGS.MANAGE_MESSAGES);
-                handle(reaction.emoji.name, user.id);
-
-                if (canDeleteEmotes) reaction.users.remove(user);
+            message.edit(callback(page, true));
+        };
+        const BACKWARDS_EMOJI = "⬅️";
+        const FORWARDS_EMOJI = "➡️";
+        const handle = (emote: string, reacterID: string) => {
+            if (senderID === reacterID) {
+                switch (emote) {
+                    case BACKWARDS_EMOJI:
+                        turn(-1);
+                        break;
+                    case FORWARDS_EMOJI:
+                        turn(1);
+                        break;
+                }
             }
+        };
 
-            return false;
-        },
-        {time: duration}
-    );
-    // When time's up, remove the bot's own reactions.
-    eventListeners.delete(message.id);
-    backwardsReaction.users.remove(message.author);
-    forwardsReaction.users.remove(message.author);
+        // Listen for reactions and call the handler.
+        let backwardsReaction = await message.react(BACKWARDS_EMOJI);
+        let forwardsReaction = await message.react(FORWARDS_EMOJI);
+        eventListeners.set(message.id, handle);
+        const collector = message.createReactionCollector(
+            (reaction, user) => {
+                if (user.id === senderID) {
+                    // The reason this is inside the call is because it's possible to switch a user's permissions halfway and suddenly throw an error.
+                    // This will dynamically adjust for that, switching modes depending on whether it currently has the "Manage Messages" permission.
+                    const canDeleteEmotes = botHasPermission(message.guild, Permissions.FLAGS.MANAGE_MESSAGES);
+                    handle(reaction.emoji.name, user.id);
+                    if (canDeleteEmotes) reaction.users.remove(user);
+                    collector.resetTimer();
+                }
+
+                return false;
+            },
+            // Apparently, regardless of whether you put "time" or "idle", it won't matter to the collector.
+            // In order to actually reset the timer, you have to do it manually via collector.resetTimer().
+            {time: duration}
+        );
+
+        // When time's up, remove the bot's own reactions.
+        collector.on("end", () => {
+            eventListeners.delete(message.id);
+            backwardsReaction.users.remove(message.author);
+            forwardsReaction.users.remove(message.author);
+        });
+    }
 }
 
 // Waits for the sender to either confirm an action or let it pass (and delete the message).

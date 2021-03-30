@@ -10,7 +10,7 @@ export const ShopCommand = new Command({
     description: "Displays the list of items you can buy in the shop.",
     async run({guild, channel, author}) {
         if (isAuthorized(guild, channel)) {
-            function getShopEmbed(selection: ShopItem[], title = "Shop") {
+            function getShopEmbed(selection: ShopItem[], title: string) {
                 const fields: EmbedField[] = [];
 
                 for (const item of selection)
@@ -32,17 +32,15 @@ export const ShopCommand = new Command({
                 };
             }
 
-            // In case there's just one page, omit unnecessary details.
-            if (ShopItems.length <= 5) channel.send(getShopEmbed(ShopItems));
-            else {
-                const shopPages = split(ShopItems, 5);
-                const pageAmount = shopPages.length;
-                const msg = await channel.send(getShopEmbed(shopPages[0], `Shop (Page 1 of ${pageAmount})`));
+            const shopPages = split(ShopItems, 5);
+            const pageAmount = shopPages.length;
 
-                paginate(msg, author.id, pageAmount, (page) => {
-                    msg.edit(getShopEmbed(shopPages[page], `Shop (Page ${page + 1} of ${pageAmount})`));
-                });
-            }
+            paginate(channel, author.id, pageAmount, (page, hasMultiplePages) => {
+                return getShopEmbed(
+                    shopPages[page],
+                    hasMultiplePages ? `Shop (Page ${page + 1} of ${pageAmount})` : "Shop"
+                );
+            });
         }
     }
 });

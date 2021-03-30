@@ -93,33 +93,21 @@ async function displayEmoteList(emotes: GuildEmoji[], channel: TextChannel | DMC
     });
     const sections = split(emotes, 20);
     const pages = sections.length;
-    const embed = new MessageEmbed().setTitle("**Emotes**").setColor("AQUA");
-    let desc = "";
+    const embed = new MessageEmbed().setColor("AQUA");
 
     // Gather the first page (if it even exists, which it might not if there no valid emotes appear)
     if (pages > 0) {
-        for (const emote of sections[0]) {
-            desc += `${emote} ${emote.name} (**${emote.guild.name}**)\n`;
-        }
+        paginate(channel, author.id, pages, (page, hasMultiplePages) => {
+            embed.setTitle(hasMultiplePages ? `**Emotes** (Page ${page + 1} of ${pages})` : "**Emotes**");
 
-        embed.setDescription(desc);
+            let desc = "";
+            for (const emote of sections[page]) {
+                desc += `${emote} ${emote.name} (**${emote.guild.name}**)\n`;
+            }
+            embed.setDescription(desc);
 
-        if (pages > 1) {
-            embed.setTitle(`**Emotes** (Page 1 of ${pages})`);
-            const msg = await channel.send({embed});
-
-            paginate(msg, author.id, pages, (page) => {
-                let desc = "";
-                for (const emote of sections[page]) {
-                    desc += `${emote} ${emote.name} (**${emote.guild.name}**)\n`;
-                }
-                embed.setTitle(`**Emotes** (Page ${page + 1} of ${pages})`);
-                embed.setDescription(desc);
-                msg.edit(embed);
-            });
-        } else {
-            channel.send({embed});
-        }
+            return embed;
+        });
     } else {
         channel.send("No valid emotes found by that query.");
     }
