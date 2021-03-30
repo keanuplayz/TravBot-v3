@@ -2,13 +2,11 @@ import {MessageEmbed, version as djsversion} from "discord.js";
 import ms from "ms";
 import os from "os";
 import Command from "../core/command";
-import {formatBytes, trimArray} from "../core/libd";
-import {verificationLevels, filterLevels, regions, flags} from "../defs/info";
+import {formatBytes, trimArray, getMemberByUsername} from "../core/libd";
+import {verificationLevels, filterLevels, regions} from "../defs/info";
 import moment from "moment";
 import utc from "moment";
 import {Guild} from "discord.js";
-
-const {version} = require("../../package.json");
 
 export default new Command({
     description: "Command to provide all sorts of info about the current server, a user, etc.",
@@ -29,6 +27,26 @@ export default new Command({
                             size: 2048
                         })
                     );
+                }
+            }),
+            any: new Command({
+                description: "Shows another user's avatar by searching their name",
+                async run($) {
+                    if ($.guild) {
+                        const name = $.args.join(" ");
+                        const member = await getMemberByUsername($.guild, name);
+
+                        if (member) {
+                            $.channel.send(
+                                member.user.displayAvatarURL({
+                                    dynamic: true,
+                                    size: 2048
+                                })
+                            );
+                        } else {
+                            $.channel.send(`No user found by the name \`${name}\`!`);
+                        }
+                    }
                 }
             })
         }),

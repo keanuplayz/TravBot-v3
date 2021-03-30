@@ -381,9 +381,9 @@ export function formatBytes(bytes: any) {
     return `${parseFloat((bytes / Math.pow(1024, i)).toFixed(2))} ${sizes[i]}`;
 }
 
-export function getContent(url: any) {
+export function getContent(url: string): Promise<{url: string}> {
     return new Promise((resolve, reject) => {
-        get(url, (res: {resume?: any; setEncoding?: any; on?: any; statusCode?: any}) => {
+        get(url, (res) => {
             const {statusCode} = res;
             if (statusCode !== 200) {
                 res.resume();

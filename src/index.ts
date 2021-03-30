@@ -53,7 +53,7 @@ export const client = new discord.Client();
             }
         ]
     },
-    prefix: "!!",
+    prefix: Config.prefix,
     helpCmd: "mhelp",
     admins: ["717352467280691331"]
 });

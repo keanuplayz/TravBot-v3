@@ -100,24 +100,28 @@ export default new Command({
             })
         }),
         purge: new Command({
-            description: "Purges bot messages.",
+            description: "Purges the bot's own messages.",
             permission: PERMISSIONS.BOT_SUPPORT,
             async run($) {
-                if ($.message.channel instanceof discord.DMChannel) {
-                    return;
-                }
-                $.message.delete();
-                const msgs = await $.channel.messages.fetch({
-                    limit: 100
-                });
-                const travMessages = msgs.filter((m) => m.author.id === $.client.user?.id);
+                // It's probably better to go through the bot's own messages instead of calling bulkDelete which requires MANAGE_MESSAGES.
+                if (botHasPermission($.guild, Permissions.FLAGS.MANAGE_MESSAGES) && $.channel.type !== "dm") {
+                    $.message.delete();
+                    const msgs = await $.channel.messages.fetch({
+                        limit: 100
+                    });
+                    const travMessages = msgs.filter((m) => m.author.id === $.client.user?.id);
 
-                await $.message.channel.send(`Found ${travMessages.size} messages to delete.`).then((m) =>
-                    m.delete({
-                        timeout: 5000
-                    })
-                );
-                await $.message.channel.bulkDelete(travMessages);
+                    await $.channel.send(`Found ${travMessages.size} messages to delete.`).then((m) =>
+                        m.delete({
+                            timeout: 5000
+                        })
+                    );
+                    await $.channel.bulkDelete(travMessages);
+                } else {
+                    $.channel.send(
+                        "This command must be executed in a guild where I have the `MANAGE_MESSAGES` permission."
+                    );
+                }
             }
         }),
         clear: new Command({
@@ -172,7 +176,7 @@ export default new Command({
             permission: PERMISSIONS.BOT_SUPPORT,
             async run($) {
                 const guildList = $.client.guilds.cache.array().map((e) => e.name);
-                $.channel.send(guildList);
+                $.channel.send(guildList, {split: true});
             }
         }),
         activity: new Command({
