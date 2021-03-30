@@ -1,9 +1,8 @@
 import Command from "../../core/command";
-import {CommonLibrary} from "../../core/lib";
 
 export default new Command({
     description: "Sends random ok message.",
-    async run($: CommonLibrary): Promise<any> {
+    async run($) {
         const responses = [
             "boomer",
             "zoomer",

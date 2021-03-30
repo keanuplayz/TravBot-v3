@@ -3,6 +3,7 @@ import {isAuthorized, getMoneyEmbed} from "./subcommands/eco-utils";
 import {DailyCommand, PayCommand, GuildCommand, LeaderboardCommand} from "./subcommands/eco-core";
 import {BuyCommand, ShopCommand} from "./subcommands/eco-shop";
 import {MondayCommand} from "./subcommands/eco-extras";
+import {callMemberByUsername} from "../../core/libd";
 
 export default new Command({
     description: "Economy command for Monika.",
@@ -26,7 +27,7 @@ export default new Command({
     }),
     any: new Command({
         description: "See how much money someone else has by using their username.",
-        async run({guild, channel, args, callMemberByUsername, message}) {
+        async run({guild, channel, args, message}) {
             if (isAuthorized(guild, channel))
                 callMemberByUsername(message, args.join(" "), (member) => {
                     channel.send(getMoneyEmbed(member.user));

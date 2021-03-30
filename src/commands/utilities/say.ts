@@ -1,5 +1,4 @@
 import Command from "../../core/command";
-import {CommonLibrary} from "../../core/lib";
 
 export default new Command({
     description: "Repeats your message.",
@@ -7,7 +6,7 @@ export default new Command({
     run: "Please provide a message for me to say!",
     any: new Command({
         description: "Message to repeat.",
-        async run($: CommonLibrary): Promise<any> {
+        async run($) {
             $.channel.send(`*${$.author} says:*\n${$.args.join(" ")}`);
         }
     })

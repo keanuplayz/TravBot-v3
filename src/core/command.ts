@@ -1,8 +1,19 @@
-import {isType, parseVars, CommonLibrary} from "./lib";
+import {parseVars} from "./libd";
 import {Collection} from "discord.js";
+import {Client, Message, TextChannel, DMChannel, NewsChannel, Guild, User, GuildMember} from "discord.js";
 import {PERMISSIONS} from "./permissions";
 import {getPrefix} from "../core/structures";
 import glob from "glob";
+
+interface CommandMenu {
+    args: any[];
+    client: Client;
+    message: Message;
+    channel: TextChannel | DMChannel | NewsChannel;
+    guild: Guild | null;
+    author: User;
+    member: GuildMember | null;
+}
 
 interface CommandOptions {
     description?: string;
@@ -10,7 +21,7 @@ interface CommandOptions {
     usage?: string;
     permission?: PERMISSIONS | null;
     aliases?: string[];
-    run?: (($: CommonLibrary) => Promise<any>) | string;
+    run?: (($: CommandMenu) => Promise<any>) | string;
     subcommands?: {[key: string]: Command};
     user?: Command;
     number?: Command;
@@ -32,7 +43,7 @@ export default class Command {
     public readonly permission: PERMISSIONS | null;
     public readonly aliases: string[]; // This is to keep the array intact for parent Command instances to use. It'll also be used when loading top-level aliases.
     public originalCommandName: string | null; // If the command is an alias, what's the original name?
-    public run: (($: CommonLibrary) => Promise<any>) | string;
+    public run: (($: CommandMenu) => Promise<any>) | string;
     public readonly subcommands: Collection<string, Command>; // This is the final data structure you'll actually use to work with the commands the aliases point to.
     public user: Command | null;
     public number: Command | null;
@@ -96,11 +107,11 @@ export default class Command {
             );
     }
 
-    public execute($: CommonLibrary) {
-        if (isType(this.run, String)) {
+    public execute($: CommandMenu) {
+        if (typeof this.run === "string") {
             $.channel.send(
                 parseVars(
-                    this.run as string,
+                    this.run,
                     {
                         author: $.author.toString(),
                         prefix: getPrefix($.guild)
@@ -108,7 +119,7 @@ export default class Command {
                     "???"
                 )
             );
-        } else (this.run as Function)($).catch($.handler.bind($));
+        } else this.run($).catch(handler.bind($));
     }
 
     public resolve(param: string): TYPES {
@@ -223,4 +234,21 @@ function globP(path: string) {
             }
         });
     });
+}
+
+// If you use promises, use this function to display the error in chat.
+// Case #1: await $.channel.send(""); --> Automatically caught by Command.execute().
+// Case #2: $.channel.send("").catch(handler.bind($)); --> Manually caught by the user.
+// TODO: Find a way to catch unhandled rejections automatically, forgoing the need for this.
+export function handler(this: CommandMenu, error: Error) {
+    if (this)
+        this.channel.send(
+            `There was an error while trying to execute that command!\`\`\`${error.stack ?? error}\`\`\``
+        );
+    else
+        console.warn(
+            "No context was attached to $.handler! Make sure to use .catch($.handler.bind($)) or .catch(error => $.handler(error)) instead!"
+        );
+
+    console.error(error);
 }

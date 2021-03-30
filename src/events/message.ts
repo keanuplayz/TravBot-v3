@@ -3,7 +3,7 @@ import Command, {loadableCommands} from "../core/command";
 import {hasPermission, getPermissionLevel, PermissionNames} from "../core/permissions";
 import {Permissions} from "discord.js";
 import {getPrefix} from "../core/structures";
-import $, {replyEventListeners} from "../core/lib";
+import {replyEventListeners} from "../core/libd";
 import quote from "../modules/message_embed";
 
 export default new Event<"message">({
@@ -132,20 +132,14 @@ export default new Event<"message">({
         // The purpose of using $.bind($) is to clone the function so as to not modify the original $.
         // The cloned function doesn't copy the properties, so Object.assign() is used.
         // Object.assign() modifies the first element and returns that, the second element applies its properties and the third element applies its own overriding the second one.
-        command.execute(
-            Object.assign(
-                $.bind($),
-                {
-                    args: params,
-                    author: message.author,
-                    channel: message.channel,
-                    client: message.client,
-                    guild: message.guild,
-                    member: message.member,
-                    message: message
-                },
-                $
-            )
-        );
+        command.execute({
+            args: params,
+            author: message.author,
+            channel: message.channel,
+            client: message.client,
+            guild: message.guild,
+            member: message.member,
+            message: message
+        });
     }
 });

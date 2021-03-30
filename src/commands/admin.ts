@@ -1,5 +1,5 @@
-import Command from "../core/command";
-import {CommonLibrary, botHasPermission, clean} from "../core/lib";
+import Command, {handler} from "../core/command";
+import {botHasPermission, clean} from "../core/libd";
 import {Config, Storage} from "../core/structures";
 import {PermissionNames, getPermissionLevel} from "../core/permissions";
 import {Permissions} from "discord.js";
@@ -23,11 +23,11 @@ const statuses = ["online", "idle", "dnd", "invisible"];
 export default new Command({
     description:
         "An all-in-one command to do admin stuff. You need to be either an admin of the server or one of the bot's mechanics to use this command.",
-    async run($: CommonLibrary): Promise<any> {
-        if (!$.member)
-            return $.channel.send(
-                "Couldn't find a member object for you! Did you make sure you used this in a server?"
-            );
+    async run($) {
+        if (!$.member) {
+            $.channel.send("Couldn't find a member object for you! Did you make sure you used this in a server?");
+            return;
+        }
         const permLevel = getPermissionLevel($.member);
         $.channel.send(
             `${$.author.toString()}, your permission level is \`${PermissionNames[permLevel]}\` (${permLevel}).`
@@ -42,7 +42,7 @@ export default new Command({
                 prefix: new Command({
                     description: "Set a custom prefix for your guild. Removes your custom prefix if none is provided.",
                     usage: "(<prefix>)",
-                    async run($: CommonLibrary): Promise<any> {
+                    async run($) {
                         Storage.getGuild($.guild?.id || "N/A").prefix = null;
                         Storage.save();
                         $.channel.send(
@@ -50,7 +50,7 @@ export default new Command({
                         );
                     },
                     any: new Command({
-                        async run($: CommonLibrary): Promise<any> {
+                        async run($) {
                             Storage.getGuild($.guild?.id || "N/A").prefix = $.args[0];
                             Storage.save();
                             $.channel.send(`The custom prefix for this guild is now \`${$.args[0]}\`.`);
@@ -62,12 +62,12 @@ export default new Command({
         diag: new Command({
             description: 'Requests a debug log with the "info" verbosity level.',
             permission: Command.PERMISSIONS.BOT_SUPPORT,
-            async run($: CommonLibrary): Promise<any> {
+            async run($) {
                 $.channel.send(getLogBuffer("info"));
             },
             any: new Command({
                 description: `Select a verbosity to listen to. Available levels: \`[${Object.keys(logs).join(", ")}]\``,
-                async run($: CommonLibrary): Promise<any> {
+                async run($) {
                     const type = $.args[0];
 
                     if (type in logs) $.channel.send(getLogBuffer(type));
@@ -83,14 +83,16 @@ export default new Command({
         status: new Command({
             description: "Changes the bot's status.",
             permission: Command.PERMISSIONS.BOT_SUPPORT,
-            async run($: CommonLibrary): Promise<any> {
+            async run($) {
                 $.channel.send("Setting status to `online`...");
             },
             any: new Command({
                 description: `Select a status to set to. Available statuses: \`[${statuses.join(", ")}]\`.`,
-                async run($: CommonLibrary): Promise<any> {
-                    if (!statuses.includes($.args[0])) return $.channel.send("That status doesn't exist!");
-                    else {
+                async run($) {
+                    if (!statuses.includes($.args[0])) {
+                        $.channel.send("That status doesn't exist!");
+                        return;
+                    } else {
                         $.client.user?.setStatus($.args[0]);
                         $.channel.send(`Setting status to \`${$.args[0]}\`...`);
                     }
@@ -100,7 +102,7 @@ export default new Command({
         purge: new Command({
             description: "Purges bot messages.",
             permission: Command.PERMISSIONS.BOT_SUPPORT,
-            async run($: CommonLibrary): Promise<any> {
+            async run($) {
                 if ($.message.channel instanceof discord.DMChannel) {
                     return;
                 }
@@ -124,7 +126,7 @@ export default new Command({
             run: "A number was not provided.",
             number: new Command({
                 description: "Amount of messages to delete.",
-                async run($: CommonLibrary): Promise<any> {
+                async run($) {
                     if ($.channel.type === "dm") {
                         await $.channel.send("Can't clear messages in the DMs!");
                         return;
@@ -142,7 +144,7 @@ export default new Command({
             usage: "<code>",
             permission: Command.PERMISSIONS.BOT_OWNER,
             // You have to bring everything into scope to use them. AFAIK, there isn't a more maintainable way to do this, but at least TS will let you know if anything gets removed.
-            async run({args, author, channel, client, guild, member, message}): Promise<any> {
+            async run({args, author, channel, client, guild, member, message}) {
                 try {
                     const code = args.join(" ");
                     let evaled = eval(code);
@@ -157,18 +159,18 @@ export default new Command({
         nick: new Command({
             description: "Change the bot's nickname.",
             permission: Command.PERMISSIONS.BOT_SUPPORT,
-            async run($: CommonLibrary): Promise<any> {
+            async run($) {
                 const nickName = $.args.join(" ");
                 await $.guild?.me?.setNickname(nickName);
                 if (botHasPermission($.guild, Permissions.FLAGS.MANAGE_MESSAGES))
-                    $.message.delete({timeout: 5000}).catch($.handler.bind($));
+                    $.message.delete({timeout: 5000}).catch(handler.bind($));
                 $.channel.send(`Nickname set to \`${nickName}\``).then((m) => m.delete({timeout: 5000}));
             }
         }),
         guilds: new Command({
             description: "Shows a list of all guilds the bot is a member of.",
             permission: Command.PERMISSIONS.BOT_SUPPORT,
-            async run($: CommonLibrary): Promise<any> {
+            async run($) {
                 const guildList = $.client.guilds.cache.array().map((e) => e.name);
                 $.channel.send(guildList);
             }
@@ -177,7 +179,7 @@ export default new Command({
             description: "Set the activity of the bot.",
             permission: Command.PERMISSIONS.BOT_SUPPORT,
             usage: "<type> <string>",
-            async run($: CommonLibrary): Promise<any> {
+            async run($) {
                 $.client.user?.setActivity(".help", {
                     type: "LISTENING"
                 });
@@ -185,7 +187,7 @@ export default new Command({
             },
             any: new Command({
                 description: `Select an activity type to set. Available levels: \`[${activities.join(", ")}]\``,
-                async run($: CommonLibrary): Promise<any> {
+                async run($) {
                     const type = $.args[0];
 
                     if (activities.includes(type)) {

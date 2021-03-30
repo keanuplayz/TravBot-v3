@@ -1,4 +1,5 @@
 import Command from "../../core/command";
+import {ask, askYesOrNo, askMultipleChoice, prompt, callMemberByUsername} from "../../core/libd";
 import {Storage} from "../../core/structures";
 import {User} from "discord.js";
 import moment from "moment";
@@ -176,7 +177,7 @@ export default new Command({
         // Welcome to callback hell. We hope you enjoy your stay here!
         setup: new Command({
             description: "Registers your timezone information for the bot.",
-            async run({author, channel, ask, askYesOrNo, askMultipleChoice}) {
+            async run({author, channel}) {
                 const profile = Storage.getUser(author.id);
                 profile.timezone = null;
                 profile.daylightSavingsRegion = null;
@@ -328,7 +329,7 @@ export default new Command({
         }),
         delete: new Command({
             description: "Delete your timezone information.",
-            async run({channel, author, prompt}) {
+            async run({channel, author}) {
                 prompt(
                     await channel.send(
                         "Are you sure you want to delete your timezone information?\n*(This message will automatically be deleted after 10 seconds.)*"
@@ -382,7 +383,7 @@ export default new Command({
     }),
     any: new Command({
         description: "See what time it is for someone else (by their username).",
-        async run({channel, args, message, callMemberByUsername}) {
+        async run({channel, args, message}) {
             callMemberByUsername(message, args.join(" "), (member) => {
                 channel.send(getTimeEmbed(member.user));
             });

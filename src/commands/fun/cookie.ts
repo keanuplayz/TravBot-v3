@@ -1,18 +1,17 @@
 import Command from "../../core/command";
-import {CommonLibrary} from "../../core/lib";
 
 export default new Command({
     description: "Gives specified user a cookie.",
     usage: "['all'/@user]",
     run: ":cookie: Here's a cookie!",
     any: new Command({
-        async run($: CommonLibrary): Promise<any> {
-            if ($.args[0] == "all") return $.channel.send(`${$.author} gave everybody a cookie!`);
+        async run($) {
+            if ($.args[0] == "all") $.channel.send(`${$.author} gave everybody a cookie!`);
         }
     }),
     user: new Command({
         description: "User to give cookie to.",
-        async run($: CommonLibrary): Promise<any> {
+        async run($) {
             const sender = $.author;
             const mention = $.message.mentions.users.first();
 
@@ -41,7 +40,10 @@ export default new Command({
                 `bakes <@${mention.id}> fresh cookies, it smells amazing.`
             ];
 
-            if (mention.id == sender.id) return $.channel.send("You can't give yourself cookies!");
+            if (mention.id == sender.id) {
+                $.channel.send("You can't give yourself cookies!");
+                return;
+            }
 
             $.channel.send(`:cookie: <@${sender.id}> ` + cookies[Math.floor(Math.random() * cookies.length)]);
         }

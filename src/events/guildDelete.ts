@@ -1,5 +1,5 @@
 import Event from "../core/event";
-import {updateGlobalEmoteRegistry} from "../core/lib";
+import {updateGlobalEmoteRegistry} from "../core/libd";
 
 export default new Event<"guildDelete">({
     on() {

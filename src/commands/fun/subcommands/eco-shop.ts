@@ -1,5 +1,6 @@
 import Command from "../../../core/command";
-import $ from "../../../core/lib";
+import {pluralise, split} from "../../../core/lib";
+import {paginate} from "../../../core/libd";
 import {Storage, getPrefix} from "../../../core/structures";
 import {isAuthorized, ECO_EMBED_COLOR} from "./eco-utils";
 import {ShopItems, ShopItem} from "./eco-shop-items";
@@ -15,7 +16,7 @@ export const ShopCommand = new Command({
                 for (const item of selection)
                     fields.push({
                         name: `**${item.title}** (${getPrefix(guild)}eco buy ${item.usage})`,
-                        value: `${item.description} Costs ${$(item.cost).pluralise("Mon", "s")}.`,
+                        value: `${item.description} Costs ${pluralise(item.cost, "Mon", "s")}.`,
                         inline: false
                     });
 
@@ -34,11 +35,11 @@ export const ShopCommand = new Command({
             // In case there's just one page, omit unnecessary details.
             if (ShopItems.length <= 5) channel.send(getShopEmbed(ShopItems));
             else {
-                const shopPages = $(ShopItems).split(5);
+                const shopPages = split(ShopItems, 5);
                 const pageAmount = shopPages.length;
                 const msg = await channel.send(getShopEmbed(shopPages[0], `Shop (Page 1 of ${pageAmount})`));
 
-                $.paginate(msg, author.id, pageAmount, (page) => {
+                paginate(msg, author.id, pageAmount, (page) => {
                     msg.edit(getShopEmbed(shopPages[page], `Shop (Page ${page + 1} of ${pageAmount})`));
                 });
             }

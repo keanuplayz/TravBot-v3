@@ -1,5 +1,6 @@
 import Command from "../../../core/command";
-import $ from "../../../core/lib";
+import {prompt} from "../../../core/libd";
+import {pluralise} from "../../../core/lib";
 import {Storage} from "../../../core/structures";
 import {isAuthorized, getMoneyEmbed, getSendEmbed, ECO_EMBED_COLOR} from "./eco-utils";
 
@@ -90,7 +91,7 @@ export const LeaderboardCommand = new Command({
 
                 fields.push({
                     name: `#${i + 1}. ${user.username}#${user.discriminator}`,
-                    value: $(users[id].money).pluralise("Mon", "s")
+                    value: pluralise(users[id].money, "Mon", "s")
                 });
             }
 
@@ -141,7 +142,7 @@ export const PayCommand = new Command({
         run: "You must use the format `eco pay <user> <amount>`!"
     }),
     any: new Command({
-        async run({args, author, channel, guild, prompt}) {
+        async run({args, author, channel, guild}) {
             if (isAuthorized(guild, channel)) {
                 const last = args.pop();
 
@@ -177,7 +178,8 @@ export const PayCommand = new Command({
 
                 return prompt(
                     await channel.send(
-                        `Are you sure you want to send ${$(amount).pluralise(
+                        `Are you sure you want to send ${pluralise(
+                            amount,
                             "Mon",
                             "s"
                         )} to this person?\n*(This message will automatically be deleted after 10 seconds.)*`,

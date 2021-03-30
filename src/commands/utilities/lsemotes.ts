@@ -1,26 +1,35 @@
 import {GuildEmoji} from "discord.js";
 import {MessageEmbed} from "discord.js";
 import Command from "../../core/command";
-import {CommonLibrary} from "../../core/lib";
+import {split} from "../../core/lib";
+import {paginate} from "../../core/libd";
 import vm from "vm";
+import {TextChannel} from "discord.js";
+import {DMChannel} from "discord.js";
+import {NewsChannel} from "discord.js";
+import {User} from "discord.js";
 
 const REGEX_TIMEOUT_MS = 1000;
 
 export default new Command({
     description: "Lists all emotes the bot has in it's registry,",
     usage: "<regex pattern> (-flags)",
-    async run($: CommonLibrary): Promise<any> {
-        displayEmoteList($, $.client.emojis.cache.array());
+    async run($) {
+        displayEmoteList($.client.emojis.cache.array(), $.channel, $.author);
     },
     any: new Command({
         description:
             "Filters emotes by via a regular expression. Flags can be added by adding a dash at the end. For example, to do a case-insensitive search, do %prefix%lsemotes somepattern -i",
-        async run($: CommonLibrary): Promise<any> {
+        async run($) {
             // If a guild ID is provided, filter all emotes by that guild (but only if there aren't any arguments afterward)
             if ($.args.length === 1 && /^\d{17,19}$/.test($.args[0])) {
                 const guildID: string = $.args[0];
 
-                displayEmoteList($, $.client.emojis.cache.filter((emote) => emote.guild.id === guildID).array());
+                displayEmoteList(
+                    $.client.emojis.cache.filter((emote) => emote.guild.id === guildID).array(),
+                    $.channel,
+                    $.author
+                );
             } else {
                 // Otherwise, search via a regex pattern
                 let flags: string | undefined = undefined;
@@ -55,7 +64,7 @@ export default new Command({
                         script.runInContext(context, {timeout: REGEX_TIMEOUT_MS});
                         emotes = sandbox.emotes;
                         emoteCollection = emoteCollection.filter((emote) => emotes.has(emote.id)); // Only allow emotes that haven't been deleted.
-                        displayEmoteList($, emoteCollection);
+                        displayEmoteList(emoteCollection, $.channel, $.author);
                     } catch (error) {
                         if (error.code === "ERR_SCRIPT_EXECUTION_TIMEOUT") {
                             $.channel.send(
@@ -73,7 +82,7 @@ export default new Command({
     })
 });
 
-async function displayEmoteList($: CommonLibrary, emotes: GuildEmoji[]) {
+async function displayEmoteList(emotes: GuildEmoji[], channel: TextChannel | DMChannel | NewsChannel, author: User) {
     emotes.sort((a, b) => {
         const first = a.name.toLowerCase();
         const second = b.name.toLowerCase();
@@ -82,7 +91,7 @@ async function displayEmoteList($: CommonLibrary, emotes: GuildEmoji[]) {
         else if (first < second) return -1;
         else return 0;
     });
-    const sections = $(emotes).split(20);
+    const sections = split(emotes, 20);
     const pages = sections.length;
     const embed = new MessageEmbed().setTitle("**Emotes**").setColor("AQUA");
     let desc = "";
@@ -97,9 +106,9 @@ async function displayEmoteList($: CommonLibrary, emotes: GuildEmoji[]) {
 
         if (pages > 1) {
             embed.setTitle(`**Emotes** (Page 1 of ${pages})`);
-            const msg = await $.channel.send({embed});
+            const msg = await channel.send({embed});
 
-            $.paginate(msg, $.author.id, pages, (page) => {
+            paginate(msg, author.id, pages, (page) => {
                 let desc = "";
                 for (const emote of sections[page]) {
                     desc += `${emote} ${emote.name} (**${emote.guild.name}**)\n`;
@@ -109,9 +118,9 @@ async function displayEmoteList($: CommonLibrary, emotes: GuildEmoji[]) {
                 msg.edit(embed);
             });
         } else {
-            await $.channel.send({embed});
+            channel.send({embed});
         }
     } else {
-        $.channel.send("No valid emotes found by that query.");
+        channel.send("No valid emotes found by that query.");
     }
 }

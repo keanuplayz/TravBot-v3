@@ -1,5 +1,5 @@
 import Command from "../../core/command";
-import {CommonLibrary} from "../../core/lib";
+import {random} from "../../core/lib";
 
 const responses = [
     "Most likely,",
@@ -31,9 +31,9 @@ export default new Command({
     run: "Please provide a question.",
     any: new Command({
         description: "Question to ask the 8-ball.",
-        async run($: CommonLibrary): Promise<any> {
+        async run($) {
             const sender = $.message.author;
-            $.channel.send($(responses).random() + ` <@${sender.id}>`);
+            $.channel.send(`${random(responses)} <@${sender.id}>`);
         }
     })
 });

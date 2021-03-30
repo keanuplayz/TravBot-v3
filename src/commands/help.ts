@@ -1,5 +1,5 @@
 import Command from "../core/command";
-import {CommonLibrary} from "../core/lib";
+import {toTitleCase} from "../core/lib";
 import {loadableCommands, categories} from "../core/command";
 import {PermissionNames} from "../core/permissions";
 
@@ -7,12 +7,12 @@ export default new Command({
     description: "Lists all commands. If a command is specified, their arguments are listed as well.",
     usage: "([command, [subcommand/type], ...])",
     aliases: ["h"],
-    async run($: CommonLibrary): Promise<any> {
+    async run($) {
         const commands = await loadableCommands;
         let output = `Legend: \`<type>\`, \`[list/of/stuff]\`, \`(optional)\`, \`(<optional type>)\`, \`([optional/list/...])\``;
 
         for (const [category, headers] of categories) {
-            output += `\n\n===[ ${$(category).toTitleCase()} ]===`;
+            output += `\n\n===[ ${toTitleCase(category)} ]===`;
 
             for (const header of headers) {
                 if (header !== "test") {
@@ -31,12 +31,15 @@ export default new Command({
         $.channel.send(output, {split: true});
     },
     any: new Command({
-        async run($: CommonLibrary): Promise<any> {
+        async run($) {
             const commands = await loadableCommands;
             let header = $.args.shift() as string;
             let command = commands.get(header);
 
-            if (!command || header === "test") return $.channel.send(`No command found by the name \`${header}\`!`);
+            if (!command || header === "test") {
+                $.channel.send(`No command found by the name \`${header}\`!`);
+                return;
+            }
 
             if (command.originalCommandName) header = command.originalCommandName;
             else console.warn(`originalCommandName isn't defined for ${header}?!`);
@@ -53,7 +56,7 @@ export default new Command({
                         console.warn(
                             `Command "${header}" is somehow in multiple categories. This means that the command loading stage probably failed in properly adding categories.`
                         );
-                    else selectedCategory = $(category).toTitleCase();
+                    else selectedCategory = toTitleCase(category);
                 }
             }
 
@@ -86,7 +89,10 @@ export default new Command({
                 }
             }
 
-            if (invalid) return $.channel.send(`No command found by the name \`${header}\`!`);
+            if (invalid) {
+                $.channel.send(`No command found by the name \`${header}\`!`);
+                return;
+            }
 
             let append = "";
 

@@ -1,5 +1,4 @@
 import Command from "../core/command";
-import {CommonLibrary} from "../core/lib";
 
 export default new Command({
     description:
@@ -8,7 +7,7 @@ export default new Command({
     usage: "",
     permission: null,
     aliases: [],
-    async run($: CommonLibrary): Promise<any> {
+    async run($) {
         // code
     },
     subcommands: {
@@ -19,7 +18,7 @@ export default new Command({
             usage: "",
             permission: null,
             aliases: [],
-            async run($: CommonLibrary): Promise<any> {
+            async run($) {
                 // code
             }
         })
@@ -30,7 +29,7 @@ export default new Command({
         endpoint: false,
         usage: "",
         permission: null,
-        async run($: CommonLibrary): Promise<any> {
+        async run($) {
             // code
         }
     }),
@@ -40,7 +39,7 @@ export default new Command({
         endpoint: false,
         usage: "",
         permission: null,
-        async run($: CommonLibrary): Promise<any> {
+        async run($) {
             // code
         }
     }),
@@ -50,7 +49,7 @@ export default new Command({
         endpoint: false,
         usage: "",
         permission: null,
-        async run($: CommonLibrary): Promise<any> {
+        async run($) {
             // code
         }
     })

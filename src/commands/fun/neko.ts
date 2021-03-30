@@ -2,13 +2,13 @@
 import {URL} from "url";
 import FileManager from "../../core/storage";
 import Command from "../../core/command";
-import {CommonLibrary, getContent} from "../../core/lib";
+import {getContent} from "../../core/libd";
 
 const endpoints = FileManager.read("endpoints");
 
 export default new Command({
     description: "Provides you with a random image with the selected argument.",
-    async run($: CommonLibrary): Promise<any> {
+    async run($) {
         console.log(endpoints.sfw);
         $.channel.send(
             `Please provide an image type. Available arguments:\n\`[${Object.keys(endpoints.sfw).join(", ")}]\`.`
@@ -16,7 +16,7 @@ export default new Command({
     },
     any: new Command({
         description: "Image type to send.",
-        async run($: CommonLibrary): Promise<any> {
+        async run($) {
             if (!($.args[0] in endpoints.sfw)) return $.channel.send("Couldn't find that endpoint!");
 
             let baseURL = "https://nekos.life/api/v2";

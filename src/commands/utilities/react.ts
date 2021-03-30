@@ -1,5 +1,4 @@
 import Command from "../../core/command";
-import {CommonLibrary} from "../../core/lib";
 import {Message, Channel, TextChannel} from "discord.js";
 import {queryClosestEmoteByName} from "./subcommands/emote-utils";
 
@@ -7,7 +6,7 @@ export default new Command({
     description:
         "Reacts to the a previous message in your place. You have to react with the same emote before the bot removes that reaction.",
     usage: 'react <emotes...> (<distance / message ID / "Copy ID" / "Copy Message Link">)',
-    async run($: CommonLibrary): Promise<any> {
+    async run($) {
         let target: Message | undefined;
         let distance = 1;
 
@@ -106,5 +105,7 @@ export default new Command({
                 reaction.users.remove($.client.user!);
             }, 5000);
         }
+
+        return;
     }
 });

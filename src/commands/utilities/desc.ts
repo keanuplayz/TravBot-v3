@@ -1,18 +1,25 @@
 import Command from "../../core/command";
-import {CommonLibrary} from "../../core/lib";
 
 export default new Command({
     description: "Renames current voice channel.",
     usage: "<name>",
-    async run($: CommonLibrary): Promise<any> {
+    async run($) {
         const voiceChannel = $.message.member?.voice.channel;
 
-        if (!voiceChannel) return $.channel.send("You are not in a voice channel.");
+        if (!voiceChannel) {
+            $.channel.send("You are not in a voice channel.");
+            return;
+        }
 
-        if (!voiceChannel.guild.me?.hasPermission("MANAGE_CHANNELS"))
-            return $.channel.send("I am lacking the required permissions to perform this action.");
+        if (!voiceChannel.guild.me?.hasPermission("MANAGE_CHANNELS")) {
+            $.channel.send("I am lacking the required permissions to perform this action.");
+            return;
+        }
 
-        if ($.args.length === 0) return $.channel.send("Please provide a new voice channel name.");
+        if ($.args.length === 0) {
+            $.channel.send("Please provide a new voice channel name.");
+            return;
+        }
 
         const prevName = voiceChannel.name;
         const newName = $.args.join(" ");

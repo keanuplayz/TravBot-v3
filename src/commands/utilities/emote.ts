@@ -1,6 +1,6 @@
 import Command from "../../core/command";
 import {queryClosestEmoteByName} from "./subcommands/emote-utils";
-import {botHasPermission} from "../../core/lib";
+import {botHasPermission} from "../../core/libd";
 import {Permissions} from "discord.js";
 
 export default new Command({

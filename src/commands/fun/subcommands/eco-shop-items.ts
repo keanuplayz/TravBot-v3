@@ -1,5 +1,5 @@
 import {Message} from "discord.js";
-import $ from "../../../core/lib";
+import {random} from "../../../core/lib";
 
 export interface ShopItem {
     cost: number;
@@ -43,7 +43,7 @@ export const ShopItems: ShopItem[] = [
         description: "Buys what is technically a laser bridge.",
         usage: "laser bridge",
         run(message) {
-            message.channel.send($(lines).random(), {
+            message.channel.send(random(lines), {
                 files: [
                     {
                         attachment:

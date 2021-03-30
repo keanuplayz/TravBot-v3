@@ -1,4 +1,4 @@
-import $ from "../../../core/lib";
+import {pluralise} from "../../../core/lib";
 import {Storage} from "../../../core/structures";
 import {User, Guild, TextChannel, DMChannel, NewsChannel} from "discord.js";
 
@@ -20,7 +20,7 @@ export function getMoneyEmbed(user: User): object {
             fields: [
                 {
                     name: "Balance",
-                    value: $(profile.money).pluralise("Mon", "s")
+                    value: pluralise(profile.money, "Mon", "s")
                 }
             ]
         }
@@ -39,15 +39,15 @@ export function getSendEmbed(sender: User, receiver: User, amount: number): obje
                 })
             },
             title: "Transaction",
-            description: `${sender.toString()} has sent ${$(amount).pluralise("Mon", "s")} to ${receiver.toString()}!`,
+            description: `${sender.toString()} has sent ${pluralise(amount, "Mon", "s")} to ${receiver.toString()}!`,
             fields: [
                 {
                     name: `Sender: ${sender.username}#${sender.discriminator}`,
-                    value: $(Storage.getUser(sender.id).money).pluralise("Mon", "s")
+                    value: pluralise(Storage.getUser(sender.id).money, "Mon", "s")
                 },
                 {
                     name: `Receiver: ${receiver.username}#${receiver.discriminator}`,
-                    value: $(Storage.getUser(receiver.id).money).pluralise("Mon", "s")
+                    value: pluralise(Storage.getUser(receiver.id).money, "Mon", "s")
                 }
             ],
             footer: {

@@ -2,7 +2,7 @@ import {MessageEmbed, version as djsversion} from "discord.js";
 import ms from "ms";
 import os from "os";
 import Command from "../core/command";
-import {CommonLibrary, formatBytes, trimArray} from "../core/lib";
+import {formatBytes, trimArray} from "../core/libd";
 import {verificationLevels, filterLevels, regions, flags} from "../defs/info";
 import moment from "moment";
 import utc from "moment";
@@ -17,12 +17,12 @@ export default new Command({
         avatar: new Command({
             description: "Shows your own, or another user's avatar.",
             usage: "(<user>)",
-            async run($: CommonLibrary): Promise<any> {
+            async run($) {
                 $.channel.send($.author.displayAvatarURL({dynamic: true, size: 2048}));
             },
             user: new Command({
                 description: "Shows your own, or another user's avatar.",
-                async run($: CommonLibrary): Promise<any> {
+                async run($) {
                     $.channel.send(
                         $.args[0].displayAvatarURL({
                             dynamic: true,
@@ -34,7 +34,7 @@ export default new Command({
         }),
         bot: new Command({
             description: "Displays info about the bot.",
-            async run($: CommonLibrary): Promise<any> {
+            async run($) {
                 const core = os.cpus()[0];
                 const embed = new MessageEmbed()
                     .setColor($.guild?.me?.displayHexColor || "BLUE")
@@ -76,7 +76,7 @@ export default new Command({
         guild: new Command({
             description: "Displays info about the current guild or another guild.",
             usage: "(<guild name>/<guild ID>)",
-            async run($: CommonLibrary): Promise<any> {
+            async run($) {
                 if ($.guild) {
                     $.channel.send(await getGuildInfo($.guild, $.guild));
                 } else {
@@ -85,7 +85,7 @@ export default new Command({
             },
             any: new Command({
                 description: "Display info about a guild by finding its name or ID.",
-                async run($: CommonLibrary): Promise<any> {
+                async run($) {
                     // If a guild ID is provided (avoid the "number" subcommand because of inaccuracies), search for that guild
                     if ($.args.length === 1 && /^\d{17,19}$/.test($.args[0])) {
                         const id = $.args[0];
@@ -112,14 +112,16 @@ export default new Command({
     },
     user: new Command({
         description: "Displays info about mentioned user.",
-        async run($: CommonLibrary): Promise<any> {
+        async run($) {
             // Transforms the User object into a GuildMember object of the current guild.
             const member = await $.guild?.members.fetch($.args[0]);
 
-            if (!member)
-                return $.channel.send(
+            if (!member) {
+                $.channel.send(
                     "No member object was found by that user! Are you sure you used this command in a server?"
                 );
+                return;
+            }
 
             const roles = member.roles.cache
                 .sort((a: {position: number}, b: {position: number}) => b.position - a.position)

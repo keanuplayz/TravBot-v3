@@ -1,5 +1,5 @@
-import Command from "../core/command";
-import {CommonLibrary} from "../core/lib";
+import Command, {handler} from "../core/command";
+import {pluralise} from "../core/lib";
 import moment from "moment";
 import {Collection, TextChannel} from "discord.js";
 
@@ -8,8 +8,11 @@ const lastUsedTimestamps: {[id: string]: number} = {};
 export default new Command({
     description:
         "Scans all text channels in the current guild and returns the number of times each emoji specific to the guild has been used. Has a cooldown of 24 hours per guild.",
-    async run($: CommonLibrary): Promise<any> {
-        if (!$.guild) return $.channel.send(`You must use this command on a server!`);
+    async run($) {
+        if (!$.guild) {
+            $.channel.send(`You must use this command on a server!`);
+            return;
+        }
 
         // Test if the command is on cooldown. This isn't the strictest cooldown possible, because in the event that the bot crashes, the cooldown will be reset. But for all intends and purposes, it's a good enough cooldown. It's a per-server cooldown.
         const startTime = Date.now();
@@ -19,11 +22,12 @@ export default new Command({
         const howLong = moment(startTime).to(lastUsedTimestamp + cooldown);
 
         // If it's been less than an hour since the command was last used, prevent it from executing.
-        if (difference < cooldown)
-            return $.channel.send(
+        if (difference < cooldown) {
+            $.channel.send(
                 `This command requires a day to cooldown. You'll be able to activate this command ${howLong}.`
             );
-        else lastUsedTimestamps[$.guild.id] = startTime;
+            return;
+        } else lastUsedTimestamps[$.guild.id] = startTime;
 
         const stats: {
             [id: string]: {
@@ -155,7 +159,8 @@ export default new Command({
         const finishTime = Date.now();
         clearInterval(interval);
         statusMessage.edit(
-            `Finished operation in ${moment.duration(finishTime - startTime).humanize()} with ${$(warnings).pluralise(
+            `Finished operation in ${moment.duration(finishTime - startTime).humanize()} with ${pluralise(
+                warnings,
                 "inconsistenc",
                 "ies",
                 "y"
@@ -181,6 +186,6 @@ export default new Command({
             );
         }
 
-        $.channel.send(lines, {split: true}).catch($.handler.bind($));
+        $.channel.send(lines, {split: true}).catch(handler.bind($));
     }
 });

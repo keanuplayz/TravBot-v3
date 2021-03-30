@@ -1,6 +1,5 @@
 import {MessageEmbed} from "discord.js";
 import Command from "../../core/command";
-import {CommonLibrary} from "../../core/lib";
 
 export default new Command({
     description: "Create a poll.",
@@ -8,7 +7,7 @@ export default new Command({
     run: "Please provide a question.",
     any: new Command({
         description: "Question for the poll.",
-        async run($: CommonLibrary): Promise<any> {
+        async run($) {
             const embed = new MessageEmbed()
                 .setAuthor(
                     `Poll created by ${$.message.author.username}`,

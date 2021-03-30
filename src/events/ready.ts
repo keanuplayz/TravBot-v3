@@ -1,7 +1,7 @@
 import Event from "../core/event";
 import {client} from "../index";
 import {Config} from "../core/structures";
-import {updateGlobalEmoteRegistry} from "../core/lib";
+import {updateGlobalEmoteRegistry} from "../core/libd";
 
 export default new Event<"ready">({
     once() {
