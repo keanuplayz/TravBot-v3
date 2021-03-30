@@ -124,14 +124,15 @@ export default new Command({
             number: new Command({
                 description: "Amount of messages to delete.",
                 async run($: CommonLibrary): Promise<any> {
+                    if ($.channel.type === "dm") {
+                        await $.channel.send("Can't clear messages in the DMs!");
+                        return;
+                    }
                     $.message.delete();
                     const fetched = await $.channel.messages.fetch({
                         limit: $.args[0]
                     });
-                    $.channel
-                        /// @ts-ignore
-                        .bulkDelete(fetched)
-                        .catch((error: any) => $.channel.send(`Error: ${error}`));
+                    await $.channel.bulkDelete(fetched);
                 }
             })
         }),
@@ -157,8 +158,7 @@ export default new Command({
             permission: Command.PERMISSIONS.BOT_SUPPORT,
             async run($: CommonLibrary): Promise<any> {
                 const nickName = $.args.join(" ");
-                const trav = $.guild?.members.cache.find((member) => member.id === $.client.user?.id);
-                await trav?.setNickname(nickName);
+                await $.guild?.me?.setNickname(nickName);
                 if (botHasPermission($.guild, Permissions.FLAGS.MANAGE_MESSAGES))
                     $.message.delete({timeout: 5000}).catch($.handler.bind($));
                 $.channel.send(`Nickname set to \`${nickName}\``).then((m) => m.delete({timeout: 5000}));

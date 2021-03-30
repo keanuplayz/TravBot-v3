@@ -4,10 +4,15 @@ import {hasPermission, getPermissionLevel, PermissionNames} from "../core/permis
 import {Permissions} from "discord.js";
 import {getPrefix} from "../core/structures";
 import $, {replyEventListeners} from "../core/lib";
+import quote from "../modules/message_embed";
 
 export default new Event<"message">({
     async on(message) {
         const commands = await loadableCommands;
+
+        if (message.content.toLowerCase().includes("remember to drink water")) {
+            message.react("🚱");
+        }
 
         // Message Setup //
         if (message.author.bot) return;
@@ -23,6 +28,10 @@ export default new Event<"message">({
         let exitEarly = !message.content.startsWith(prefix);
         const clientUser = message.client.user;
         let usesBotSpecificPrefix = false;
+
+        if (!message.content.startsWith(prefix)) {
+            return quote(message);
+        }
 
         // If the client user exists, check if it starts with the bot-specific prefix.
         if (clientUser) {
