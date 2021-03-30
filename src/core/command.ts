@@ -1,7 +1,6 @@
 import {parseVars} from "./libd";
 import {Collection} from "discord.js";
 import {Client, Message, TextChannel, DMChannel, NewsChannel, Guild, User, GuildMember} from "discord.js";
-import {PERMISSIONS} from "./permissions";
 import {getPrefix} from "../core/structures";
 import glob from "glob";
 
@@ -19,7 +18,7 @@ interface CommandOptions {
     description?: string;
     endpoint?: boolean;
     usage?: string;
-    permission?: PERMISSIONS | null;
+    permission?: number;
     aliases?: string[];
     run?: (($: CommandMenu) => Promise<any>) | string;
     subcommands?: {[key: string]: Command};
@@ -40,7 +39,7 @@ export default class Command {
     public readonly description: string;
     public readonly endpoint: boolean;
     public readonly usage: string;
-    public readonly permission: PERMISSIONS | null;
+    public readonly permission: number; // -1 (default) indicates to inherit, 0 is the lowest rank, 1 is second lowest rank, and so on.
     public readonly aliases: string[]; // This is to keep the array intact for parent Command instances to use. It'll also be used when loading top-level aliases.
     public originalCommandName: string | null; // If the command is an alias, what's the original name?
     public run: (($: CommandMenu) => Promise<any>) | string;
@@ -49,13 +48,12 @@ export default class Command {
     public number: Command | null;
     public any: Command | null;
     public static readonly TYPES = TYPES;
-    public static readonly PERMISSIONS = PERMISSIONS;
 
     constructor(options?: CommandOptions) {
         this.description = options?.description || "No description.";
         this.endpoint = options?.endpoint || false;
         this.usage = options?.usage || "";
-        this.permission = options?.permission ?? null;
+        this.permission = options?.permission ?? -1;
         this.aliases = options?.aliases ?? [];
         this.originalCommandName = null;
         this.run = options?.run || "No action was set on this command!";

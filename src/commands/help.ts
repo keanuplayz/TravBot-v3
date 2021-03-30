@@ -1,7 +1,7 @@
 import Command from "../core/command";
 import {toTitleCase} from "../core/lib";
 import {loadableCommands, categories} from "../core/command";
-import {PermissionNames} from "../core/permissions";
+import {getPermissionName} from "../core/permissions";
 
 export default new Command({
     description: "Lists all commands. If a command is specified, their arguments are listed as well.",
@@ -44,7 +44,7 @@ export default new Command({
             if (command.originalCommandName) header = command.originalCommandName;
             else console.warn(`originalCommandName isn't defined for ${header}?!`);
 
-            let permLevel = command.permission ?? Command.PERMISSIONS.NONE;
+            let permLevel = command.permission ?? 0;
             let usage = command.usage;
             let invalid = false;
 
@@ -135,7 +135,9 @@ export default new Command({
             }
 
             $.channel.send(
-                `Command: \`${header}\`\nAliases: ${aliases}\nCategory: \`${selectedCategory}\`\nPermission Required: \`${PermissionNames[permLevel]}\` (${permLevel})\nDescription: ${command.description}\n${append}`,
+                `Command: \`${header}\`\nAliases: ${aliases}\nCategory: \`${selectedCategory}\`\nPermission Required: \`${getPermissionName(
+                    permLevel
+                )}\` (${permLevel})\nDescription: ${command.description}\n${append}`,
                 {split: true}
             );
         }

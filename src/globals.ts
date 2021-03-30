@@ -2,13 +2,25 @@ import chalk from "chalk";
 
 declare global {
     var IS_DEV_MODE: boolean;
+    var PERMISSIONS: typeof PermissionsEnum;
 
     interface Console {
         ready: (...data: any[]) => void;
     }
 }
 
+enum PermissionsEnum {
+    NONE,
+    MOD,
+    ADMIN,
+    OWNER,
+    BOT_SUPPORT,
+    BOT_ADMIN,
+    BOT_OWNER
+}
+
 global.IS_DEV_MODE = process.argv[2] === "dev";
+global.PERMISSIONS = PermissionsEnum;
 
 const oldConsole = console;
 

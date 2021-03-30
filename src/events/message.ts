@@ -1,6 +1,6 @@
 import Event from "../core/event";
 import Command, {loadableCommands} from "../core/command";
-import {hasPermission, getPermissionLevel, PermissionNames} from "../core/permissions";
+import {hasPermission, getPermissionLevel, getPermissionName} from "../core/permissions";
 import {Permissions} from "discord.js";
 import {getPrefix} from "../core/structures";
 import {replyEventListeners} from "../core/libd";
@@ -91,7 +91,7 @@ export default new Event<"message">({
         if (!command) return console.warn(`Command "${header}" was called but for some reason it's still undefined!`);
         const params: any[] = [];
         let isEndpoint = false;
-        let permLevel = command.permission ?? Command.PERMISSIONS.NONE;
+        let permLevel = command.permission ?? 0;
 
         for (let param of args) {
             if (command.endpoint) {
@@ -122,7 +122,11 @@ export default new Event<"message">({
         if (!hasPermission(message.member, permLevel)) {
             const userPermLevel = getPermissionLevel(message.member);
             return message.channel.send(
-                `You don't have access to this command! Your permission level is \`${PermissionNames[userPermLevel]}\` (${userPermLevel}), but this command requires a permission level of \`${PermissionNames[permLevel]}\` (${permLevel}).`
+                `You don't have access to this command! Your permission level is \`${getPermissionName(
+                    userPermLevel
+                )}\` (${userPermLevel}), but this command requires a permission level of \`${getPermissionName(
+                    permLevel
+                )}\` (${permLevel}).`
             );
         }
 

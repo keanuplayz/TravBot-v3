@@ -1,7 +1,7 @@
 import Command, {handler} from "../core/command";
 import {botHasPermission, clean} from "../core/libd";
 import {Config, Storage} from "../core/structures";
-import {PermissionNames, getPermissionLevel} from "../core/permissions";
+import {getPermissionLevel, getPermissionName} from "../core/permissions";
 import {Permissions} from "discord.js";
 import * as discord from "discord.js";
 import {logs} from "../globals";
@@ -30,14 +30,14 @@ export default new Command({
         }
         const permLevel = getPermissionLevel($.member);
         $.channel.send(
-            `${$.author.toString()}, your permission level is \`${PermissionNames[permLevel]}\` (${permLevel}).`
+            `${$.author.toString()}, your permission level is \`${getPermissionName(permLevel)}\` (${permLevel}).`
         );
     },
     subcommands: {
         set: new Command({
             description: "Set different per-guild settings for the bot.",
             run: "You have to specify the option you want to set.",
-            permission: Command.PERMISSIONS.ADMIN,
+            permission: PERMISSIONS.ADMIN,
             subcommands: {
                 prefix: new Command({
                     description: "Set a custom prefix for your guild. Removes your custom prefix if none is provided.",
@@ -61,7 +61,7 @@ export default new Command({
         }),
         diag: new Command({
             description: 'Requests a debug log with the "info" verbosity level.',
-            permission: Command.PERMISSIONS.BOT_SUPPORT,
+            permission: PERMISSIONS.BOT_SUPPORT,
             async run($) {
                 $.channel.send(getLogBuffer("info"));
             },
@@ -82,7 +82,7 @@ export default new Command({
         }),
         status: new Command({
             description: "Changes the bot's status.",
-            permission: Command.PERMISSIONS.BOT_SUPPORT,
+            permission: PERMISSIONS.BOT_SUPPORT,
             async run($) {
                 $.channel.send("Setting status to `online`...");
             },
@@ -101,7 +101,7 @@ export default new Command({
         }),
         purge: new Command({
             description: "Purges bot messages.",
-            permission: Command.PERMISSIONS.BOT_SUPPORT,
+            permission: PERMISSIONS.BOT_SUPPORT,
             async run($) {
                 if ($.message.channel instanceof discord.DMChannel) {
                     return;
@@ -142,7 +142,7 @@ export default new Command({
         eval: new Command({
             description: "Evaluate code.",
             usage: "<code>",
-            permission: Command.PERMISSIONS.BOT_OWNER,
+            permission: PERMISSIONS.BOT_OWNER,
             // You have to bring everything into scope to use them. AFAIK, there isn't a more maintainable way to do this, but at least TS will let you know if anything gets removed.
             async run({args, author, channel, client, guild, member, message}) {
                 try {
@@ -158,7 +158,7 @@ export default new Command({
         }),
         nick: new Command({
             description: "Change the bot's nickname.",
-            permission: Command.PERMISSIONS.BOT_SUPPORT,
+            permission: PERMISSIONS.BOT_SUPPORT,
             async run($) {
                 const nickName = $.args.join(" ");
                 await $.guild?.me?.setNickname(nickName);
@@ -169,7 +169,7 @@ export default new Command({
         }),
         guilds: new Command({
             description: "Shows a list of all guilds the bot is a member of.",
-            permission: Command.PERMISSIONS.BOT_SUPPORT,
+            permission: PERMISSIONS.BOT_SUPPORT,
             async run($) {
                 const guildList = $.client.guilds.cache.array().map((e) => e.name);
                 $.channel.send(guildList);
@@ -177,7 +177,7 @@ export default new Command({
         }),
         activity: new Command({
             description: "Set the activity of the bot.",
-            permission: Command.PERMISSIONS.BOT_SUPPORT,
+            permission: PERMISSIONS.BOT_SUPPORT,
             usage: "<type> <string>",
             async run($) {
                 $.client.user?.setActivity(".help", {
