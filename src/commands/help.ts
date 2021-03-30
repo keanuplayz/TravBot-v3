@@ -19,7 +19,9 @@ export default new Command({
                     const command = commands.get(header);
 
                     if (!command)
-                        return $.warn(`Command "${header}" of category "${category}" unexpectedly doesn't exist!`);
+                        return console.warn(
+                            `Command "${header}" of category "${category}" unexpectedly doesn't exist!`
+                        );
 
                     output += `\n- \`${header}\`: ${command.description}`;
                 }
@@ -37,7 +39,7 @@ export default new Command({
             if (!command || header === "test") return $.channel.send(`No command found by the name \`${header}\`!`);
 
             if (command.originalCommandName) header = command.originalCommandName;
-            else $.warn(`originalCommandName isn't defined for ${header}?!`);
+            else console.warn(`originalCommandName isn't defined for ${header}?!`);
 
             let permLevel = command.permission ?? Command.PERMISSIONS.NONE;
             let usage = command.usage;
@@ -48,7 +50,7 @@ export default new Command({
             for (const [category, headers] of categories) {
                 if (headers.includes(header)) {
                     if (selectedCategory !== "Unknown")
-                        $.warn(
+                        console.warn(
                             `Command "${header}" is somehow in multiple categories. This means that the command loading stage probably failed in properly adding categories.`
                         );
                     else selectedCategory = $(category).toTitleCase();

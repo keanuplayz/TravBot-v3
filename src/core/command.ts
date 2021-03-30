@@ -1,4 +1,4 @@
-import $, {isType, parseVars, CommonLibrary} from "./lib";
+import {isType, parseVars, CommonLibrary} from "./lib";
 import {Collection} from "discord.js";
 import {PERMISSIONS} from "./permissions";
 import {getPrefix} from "../core/structures";
@@ -68,11 +68,11 @@ export default class Command {
 
                 for (const alias of aliases) {
                     if (baseSubcommands.includes(alias))
-                        $.warn(
+                        console.warn(
                             `"${alias}" in subcommand "${name}" was attempted to be declared as an alias but it already exists in the base commands! (Look at the next "Loading Command" line to see which command is affected.)`
                         );
                     else if (this.subcommands.has(alias))
-                        $.warn(
+                        console.warn(
                             `Duplicate alias "${alias}" at subcommand "${name}"! (Look at the next "Loading Command" line to see which command is affected.)`
                         );
                     else this.subcommands.set(alias, subcmd);
@@ -81,17 +81,17 @@ export default class Command {
         }
 
         if (this.user && this.user.aliases.length > 0)
-            $.warn(
+            console.warn(
                 `There are aliases defined for a "user"-type subcommand, but those aliases won't be used. (Look at the next "Loading Command" line to see which command is affected.)`
             );
 
         if (this.number && this.number.aliases.length > 0)
-            $.warn(
+            console.warn(
                 `There are aliases defined for a "number"-type subcommand, but those aliases won't be used. (Look at the next "Loading Command" line to see which command is affected.)`
             );
 
         if (this.any && this.any.aliases.length > 0)
-            $.warn(
+            console.warn(
                 `There are aliases defined for an "any"-type subcommand, but those aliases won't be used. (Look at the next "Loading Command" line to see which command is affected.)`
             );
     }
@@ -179,7 +179,7 @@ export const loadableCommands = (async () => {
                 command.originalCommandName = commandName;
 
                 if (commands.has(commandName)) {
-                    $.warn(
+                    console.warn(
                         `Command "${commandName}" already exists! Make sure to make each command uniquely identifiable across categories!`
                     );
                 } else {
@@ -188,7 +188,7 @@ export const loadableCommands = (async () => {
 
                 for (const alias of command.aliases) {
                     if (commands.has(alias)) {
-                        $.warn(
+                        console.warn(
                             `Top-level alias "${alias}" from command "${commandID}" already exists either as a command or alias!`
                         );
                     } else {
@@ -199,9 +199,9 @@ export const loadableCommands = (async () => {
                 if (!(category in lists)) lists[category] = [];
                 lists[category].push(commandName);
 
-                $.log(`Loading Command: ${commandID}`);
+                console.log(`Loading Command: ${commandID}`);
             } else {
-                $.warn(`Command "${commandID}" has no default export which is a Command instance!`);
+                console.warn(`Command "${commandID}" has no default export which is a Command instance!`);
             }
         }
     }

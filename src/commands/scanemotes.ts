@@ -131,7 +131,7 @@ export default new Command({
                                         continueReactionLoop = false;
 
                                         if (reaction.count !== userReactions + botReactions) {
-                                            $.warn(
+                                            console.warn(
                                                 `[Channel: ${channel.id}, Message: ${msg.id}] A reaction count of ${reaction.count} was expected but was given ${userReactions} user reactions and ${botReactions} bot reactions.`
                                             );
                                             warnings++;
@@ -161,7 +161,7 @@ export default new Command({
                 "y"
             )}.`
         );
-        $.log(`Finished operation in ${finishTime - startTime} ms.`);
+        console.log(`Finished operation in ${finishTime - startTime} ms.`);
         $.channel.stopTyping();
 
         // Display stats on emote usage.

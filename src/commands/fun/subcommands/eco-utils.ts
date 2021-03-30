@@ -62,7 +62,7 @@ export function getSendEmbed(sender: User, receiver: User, amount: number): obje
 }
 
 export function isAuthorized(guild: Guild | null, channel: TextChannel | DMChannel | NewsChannel): boolean {
-    if (guild?.id === "637512823676600330" && channel?.id === "669464416420364288" || process.argv[2] === "dev") return true;
+    if ((guild?.id === "637512823676600330" && channel?.id === "669464416420364288") || IS_DEV_MODE) return true;
     else {
         channel.send("Sorry, this command can only be used in Monika's emote server. (#mon-stocks)");
         return false;

@@ -1,6 +1,5 @@
 import {Client, ClientEvents, Constants} from "discord.js";
 import Storage from "./storage";
-import $ from "./lib";
 
 interface EventOptions<K extends keyof ClientEvents> {
     readonly on?: (...args: ClientEvents[K]) => void;
@@ -30,9 +29,9 @@ export async function loadEvents(client: Client) {
 
         if ((Object.values(Constants.Events) as string[]).includes(header)) {
             event.attach(client, header);
-            $.log(`Loading Event: ${header}`);
+            console.log(`Loading Event: ${header}`);
         } else
-            $.warn(
+            console.warn(
                 `"${header}" is not a valid event type! Did you misspell it? (Note: If you fixed the issue, delete "dist" because the compiler won't automatically delete any extra files.)`
             );
     }

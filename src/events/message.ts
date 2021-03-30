@@ -82,13 +82,13 @@ export default new Event<"message">({
             );
         }
 
-        $.log(
+        console.log(
             `${message.author.username}#${message.author.discriminator} executed the command "${header}" with arguments "${args}".`
         );
 
         // Subcommand Recursion //
         let command = commands.get(header);
-        if (!command) return $.warn(`Command "${header}" was called but for some reason it's still undefined!`);
+        if (!command) return console.warn(`Command "${header}" was called but for some reason it's still undefined!`);
         const params: any[] = [];
         let isEndpoint = false;
         let permLevel = command.permission ?? Command.PERMISSIONS.NONE;
@@ -96,7 +96,7 @@ export default new Event<"message">({
         for (let param of args) {
             if (command.endpoint) {
                 if (command.subcommands.size > 0 || command.user || command.number || command.any)
-                    $.warn(`An endpoint cannot have subcommands! Check ${originalPrefix}${header} again.`);
+                    console.warn(`An endpoint cannot have subcommands! Check ${originalPrefix}${header} again.`);
                 isEndpoint = true;
                 break;
             }
@@ -117,7 +117,7 @@ export default new Event<"message">({
         }
 
         if (!message.member)
-            return $.warn("This command was likely called from a DM channel meaning the member object is null.");
+            return console.warn("This command was likely called from a DM channel meaning the member object is null.");
 
         if (!hasPermission(message.member, permLevel)) {
             const userPermLevel = getPermissionLevel(message.member);

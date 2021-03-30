@@ -1,6 +1,5 @@
 import {GenericWrapper, NumberWrapper, StringWrapper, ArrayWrapper} from "./wrappers";
 import {Client, Message, TextChannel, DMChannel, NewsChannel, Guild, User, GuildMember, Permissions} from "discord.js";
-import chalk from "chalk";
 import {get} from "https";
 import FileManager from "./storage";
 import {eventListeners} from "../events/messageReactionRemove";
@@ -19,11 +18,6 @@ export interface CommonLibrary {
     // Common Library Functions //
     /** <Promise>.catch($.handler.bind($)) or <Promise>.catch(error => $.handler(error)) */
     handler: (error: Error) => void;
-    log: (...args: any[]) => void;
-    warn: (...args: any[]) => void;
-    error: (...args: any[]) => void;
-    debug: (...args: any[]) => void;
-    ready: (...args: any[]) => void;
     paginate: (
         message: Message,
         senderID: string,
@@ -79,93 +73,12 @@ $.handler = function (this: CommonLibrary, error: Error) {
             `There was an error while trying to execute that command!\`\`\`${error.stack ?? error}\`\`\``
         );
     else
-        $.warn(
+        console.warn(
             "No context was attached to $.handler! Make sure to use .catch($.handler.bind($)) or .catch(error => $.handler(error)) instead!"
         );
 
-    $.error(error);
+    console.error(error);
 };
-
-// Logs with different levels of verbosity.
-export const logs: {[type: string]: string} = {
-    error: "",
-    warn: "",
-    info: "",
-    verbose: ""
-};
-
-let enabled = true;
-
-export function setConsoleActivated(activated: boolean) {
-    enabled = activated;
-}
-
-// The custom console. In order of verbosity, error, warn, log, and debug. Ready is a variation of log.
-// General Purpose Logger
-$.log = (...args: any[]) => {
-    if (enabled) console.log(chalk.white.bgGray(formatTimestamp()), chalk.black.bgWhite("INFO"), ...args);
-
-    const text = `[${formatUTCTimestamp()}] [INFO] ${args.join(" ")}\n`;
-    logs.info += text;
-    logs.verbose += text;
-};
-// "It'll still work, but you should really check up on this."
-$.warn = (...args: any[]) => {
-    if (enabled) console.warn(chalk.white.bgGray(formatTimestamp()), chalk.black.bgYellow("WARN"), ...args);
-
-    const text = `[${formatUTCTimestamp()}] [WARN] ${args.join(" ")}\n`;
-    logs.warn += text;
-    logs.info += text;
-    logs.verbose += text;
-};
-// Used for anything which prevents the program from actually running.
-$.error = (...args: any[]) => {
-    if (enabled) console.error(chalk.white.bgGray(formatTimestamp()), chalk.white.bgRed("ERROR"), ...args);
-
-    const text = `[${formatUTCTimestamp()}] [ERROR] ${args.join(" ")}\n`;
-    logs.error += text;
-    logs.warn += text;
-    logs.info += text;
-    logs.verbose += text;
-};
-// Be as verbose as possible. If anything might help when debugging an error, then include it. This only shows in your console if you run this with "dev", but you can still get it from "logs.verbose".
-// $.debug(`core/lib::parseArgs("testing \"in progress\"") = ["testing", "in progress"]`) --> <path>/::(<object>.)<function>(<args>) = <value>
-// Would probably be more suited for debugging program logic rather than function logic, which can be checked using unit tests.
-$.debug = (...args: any[]) => {
-    if (process.argv[2] === "dev" && enabled)
-        console.debug(chalk.white.bgGray(formatTimestamp()), chalk.white.bgBlue("DEBUG"), ...args);
-
-    const text = `[${formatUTCTimestamp()}] [DEBUG] ${args.join(" ")}\n`;
-    logs.verbose += text;
-};
-// Used once at the start of the program when the bot loads.
-$.ready = (...args: any[]) => {
-    if (enabled) console.log(chalk.white.bgGray(formatTimestamp()), chalk.black.bgGreen("READY"), ...args);
-
-    const text = `[${formatUTCTimestamp()}] [READY] ${args.join(" ")}\n`;
-    logs.info += text;
-    logs.verbose += text;
-};
-
-export function formatTimestamp(now = new Date()) {
-    const year = now.getFullYear();
-    const month = (now.getMonth() + 1).toString().padStart(2, "0");
-    const day = now.getDate().toString().padStart(2, "0");
-    const hour = now.getHours().toString().padStart(2, "0");
-    const minute = now.getMinutes().toString().padStart(2, "0");
-    const second = now.getSeconds().toString().padStart(2, "0");
-    return `${year}-${month}-${day} ${hour}:${minute}:${second}`;
-}
-
-export function formatUTCTimestamp(now = new Date()) {
-    const year = now.getUTCFullYear();
-    const month = (now.getUTCMonth() + 1).toString().padStart(2, "0");
-    const day = now.getUTCDate().toString().padStart(2, "0");
-    const hour = now.getUTCHours().toString().padStart(2, "0");
-    const minute = now.getUTCMinutes().toString().padStart(2, "0");
-    const second = now.getUTCSeconds().toString().padStart(2, "0");
-    return `${year}-${month}-${day} ${hour}:${minute}:${second}`;
-}
 
 export function botHasPermission(guild: Guild | null, permission: number): boolean {
     return !!guild?.me?.hasPermission(permission);

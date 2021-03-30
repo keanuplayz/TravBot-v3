@@ -1,3 +1,4 @@
+import "./globals";
 import * as discord from "discord.js";
 import setup from "./setup";
 import {Config} from "./core/structures";

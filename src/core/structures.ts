@@ -1,5 +1,5 @@
 import FileManager from "./storage";
-import $, {select, GenericJSON, GenericStructure} from "./lib";
+import {select, GenericJSON, GenericStructure} from "./lib";
 import {watch} from "fs";
 import {Guild as DiscordGuild, Snowflake} from "discord.js";
 
@@ -63,7 +63,7 @@ class StorageStructure extends GenericStructure {
     /** Gets a user's profile if they exist and generate one if not. */
     public getUser(id: string): User {
         if (!/\d{17,19}/g.test(id))
-            $.warn(`"${id}" is not a valid user ID! It will be erased when the data loads again.`);
+            console.warn(`"${id}" is not a valid user ID! It will be erased when the data loads again.`);
 
         if (id in this.users) return this.users[id];
         else {
@@ -76,7 +76,7 @@ class StorageStructure extends GenericStructure {
     /** Gets a guild's settings if they exist and generate one if not. */
     public getGuild(id: string): Guild {
         if (!/\d{17,19}/g.test(id))
-            $.warn(`"${id}" is not a valid guild ID! It will be erased when the data loads again.`);
+            console.warn(`"${id}" is not a valid guild ID! It will be erased when the data loads again.`);
 
         if (id in this.guilds) return this.guilds[id];
         else {
@@ -93,9 +93,9 @@ export let Storage = new StorageStructure(FileManager.read("storage"));
 
 // This part will allow the user to manually edit any JSON files they want while the program is running which'll update the program's cache.
 // However, fs.watch is a buggy mess that should be avoided in production. While it helps test out stuff for development, it's not a good idea to have it running outside of development as it causes all sorts of issues.
-if (process.argv[2] === "dev") {
+if (IS_DEV_MODE) {
     watch("data", (event, filename) => {
-        $.debug("File Watcher:", event, filename);
+        console.debug("File Watcher:", event, filename);
         const header = filename.substring(0, filename.indexOf(".json"));
 
         switch (header) {

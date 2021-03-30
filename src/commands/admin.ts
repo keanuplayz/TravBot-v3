@@ -1,9 +1,10 @@
 import Command from "../core/command";
-import {CommonLibrary, logs, botHasPermission, clean} from "../core/lib";
+import {CommonLibrary, botHasPermission, clean} from "../core/lib";
 import {Config, Storage} from "../core/structures";
 import {PermissionNames, getPermissionLevel} from "../core/permissions";
 import {Permissions} from "discord.js";
 import * as discord from "discord.js";
+import {logs} from "../globals";
 
 function getLogBuffer(type: string) {
     return {
