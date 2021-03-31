@@ -1,7 +1,7 @@
 import {User} from "discord.js";
 import Command from "../../core/command";
 import {random} from "../../core/lib";
-import {parseVars} from "../../core/libd";
+import {parseVars} from "../../core/lib";
 
 const cookies = [
     `has given %target% a chocolate chip cookie!`,

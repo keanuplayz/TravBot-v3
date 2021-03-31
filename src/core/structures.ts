@@ -1,5 +1,5 @@
 import FileManager from "./storage";
-import {select, GenericJSON, GenericStructure} from "./libd";
+import {select, GenericJSON, GenericStructure} from "./lib";
 import {watch} from "fs";
 import {Guild as DiscordGuild, Snowflake} from "discord.js";
 

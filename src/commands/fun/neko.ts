@@ -1,6 +1,6 @@
 import {URL} from "url";
 import Command from "../../core/command";
-import {getContent} from "../../core/libd";
+import {getContent} from "../../core/lib";
 
 const endpoints: {sfw: {[key: string]: string}} = {
     sfw: {

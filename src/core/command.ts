@@ -1,4 +1,4 @@
-import {parseVars} from "./libd";
+import {parseVars} from "./lib";
 import {Collection} from "discord.js";
 import {Client, Message, TextChannel, DMChannel, NewsChannel, Guild, User, GuildMember} from "discord.js";
 import {getPrefix} from "../core/structures";
