@@ -1,5 +1,5 @@
-import Command, {handler} from "../core/command";
-import {pluralise} from "../core/lib";
+import Command, {handler} from "../../core/command";
+import {pluralise} from "../../core/lib";
 import moment from "moment";
 import {Collection, TextChannel} from "discord.js";
 

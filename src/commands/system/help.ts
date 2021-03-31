@@ -1,7 +1,7 @@
-import Command from "../core/command";
-import {toTitleCase} from "../core/lib";
-import {loadableCommands, categories} from "../core/command";
-import {getPermissionName} from "../core/permissions";
+import Command from "../../core/command";
+import {toTitleCase} from "../../core/lib";
+import {loadableCommands, categories} from "../../core/command";
+import {getPermissionName} from "../../core/permissions";
 
 export default new Command({
     description: "Lists all commands. If a command is specified, their arguments are listed as well.",

@@ -63,6 +63,6 @@ export function getPermissionLevel(member: GuildMember): number {
 }
 
 export function getPermissionName(level: number) {
-    if (level > length || length < 0) return "N/A";
+    if (level > length || level < 0) return "N/A";
     else return PermissionLevels[level].name;
 }

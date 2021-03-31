@@ -1,8 +1,8 @@
 import Command from "../../core/command";
-import {isAuthorized, getMoneyEmbed} from "./subcommands/eco-utils";
-import {DailyCommand, PayCommand, GuildCommand, LeaderboardCommand} from "./subcommands/eco-core";
-import {BuyCommand, ShopCommand} from "./subcommands/eco-shop";
-import {MondayCommand} from "./subcommands/eco-extras";
+import {isAuthorized, getMoneyEmbed} from "./modules/eco-utils";
+import {DailyCommand, PayCommand, GuildCommand, LeaderboardCommand} from "./modules/eco-core";
+import {BuyCommand, ShopCommand} from "./modules/eco-shop";
+import {MondayCommand} from "./modules/eco-extras";
 import {callMemberByUsername} from "../../core/libd";
 
 export default new Command({

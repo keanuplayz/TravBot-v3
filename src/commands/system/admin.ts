@@ -1,10 +1,10 @@
-import Command, {handler} from "../core/command";
-import {clean} from "../core/lib";
-import {botHasPermission} from "../core/libd";
-import {Config, Storage} from "../core/structures";
-import {getPermissionLevel, getPermissionName} from "../core/permissions";
+import Command, {handler} from "../../core/command";
+import {clean} from "../../core/lib";
+import {botHasPermission} from "../../core/libd";
+import {Config, Storage} from "../../core/structures";
+import {getPermissionLevel, getPermissionName} from "../../core/permissions";
 import {Permissions} from "discord.js";
-import {logs} from "../globals";
+import {logs} from "../../globals";
 
 function getLogBuffer(type: string) {
     return {

@@ -1,10 +1,10 @@
 import {MessageEmbed, version as djsversion} from "discord.js";
 import ms from "ms";
 import os from "os";
-import Command from "../core/command";
-import {formatBytes, trimArray} from "../core/lib";
-import {getMemberByUsername} from "../core/libd";
-import {verificationLevels, filterLevels, regions} from "../defs/info";
+import Command from "../../core/command";
+import {formatBytes, trimArray} from "../../core/lib";
+import {getMemberByUsername} from "../../core/libd";
+import {verificationLevels, filterLevels, regions} from "../../defs/info";
 import moment from "moment";
 import utc from "moment";
 import {Guild} from "discord.js";

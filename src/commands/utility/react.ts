@@ -1,6 +1,6 @@
 import Command from "../../core/command";
 import {Message, Channel, TextChannel} from "discord.js";
-import {queryClosestEmoteByName} from "./subcommands/emote-utils";
+import {queryClosestEmoteByName} from "./modules/emote-utils";
 
 export default new Command({
     description:
