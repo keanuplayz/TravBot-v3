@@ -9,34 +9,23 @@ import {
     NewsChannel,
     MessageOptions
 } from "discord.js";
-import FileManager from "./storage";
-import {eventListeners} from "../events/messageReactionRemove";
 import {client} from "../index";
-import {EmoteRegistryDump} from "./structures";
+
+// A list of message ID and callback pairs. You get the emote name and ID of the user reacting.
+const eventListeners: Map<string, (emote: string, id: string) => void> = new Map();
+
+// Attached to the client, there can be one event listener attached to a message ID which is executed if present.
+client.on("messageReactionRemove", (reaction, user) => {
+    const canDeleteEmotes = botHasPermission(reaction.message.guild, Permissions.FLAGS.MANAGE_MESSAGES);
+
+    if (!canDeleteEmotes) {
+        const callback = eventListeners.get(reaction.message.id);
+        callback && callback(reaction.emoji.name, user.id);
+    }
+});
 
 export function botHasPermission(guild: Guild | null, permission: number): boolean {
     return !!guild?.me?.hasPermission(permission);
-}
-
-export function updateGlobalEmoteRegistry(): void {
-    const data: EmoteRegistryDump = {version: 1, list: []};
-
-    for (const guild of client.guilds.cache.values()) {
-        for (const emote of guild.emojis.cache.values()) {
-            data.list.push({
-                ref: emote.name,
-                id: emote.id,
-                name: emote.name,
-                requires_colons: emote.requiresColons || false,
-                animated: emote.animated,
-                url: emote.url,
-                guild_id: emote.guild.name,
-                guild_name: emote.guild.name
-            });
-        }
-    }
-
-    FileManager.write("emote-registry", data, true);
 }
 
 // Maybe promisify this section to reduce the potential for creating callback hell? Especially if multiple questions in a row are being asked.

@@ -1,6 +1,7 @@
-import {Presence, Client} from "discord.js";
+import {Presence} from "discord.js";
 import LavalinkMusic from "discord.js-lavalink-lib";
 import {Config} from "../core/structures";
+import {client} from "../index";
 
 declare module "discord.js" {
     interface Presence {
@@ -28,26 +29,24 @@ Presence.prototype.patch = function patch(data: any) {
 // the function which handles those packets is NOP-ed out, which, among other
 // things, skips the code which caches the referenced users in the packet. See
 // <https://github.com/discordjs/discord.js/blob/cee6cf70ce76e9b06dc7f25bfd77498e18d7c8d4/src/client/actions/PresenceUpdate.js#L7-L41>.
-export function attachToClient(client: Client) {
-    (client["actions"] as any)["PresenceUpdate"].handle = () => {};
+(client["actions"] as any)["PresenceUpdate"].handle = () => {};
 
-    (client as any).music = LavalinkMusic(client, {
-        lavalink: {
-            restnode: {
+(client as any).music = LavalinkMusic(client, {
+    lavalink: {
+        restnode: {
+            host: "localhost",
+            port: 2333,
+            password: "youshallnotpass"
+        },
+        nodes: [
+            {
                 host: "localhost",
                 port: 2333,
                 password: "youshallnotpass"
-            },
-            nodes: [
-                {
-                    host: "localhost",
-                    port: 2333,
-                    password: "youshallnotpass"
-                }
-            ]
-        },
-        prefix: Config.prefix,
-        helpCmd: "mhelp",
-        admins: ["717352467280691331"]
-    });
-}
+            }
+        ]
+    },
+    prefix: Config.prefix,
+    helpCmd: "mhelp",
+    admins: ["717352467280691331"]
+});
