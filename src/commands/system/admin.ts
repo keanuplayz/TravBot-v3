@@ -4,7 +4,7 @@ import {botHasPermission} from "../../core/libd";
 import {Config, Storage} from "../../core/structures";
 import {getPermissionLevel, getPermissionName} from "../../core/permissions";
 import {Permissions} from "discord.js";
-import {logs} from "../../globals";
+import {logs} from "../../modules/globals";
 
 function getLogBuffer(type: string) {
     return {

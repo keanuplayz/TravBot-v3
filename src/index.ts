@@ -1,7 +1,7 @@
 // Bootstrapping Section //
-import "./globals";
+import "./modules/globals";
 import {Client} from "discord.js";
-import setup from "./setup";
+import setup from "./modules/setup";
 import {Config} from "./core/structures";
 
 // This is here in order to make it much less of a headache to access the client from other files.
@@ -15,6 +15,7 @@ setup.init().then(() => {
 
 // Initialize Modules //
 import "./core/handler"; // Command loading will start as soon as an instance of "core/command" is loaded, which is loaded in "core/handler".
+import "./modules/presence";
 import "./modules/lavalink";
 import "./modules/emoteRegistry";
 import "./modules/channelListener";

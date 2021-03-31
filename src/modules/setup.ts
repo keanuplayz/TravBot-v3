@@ -1,7 +1,7 @@
 import {existsSync as exists, readFileSync as read, writeFile as write} from "fs";
 import inquirer from "inquirer";
-import Storage, {generateHandler} from "./core/storage";
-import {Config} from "./core/structures";
+import Storage, {generateHandler} from "../core/storage";
+import {Config} from "../core/structures";
 
 // The template should be built with a reductionist mentality.
 // Provide everything the user needs and then let them remove whatever they want.

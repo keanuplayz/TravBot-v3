@@ -65,6 +65,8 @@ export default new Command({
                 command = command.get(param);
                 permLevel = command.permission ?? permLevel;
 
+                if (permLevel === -1) permLevel = command.permission;
+
                 switch (type) {
                     case Command.TYPES.SUBCOMMAND:
                         header += ` ${command.originalCommandName}`;
