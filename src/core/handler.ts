@@ -1,5 +1,5 @@
 import {client} from "../index";
-import Command, {loadableCommands} from "../core/command";
+import Command, {loadableCommands, TYPES} from "../core/command";
 import {hasPermission, getPermissionLevel, getPermissionName} from "../core/permissions";
 import {Permissions} from "discord.js";
 import {getPrefix} from "../core/structures";
@@ -102,18 +102,70 @@ client.on("message", async (message) => {
         }
 
         const type = command.resolve(param);
-        command = command.get(param);
+        command = command.get(param, type);
         permLevel = command.permission ?? permLevel;
 
-        if (type === Command.TYPES.USER) {
-            const id = param.match(/\d+/g)![0];
-            try {
-                params.push(await message.client.users.fetch(id));
-            } catch (error) {
-                return message.channel.send(`No user found by the ID \`${id}\`!`);
+        // Add argument to parameter list, do different stuff depending on the subcommand type.
+        switch (type) {
+            case TYPES.SUBCOMMAND:
+                break;
+            case TYPES.CHANNEL: {
+                const id = param.match(/^<#(\d{17,19})>$/)![1];
+                console.debug(id);
+                try {
+                    params.push(message.guild!.channels.cache.get(id));
+                } catch (error) {
+                    return message.channel.send(`No channel found by the ID \`${id}\` in this guild!`);
+                }
+                break;
             }
-        } else if (type === Command.TYPES.NUMBER) params.push(Number(param));
-        else if (type !== Command.TYPES.SUBCOMMAND) params.push(param);
+            case TYPES.ROLE: {
+                const id = param.match(/^<@&(\d{17,19})>$/)![1];
+                console.debug(id);
+                try {
+                    params.push(await message.guild!.roles.fetch(id));
+                } catch (error) {
+                    return message.channel.send(`No role found by the ID \`${id}\` in this guild!`);
+                }
+                break;
+            }
+            case TYPES.EMOTE: {
+                const id = param.match(/^<a?:.*?:(\d{17,19})>$/)![1];
+                console.debug(id);
+                try {
+                    params.push(message.client.emojis.cache.get(id));
+                } catch (error) {
+                    return message.channel.send(`No emote found by the ID \`${id}\`!`);
+                }
+                break;
+            }
+            case TYPES.MESSAGE: {
+                const id = param.match(/(\d{17,19}\/\d{17,19}\/\d{17,19}$)|(^\d{17,19}-\d{17,19}$)/);
+                console.log(id);
+                /*try {
+                    params.push(await message.client.users.fetch(id));
+                } catch (error) {
+                    return message.channel.send(`No user found by the ID \`${id}\`!`);
+                }*/
+                break;
+            }
+            case TYPES.USER: {
+                const id = param.match(/^<@!?(\d{17,19})>$/)![1];
+                console.debug(param, id);
+                try {
+                    params.push(await message.client.users.fetch(id));
+                } catch (error) {
+                    return message.channel.send(`No user found by the ID \`${id}\`!`);
+                }
+                break;
+            }
+            case TYPES.NUMBER:
+                params.push(Number(param));
+                break;
+            case TYPES.ANY:
+                params.push(param);
+                break;
+        }
     }
 
     if (!message.member)

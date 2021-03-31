@@ -1,4 +1,4 @@
-import Command from "../../core/command";
+import Command, {TYPES} from "../../core/command";
 import {toTitleCase} from "../../core/lib";
 import {loadableCommands, categories} from "../../core/command";
 import {getPermissionName} from "../../core/permissions";
@@ -68,16 +68,16 @@ export default new Command({
                 if (permLevel === -1) permLevel = command.permission;
 
                 switch (type) {
-                    case Command.TYPES.SUBCOMMAND:
+                    case TYPES.SUBCOMMAND:
                         header += ` ${command.originalCommandName}`;
                         break;
-                    case Command.TYPES.USER:
+                    case TYPES.USER:
                         header += " <user>";
                         break;
-                    case Command.TYPES.NUMBER:
+                    case TYPES.NUMBER:
                         header += " <number>";
                         break;
-                    case Command.TYPES.ANY:
+                    case TYPES.ANY:
                         header += " <any>";
                         break;
                     default:
@@ -85,7 +85,7 @@ export default new Command({
                         break;
                 }
 
-                if (type === Command.TYPES.NONE) {
+                if (type === TYPES.NONE) {
                     invalid = true;
                     break;
                 }

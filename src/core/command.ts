@@ -1,6 +1,5 @@
 import {parseVars} from "./lib";
-import {Collection} from "discord.js";
-import {Client, Message, TextChannel, DMChannel, NewsChannel, Guild, User, GuildMember} from "discord.js";
+import {Collection, Client, Message, TextChannel, DMChannel, NewsChannel, Guild, User, GuildMember} from "discord.js";
 import {getPrefix} from "../core/structures";
 import glob from "glob";
 
@@ -22,17 +21,27 @@ interface CommandOptions {
     aliases?: string[];
     run?: (($: CommandMenu) => Promise<any>) | string;
     subcommands?: {[key: string]: Command};
+    channel?: Command;
+    role?: Command;
+    emote?: Command;
+    message?: Command;
     user?: Command;
+    id?: "channel" | "role" | "emote" | "message" | "user";
     number?: Command;
     any?: Command;
 }
 
 export enum TYPES {
-    SUBCOMMAND,
-    USER,
-    NUMBER,
-    ANY,
-    NONE
+    SUBCOMMAND, // Any specifically-defined keywords / string literals.
+    CHANNEL, // <#...>
+    ROLE, // <@&...>
+    EMOTE, // <::ID> (The previous two values, animated and emote name respectively, do not matter at all for finding the emote.)
+    MESSAGE, // Available by using the built-in "Copy Message Link" or "Copy ID" buttons. https://discordapp.com/channels/<Guild ID>/<Channel ID>/<Message ID> or <Channel ID>-<Message ID> (automatically searches all guilds for the channel ID).
+    USER, // <@...> and <@!...>
+    ID, // Any number with 17-19 digits. Only used as a redirect to another subcommand type.
+    NUMBER, // Any valid number via the Number() function, except for NaN and Infinity (because those can really mess with the program).
+    ANY, // Generic argument case.
+    NONE // No subcommands exist.
 }
 
 export default class Command {
@@ -44,10 +53,14 @@ export default class Command {
     public originalCommandName: string | null; // If the command is an alias, what's the original name?
     public run: (($: CommandMenu) => Promise<any>) | string;
     public readonly subcommands: Collection<string, Command>; // This is the final data structure you'll actually use to work with the commands the aliases point to.
+    public channel: Command | null;
+    public role: Command | null;
+    public emote: Command | null;
+    public message: Command | null;
     public user: Command | null;
+    public id: Command | null;
     public number: Command | null;
     public any: Command | null;
-    public static readonly TYPES = TYPES;
 
     constructor(options?: CommandOptions) {
         this.description = options?.description || "No description.";
@@ -58,9 +71,34 @@ export default class Command {
         this.originalCommandName = null;
         this.run = options?.run || "No action was set on this command!";
         this.subcommands = new Collection(); // Populate this collection after setting subcommands.
+        this.channel = options?.channel || null;
+        this.role = options?.role || null;
+        this.emote = options?.emote || null;
+        this.message = options?.message || null;
         this.user = options?.user || null;
         this.number = options?.number || null;
         this.any = options?.any || null;
+
+        switch (options?.id) {
+            case "channel":
+                this.id = this.channel;
+                break;
+            case "role":
+                this.id = this.role;
+                break;
+            case "emote":
+                this.id = this.emote;
+                break;
+            case "message":
+                this.id = this.message;
+                break;
+            case "user":
+                this.id = this.user;
+                break;
+            default:
+                this.id = null;
+                break;
+        }
 
         if (options?.subcommands) {
             const baseSubcommands = Object.keys(options.subcommands);
@@ -89,20 +127,28 @@ export default class Command {
             }
         }
 
-        if (this.user && this.user.aliases.length > 0)
-            console.warn(
-                `There are aliases defined for a "user"-type subcommand, but those aliases won't be used. (Look at the next "Loading Command" line to see which command is affected.)`
-            );
+        // Because command aliases don't actually do anything except for subcommands, let the user know that this won't do anything.
+        warnCommandAliases(this.channel, "channel");
+        warnCommandAliases(this.role, "role");
+        warnCommandAliases(this.emote, "emote");
+        warnCommandAliases(this.message, "message");
+        warnCommandAliases(this.user, "user");
+        warnCommandAliases(this.number, "number");
+        warnCommandAliases(this.any, "any");
 
-        if (this.number && this.number.aliases.length > 0)
-            console.warn(
-                `There are aliases defined for a "number"-type subcommand, but those aliases won't be used. (Look at the next "Loading Command" line to see which command is affected.)`
-            );
-
-        if (this.any && this.any.aliases.length > 0)
-            console.warn(
-                `There are aliases defined for an "any"-type subcommand, but those aliases won't be used. (Look at the next "Loading Command" line to see which command is affected.)`
-            );
+        // Warn on unused endpoints too.
+        if (
+            this.endpoint &&
+            (this.subcommands.size > 0 ||
+                this.channel ||
+                this.role ||
+                this.emote ||
+                this.message ||
+                this.user ||
+                this.number ||
+                this.any)
+        )
+            console.warn(`An endpoint cannot have subcommands!`);
     }
 
     public execute($: CommandMenu) {
@@ -121,39 +167,59 @@ export default class Command {
     }
 
     public resolve(param: string): TYPES {
+        if (this.id && /^\d{17,19}$/.test(param)) {
+        }
+
         if (this.subcommands.has(param)) return TYPES.SUBCOMMAND;
-        // Any Discord ID format will automatically format to a user ID.
-        else if (this.user && /\d{17,19}/.test(param)) return TYPES.USER;
+        else if (this.channel && /^<#\d{17,19}>$/.test(param)) return TYPES.CHANNEL;
+        else if (this.role && /^<@&\d{17,19}>$/.test(param)) return TYPES.ROLE;
+        else if (this.emote && /^<a?:.*?:\d{17,19}>$/.test(param)) return TYPES.EMOTE;
+        else if (this.message && /(\d{17,19}\/\d{17,19}\/\d{17,19}$)|(^\d{17,19}-\d{17,19}$)/.test(param))
+            return TYPES.MESSAGE;
+        else if (this.user && /^<@!?\d{17,19}>$/.test(param)) return TYPES.USER;
         // Disallow infinity and allow for 0.
-        else if (this.number && (Number(param) || param === "0") && !param.includes("Infinity")) return TYPES.NUMBER;
+        else if (this.number && !Number.isNaN(Number(param)) && param !== "Infinity" && param !== "-Infinity")
+            return TYPES.NUMBER;
         else if (this.any) return TYPES.ANY;
         else return TYPES.NONE;
     }
 
-    public get(param: string): Command {
-        const type = this.resolve(param);
-        let command: Command;
-
-        switch (type) {
+    // You can also optionally send in a pre-calculated value if you already called Command.resolve so you don't call it again.
+    public get(param: string, type?: TYPES): Command {
+        // This expression only runs once, don't worry.
+        switch (type ?? this.resolve(param)) {
             case TYPES.SUBCOMMAND:
-                command = this.subcommands.get(param) as Command;
-                break;
+                return checkResolvedCommand(this.subcommands.get(param));
+            case TYPES.CHANNEL:
+                return checkResolvedCommand(this.channel);
+            case TYPES.ROLE:
+                return checkResolvedCommand(this.role);
+            case TYPES.EMOTE:
+                return checkResolvedCommand(this.emote);
+            case TYPES.MESSAGE:
+                return checkResolvedCommand(this.message);
             case TYPES.USER:
-                command = this.user as Command;
-                break;
+                return checkResolvedCommand(this.user);
             case TYPES.NUMBER:
-                command = this.number as Command;
-                break;
+                return checkResolvedCommand(this.number);
             case TYPES.ANY:
-                command = this.any as Command;
-                break;
+                return checkResolvedCommand(this.any);
             default:
-                command = this;
-                break;
+                return this;
         }
-
-        return command;
     }
+}
+
+function warnCommandAliases(command: Command | null, type: string) {
+    if (command && command.aliases.length > 0)
+        console.warn(
+            `There are aliases defined for an "${type}"-type subcommand, but those aliases won't be used. (Look at the next "Loading Command" line to see which command is affected.)`
+        );
+}
+
+function checkResolvedCommand(command: Command | null | undefined): Command {
+    if (!command) throw new Error("FATAL: Command type mismatch while calling Command.get!");
+    return command;
 }
 
 // Internally, it'll keep its original capitalization. It's up to you to convert it to title case when you make a help command.
