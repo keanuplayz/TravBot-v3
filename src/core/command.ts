@@ -3,23 +3,49 @@ import {Collection, Client, Message, TextChannel, DMChannel, NewsChannel, Guild,
 import {getPrefix} from "../core/structures";
 import glob from "glob";
 
-interface CommandMenu {
+export enum CHANNEL_TYPE {
+    BOTH,
+    GUILD,
+    DM
+}
+
+// **Notice**
+// Now that I've tried it out, this turned out to be a pretty bad idea in the amount of time spent, the decrease of flexibility, and the maintainability of the code. It's not even worth doing this.
+
+interface CommandMenuBase {
     args: any[];
     client: Client;
     message: Message;
-    channel: TextChannel | DMChannel | NewsChannel;
-    guild: Guild | null;
     author: User;
+    // According to the documentation, a message can be part of a guild while also not having a
+    // member object for the author. This will happen if the author of a message left the guild.
     member: GuildMember | null;
 }
 
-interface CommandOptions {
+interface CommandMenuBoth extends CommandMenuBase {
+    channel: TextChannel | DMChannel | NewsChannel;
+    guild: Guild | null;
+}
+
+interface CommandMenuGuild extends CommandMenuBase {
+    channel: TextChannel | NewsChannel;
+    guild: Guild;
+}
+
+// If it's a DM, the guild must be null and the channel type must be DM (single user). Although there is a Group DM type on Discord's API, it will always be invalid for bots. It can never be a group DM because you need to be friends with a user to add them to a group DM and you cannot friend bots.
+interface CommandMenuDM extends CommandMenuBase {
+    channel: DMChannel;
+    guild: null;
+}
+
+type CommandMenu = CommandMenuBoth | CommandMenuGuild | CommandMenuDM;
+
+interface CommandOptionsBase {
     description?: string;
     endpoint?: boolean;
     usage?: string;
     permission?: number;
     aliases?: string[];
-    run?: (($: CommandMenu) => Promise<any>) | string;
     subcommands?: {[key: string]: Command};
     channel?: Command;
     role?: Command;
@@ -30,6 +56,23 @@ interface CommandOptions {
     number?: Command;
     any?: Command;
 }
+
+interface CommandOptionsBoth extends CommandOptionsBase {
+    channelType: CHANNEL_TYPE.BOTH;
+    run?: (($: CommandMenuBoth) => Promise<any>) | string;
+}
+
+interface CommandOptionsGuild extends CommandOptionsBase {
+    channelType: CHANNEL_TYPE.GUILD;
+    run?: (($: CommandMenuGuild) => Promise<any>) | string;
+}
+
+interface CommandOptionsDM extends CommandOptionsBase {
+    channelType: CHANNEL_TYPE.DM;
+    run?: (($: CommandMenuDM) => Promise<any>) | string;
+}
+
+type CommandOptions = CommandOptionsBoth | CommandOptionsGuild | CommandOptionsDM;
 
 export enum TYPES {
     SUBCOMMAND, // Any specifically-defined keywords / string literals.
@@ -51,7 +94,12 @@ export default class Command {
     public readonly permission: number; // -1 (default) indicates to inherit, 0 is the lowest rank, 1 is second lowest rank, and so on.
     public readonly aliases: string[]; // This is to keep the array intact for parent Command instances to use. It'll also be used when loading top-level aliases.
     public originalCommandName: string | null; // If the command is an alias, what's the original name?
-    public run: (($: CommandMenu) => Promise<any>) | string;
+    // I'm going to trust that the code knows which one to execute.
+    private runAnywhere?: ($: CommandMenuBoth) => Promise<any>;
+    private runGuild?: ($: CommandMenuGuild) => Promise<any>;
+    private runDM?: ($: CommandMenuDM) => Promise<any>;
+    private runMessage?: string;
+    private runType: keyof typeof CHANNEL_TYPE | "TEXT";
     public readonly subcommands: Collection<string, Command>; // This is the final data structure you'll actually use to work with the commands the aliases point to.
     public channel: Command | null;
     public role: Command | null;
@@ -62,24 +110,45 @@ export default class Command {
     public number: Command | null;
     public any: Command | null;
 
-    constructor(options?: CommandOptions) {
-        this.description = options?.description || "No description.";
-        this.endpoint = options?.endpoint || false;
-        this.usage = options?.usage || "";
-        this.permission = options?.permission ?? -1;
-        this.aliases = options?.aliases ?? [];
+    constructor(options: CommandOptions) {
+        this.description = options.description || "No description.";
+        this.endpoint = options.endpoint || false;
+        this.usage = options.usage || "";
+        this.permission = options.permission ?? -1;
+        this.aliases = options.aliases ?? [];
         this.originalCommandName = null;
-        this.run = options?.run || "No action was set on this command!";
         this.subcommands = new Collection(); // Populate this collection after setting subcommands.
-        this.channel = options?.channel || null;
-        this.role = options?.role || null;
-        this.emote = options?.emote || null;
-        this.message = options?.message || null;
-        this.user = options?.user || null;
-        this.number = options?.number || null;
-        this.any = options?.any || null;
+        this.channel = options.channel || null;
+        this.role = options.role || null;
+        this.emote = options.emote || null;
+        this.message = options.message || null;
+        this.user = options.user || null;
+        this.number = options.number || null;
+        this.any = options.any || null;
 
-        switch (options?.id) {
+        if (typeof options.run === "string") {
+            this.runMessage = options.run;
+            this.runType = "TEXT";
+        } else if (options.run === undefined) {
+            this.runMessage = "No action was set on this command!";
+            this.runType = "TEXT";
+        } else {
+            switch (options.channelType) {
+                case CHANNEL_TYPE.BOTH:
+                    this.runAnywhere = options.run;
+                    this.runType = "BOTH";
+                    break;
+                case CHANNEL_TYPE.GUILD:
+                    this.runGuild = options.run;
+                    this.runType = "GUILD";
+                    break;
+                case CHANNEL_TYPE.DM:
+                    this.runDM = options.run;
+                    this.runType = "DM";
+            }
+        }
+
+        switch (options.id) {
             case "channel":
                 this.id = this.channel;
                 break;
@@ -100,7 +169,7 @@ export default class Command {
                 break;
         }
 
-        if (options?.subcommands) {
+        if (options.subcommands) {
             const baseSubcommands = Object.keys(options.subcommands);
 
             // Loop once to set the base subcommands.
@@ -152,18 +221,32 @@ export default class Command {
     }
 
     public execute($: CommandMenu) {
-        if (typeof this.run === "string") {
-            $.channel.send(
-                parseVars(
-                    this.run,
-                    {
-                        author: $.author.toString(),
-                        prefix: getPrefix($.guild)
-                    },
-                    "???"
-                )
-            );
-        } else this.run($).catch(handler.bind($));
+        switch (this.runType) {
+            case "BOTH":
+                this.runAnywhere!($).catch(handler.bind($));
+                break;
+            case "GUILD":
+                if ($.guild !== null && $.channel.type !== "dm")
+                    this.runGuild!($ as CommandMenuGuild).catch(handler.bind($));
+                else $.channel.send("You must use this command in a guild!");
+                break;
+            case "DM":
+                if ($.guild === null && $.channel.type === "dm") this.runDM!($ as CommandMenuDM).catch(handler.bind($));
+                else $.channel.send("You can't use this command in a guild!");
+                break;
+            case "TEXT":
+                $.channel.send(
+                    parseVars(
+                        this.runMessage!,
+                        {
+                            author: $.author.toString(),
+                            prefix: getPrefix($.guild)
+                        },
+                        "???"
+                    )
+                );
+                break;
+        }
     }
 
     public resolve(param: string): TYPES {
