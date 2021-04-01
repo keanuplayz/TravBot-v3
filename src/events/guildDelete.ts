@@ -3,8 +3,8 @@ import $ from "../core/lib";
 import {updateGlobalEmoteRegistry} from "../core/lib";
 
 export default new Event<"guildDelete">({
-    on() {
-        $.log("Updated emote registry.");
+    on(guild) {
+        $.log(`[GUILD LEAVE] ${guild.name} (${guild.id}) removed the bot. Updated emote registry.`);
         updateGlobalEmoteRegistry();
     }
 });

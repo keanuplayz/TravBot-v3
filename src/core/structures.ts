@@ -51,9 +51,24 @@ class User {
 
 class Guild {
     public prefix: string | null;
+    public welcomeType: "none" | "text" | "graphical";
+    public welcomeChannel: string | null;
 
     constructor(data?: GenericJSON) {
         this.prefix = select(data?.prefix, null, String);
+        this.welcomeChannel = select(data?.welcomeChannel, null, String);
+
+        switch (data?.welcomeType) {
+            case "text":
+                this.welcomeType = "text";
+                break;
+            case "graphical":
+                this.welcomeType = "graphical";
+                break;
+            default:
+                this.welcomeType = "none";
+                break;
+        }
     }
 }
 

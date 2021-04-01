@@ -55,6 +55,79 @@ export default new Command({
                             $.channel.send(`The custom prefix for this guild is now \`${$.args[0]}\`.`);
                         }
                     })
+                }),
+                welcome: new Command({
+                    description: "Configure your server's welcome settings for the bot.",
+                    usage: "type/channel <...>",
+                    run: "You need to specify which part to modify, `type`/`channel`.",
+                    subcommands: {
+                        type: new Command({
+                            description:
+                                "Sets how welcome messages are displayed for your server. Removes welcome messages if unspecified.",
+                            usage: "`none`/`text`/`graphical`",
+                            async run($) {
+                                if ($.guild) {
+                                    Storage.getGuild($.guild.id).welcomeType = "none";
+                                    Storage.save();
+                                    $.channel.send("Set this server's welcome type to `none`.");
+                                } else {
+                                    $.channel.send("You must use this command in a server.");
+                                }
+                            },
+                            // I should probably make this a bit more dynamic... Oh well.
+                            subcommands: {
+                                text: new Command({
+                                    async run($) {
+                                        if ($.guild) {
+                                            Storage.getGuild($.guild.id).welcomeType = "text";
+                                            Storage.save();
+                                            $.channel.send("Set this server's welcome type to `text`.");
+                                        } else {
+                                            $.channel.send("You must use this command in a server.");
+                                        }
+                                    }
+                                }),
+                                graphical: new Command({
+                                    async run($) {
+                                        if ($.guild) {
+                                            Storage.getGuild($.guild.id).welcomeType = "graphical";
+                                            Storage.save();
+                                            $.channel.send("Set this server's welcome type to `graphical`.");
+                                        } else {
+                                            $.channel.send("You must use this command in a server.");
+                                        }
+                                    }
+                                })
+                            }
+                        }),
+                        channel: new Command({
+                            description: "Sets the welcome channel for your server. Type `#` to reference the channel.",
+                            usage: "<channel mention>",
+                            run: "You need to specify a channel.",
+                            // If/when channel types come out, this will be the perfect candidate to test it.
+                            any: new Command({
+                                async run($) {
+                                    if ($.guild) {
+                                        const match = $.args[0].match(/^<#(\d{17,19})>$/);
+
+                                        if (match) {
+                                            Storage.getGuild($.guild.id).welcomeChannel = match[1];
+                                            Storage.save();
+                                            $.channel.send(
+                                                `Successfully set this server's welcome channel to ${match[0]}.`
+                                            );
+                                        } else {
+                                            $.channel.send(
+                                                "You must provide a reference channel. You can do this by typing `#` then searching for the proper channel."
+                                            );
+                                        }
+                                    } else {
+                                        $.channel.send("You must use this command in a server.");
+                                    }
+                                }
+                            })
+                        })
+                    }
                 })
             }
         }),
