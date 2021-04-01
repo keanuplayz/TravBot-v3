@@ -15,7 +15,10 @@ setup.init().then(() => {
 
 // Initialize Modules //
 import "./core/handler"; // Command loading will start as soon as an instance of "core/command" is loaded, which is loaded in "core/handler".
+import "./core/eventListeners";
 import "./modules/presence";
 import "./modules/lavalink";
 import "./modules/emoteRegistry";
 import "./modules/channelListener";
+import "./modules/intercept";
+import "./modules/messageEmbed";

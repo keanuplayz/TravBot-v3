@@ -9,20 +9,9 @@ import {
     NewsChannel,
     MessageOptions
 } from "discord.js";
-import {client} from "../index";
+import {unreactEventListeners, replyEventListeners} from "./eventListeners";
 
-// A list of message ID and callback pairs. You get the emote name and ID of the user reacting.
-const eventListeners: Map<string, (emote: string, id: string) => void> = new Map();
-
-// Attached to the client, there can be one event listener attached to a message ID which is executed if present.
-client.on("messageReactionRemove", (reaction, user) => {
-    const canDeleteEmotes = botHasPermission(reaction.message.guild, Permissions.FLAGS.MANAGE_MESSAGES);
-
-    if (!canDeleteEmotes) {
-        const callback = eventListeners.get(reaction.message.id);
-        callback && callback(reaction.emoji.name, user.id);
-    }
-});
+export type SingleMessageOptions = MessageOptions & {split?: false};
 
 export function botHasPermission(guild: Guild | null, permission: number): boolean {
     return !!guild?.me?.hasPermission(permission);
@@ -36,7 +25,7 @@ export async function paginate(
     channel: TextChannel | DMChannel | NewsChannel,
     senderID: string,
     total: number,
-    callback: (page: number, hasMultiplePages: boolean) => MessageOptions & {split?: false},
+    callback: (page: number, hasMultiplePages: boolean) => SingleMessageOptions,
     duration = 60000
 ) {
     const hasMultiplePages = total > 1;
@@ -70,7 +59,7 @@ export async function paginate(
         // Listen for reactions and call the handler.
         let backwardsReaction = await message.react(BACKWARDS_EMOJI);
         let forwardsReaction = await message.react(FORWARDS_EMOJI);
-        eventListeners.set(message.id, handle);
+        unreactEventListeners.set(message.id, handle);
         const collector = message.createReactionCollector(
             (reaction, user) => {
                 if (user.id === senderID) {
@@ -91,7 +80,7 @@ export async function paginate(
 
         // When time's up, remove the bot's own reactions.
         collector.on("end", () => {
-            eventListeners.delete(message.id);
+            unreactEventListeners.delete(message.id);
             backwardsReaction.users.remove(message.author);
             forwardsReaction.users.remove(message.author);
         });
@@ -126,10 +115,6 @@ export async function prompt(message: Message, senderID: string, onConfirm: () =
 
     if (!isDeleted) message.delete();
 }
-
-// A list of "channel-message" and callback pairs. Also, I imagine that the callback will be much more maintainable when discord.js v13 comes out with a dedicated message.referencedMessage property.
-// Also, I'm defining it here instead of the message event because the load order screws up if you export it from there. Yeah... I'm starting to notice just how much technical debt has been built up. The command handler needs to be modularized and refactored sooner rather than later. Define all constants in one area then grab from there.
-export const replyEventListeners = new Map<string, (message: Message) => void>();
 
 // Asks the user for some input using the inline reply feature. The message here is a message you send beforehand.
 // If the reply is rejected, reply with an error message (when stable support comes from discord.js).

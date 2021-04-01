@@ -1,37 +1,42 @@
 import {client} from "../index";
-import Command, {loadableCommands} from "../core/command";
-import {hasPermission, getPermissionLevel, getPermissionName} from "../core/permissions";
-import {Permissions} from "discord.js";
-import {getPrefix} from "../core/structures";
-import {replyEventListeners} from "../core/libd";
-import quote from "../modules/message_embed";
-import {Config} from "../core/structures";
+import Command, {loadableCommands} from "./command";
+import {hasPermission, getPermissionLevel, getPermissionName} from "./permissions";
+import {Permissions, Message} from "discord.js";
+import {getPrefix} from "./structures";
+import {Config} from "./structures";
+
+///////////
+// Steps //
+///////////
+// 1. Someone sends a message in chat.
+// 2. Check if bot, then load commands.
+// 3. Check if "<prefix>...". If not, check if "@<bot>...". Resolve prefix and cropped message (if possible).
+// 4. Test if bot has permission to send messages.
+// 5. Once confirmed as a command, resolve the subcommand.
+// 6. Check permission level and whether or not it's an endpoint.
+// 7. Execute command if all successful.
+
+// For custom message events that want to cancel this one on certain conditions.
+const interceptRules: ((message: Message) => boolean)[] = [(message) => message.author.bot];
+
+export function addInterceptRule(handler: (message: Message) => boolean) {
+    interceptRules.push(handler);
+}
 
 client.on("message", async (message) => {
+    for (const shouldIntercept of interceptRules) {
+        if (shouldIntercept(message)) {
+            return;
+        }
+    }
+
     const commands = await loadableCommands;
-
-    if (message.content.toLowerCase().includes("remember to drink water")) {
-        message.react("🚱");
-    }
-
-    // Message Setup //
-    if (message.author.bot) return;
-
-    // If there's an inline reply, fire off that event listener (if it exists).
-    if (message.reference) {
-        const reference = message.reference;
-        replyEventListeners.get(`${reference.channelID}-${reference.messageID}`)?.(message);
-    }
 
     let prefix = getPrefix(message.guild);
     const originalPrefix = prefix;
     let exitEarly = !message.content.startsWith(prefix);
     const clientUser = message.client.user;
     let usesBotSpecificPrefix = false;
-
-    if (!message.content.startsWith(prefix)) {
-        return quote(message);
-    }
 
     // If the client user exists, check if it starts with the bot-specific prefix.
     if (clientUser) {
@@ -87,34 +92,8 @@ client.on("message", async (message) => {
     );
 
     // Subcommand Recursion //
-    let command = commands.get(header);
-    if (!command) return console.warn(`Command "${header}" was called but for some reason it's still undefined!`);
-    const params: any[] = [];
-    let isEndpoint = false;
-    let permLevel = command.permission ?? 0;
-
-    for (let param of args) {
-        if (command.endpoint) {
-            if (command.subcommands.size > 0 || command.user || command.number || command.any)
-                console.warn(`An endpoint cannot have subcommands! Check ${originalPrefix}${header} again.`);
-            isEndpoint = true;
-            break;
-        }
-
-        const type = command.resolve(param);
-        command = command.get(param);
-        permLevel = command.permission ?? permLevel;
-
-        if (type === Command.TYPES.USER) {
-            const id = param.match(/\d+/g)![0];
-            try {
-                params.push(await message.client.users.fetch(id));
-            } catch (error) {
-                return message.channel.send(`No user found by the ID \`${id}\`!`);
-            }
-        } else if (type === Command.TYPES.NUMBER) params.push(Number(param));
-        else if (type !== Command.TYPES.SUBCOMMAND) params.push(param);
-    }
+    let command = commands.get(header)!;
+    //resolveSubcommand()
 
     if (!message.member)
         return console.warn("This command was likely called from a DM channel meaning the member object is null.");
@@ -146,6 +125,40 @@ client.on("message", async (message) => {
         message: message
     });
 });
+
+// Takes a base command and a list of string parameters and returns:
+// - The resolved subcommand
+// - The resolved parameters
+// - Whether or not an endpoint has been broken
+// - The permission level required
+async function resolveSubcommand(command: Command, args: string[]): [Command, any[], boolean, number] {
+    const params: any[] = [];
+    let isEndpoint = false;
+    let permLevel = command.permission ?? 0;
+
+    for (const param of args) {
+        if (command.endpoint) {
+            if (command.subcommands.size > 0 || command.user || command.number || command.any)
+                console.warn("An endpoint cannot have subcommands!");
+            isEndpoint = true;
+            break;
+        }
+
+        const type = command.resolve(param);
+        command = command.get(param);
+        permLevel = command.permission ?? permLevel;
+
+        if (type === Command.TYPES.USER) {
+            const id = param.match(/\d+/g)![0];
+            try {
+                params.push(await message.client.users.fetch(id));
+            } catch (error) {
+                return message.channel.send(`No user found by the ID \`${id}\`!`);
+            }
+        } else if (type === Command.TYPES.NUMBER) params.push(Number(param));
+        else if (type !== Command.TYPES.SUBCOMMAND) params.push(param);
+    }
+}
 
 client.once("ready", () => {
     if (client.user) {

@@ -1,19 +1,14 @@
-import {client} from "..";
-import {Message, TextChannel, APIMessage, MessageEmbed} from "discord.js";
+import {client} from "../index";
+import {TextChannel, APIMessage, MessageEmbed} from "discord.js";
 import {getPrefix} from "../core/structures";
 import {DiscordAPIError} from "discord.js";
 
-export default async function quote(message: Message) {
-    if (message.author.bot) return;
-    // const message_link_regex = message.content.match(/(!)?https?:\/\/\w+\.com\/channels\/(\d+)\/(\d+)\/(\d+)/)
-    const message_link_regex = message.content.match(
-        /([<!]?)https?:\/\/(?:ptb\.|canary\.|)discord(?:app)?\.com\/channels\/(\d+)\/(\d+)\/(\d+)(>?)/
-    );
-
-    if (message_link_regex == null) return;
-    const [, char, guildID, channelID, messageID] = message_link_regex;
-
-    if (char || message.content.startsWith(getPrefix(message.guild))) return;
+client.on("message", async (message) => {
+    // Only execute if the message is from a user and isn't a command.
+    if (message.content.startsWith(getPrefix(message.guild)) || message.author.bot) return;
+    const messageLink = extractFirstMessageLink(message.content);
+    if (!messageLink) return;
+    const [guildID, channelID, messageID] = messageLink;
 
     try {
         const channel = client.guilds.cache.get(guildID)?.channels.cache.get(channelID) as TextChannel;
@@ -58,4 +53,15 @@ export default async function quote(message: Message) {
         }
         return console.error(error);
     }
+});
+
+export function extractFirstMessageLink(message: string): [string, string, string] | null {
+    const messageLinkMatch = message.match(
+        /([!<])?https?:\/\/(?:ptb\.|canary\.)?discord(?:app)?\.com\/channels\/(\d{17,19})\/(\d{17,19})\/(\d{17,19})(>)?/
+    );
+    if (messageLinkMatch === null) return null;
+    const [, leftToken, guildID, channelID, messageID, rightToken] = messageLinkMatch;
+    // "!link" and "<link>" will cancel the embed request.
+    if (leftToken === "!" || (leftToken === "<" && rightToken === ">")) return null;
+    else return [guildID, channelID, messageID];
 }
