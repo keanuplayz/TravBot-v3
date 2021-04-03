@@ -3,12 +3,15 @@ import $, {select, GenericJSON, GenericStructure} from "./lib";
 import {watch} from "fs";
 import {Guild as DiscordGuild, Snowflake} from "discord.js";
 
+// Maybe use getters and setters to auto-save on set?
+
 class ConfigStructure extends GenericStructure {
     public token: string;
     public prefix: string;
     public owner: string;
     public admins: string[];
     public support: string[];
+    public systemLogsChannel: string | null;
 
     constructor(data: GenericJSON) {
         super("config");
@@ -17,6 +20,7 @@ class ConfigStructure extends GenericStructure {
         this.owner = select(data.owner, "", String);
         this.admins = select(data.admins, [], String, true);
         this.support = select(data.support, [], String, true);
+        this.systemLogsChannel = select(data.systemLogsChannel, null, String);
     }
 }
 
@@ -53,10 +57,12 @@ class Guild {
     public prefix: string | null;
     public welcomeType: "none" | "text" | "graphical";
     public welcomeChannel: string | null;
+    public welcomeMessage: string | null;
 
     constructor(data?: GenericJSON) {
         this.prefix = select(data?.prefix, null, String);
         this.welcomeChannel = select(data?.welcomeChannel, null, String);
+        this.welcomeMessage = select(data?.welcomeMessage, null, String);
 
         switch (data?.welcomeType) {
             case "text":

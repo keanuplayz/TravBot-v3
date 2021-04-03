@@ -17,7 +17,7 @@ function applyText(canvas: Canvas, text: string) {
 
 export default new Event<"guildMemberAdd">({
     async on(member) {
-        const {welcomeType, welcomeChannel} = Storage.getGuild(member.guild.id);
+        const {welcomeType, welcomeChannel, welcomeMessage} = Storage.getGuild(member.guild.id);
 
         if (welcomeChannel) {
             const channel = member.guild.channels.cache.get(welcomeChannel);
@@ -60,9 +60,13 @@ export default new Event<"guildMemberAdd">({
                     (channel as TextChannel).send(`Welcome \`${member.user.tag}\`!`, attachment);
                 } else if (welcomeType === "text") {
                     (channel as TextChannel).send(
-                        parseVars("Say hello to `%user%`, everyone! We all need a warm welcome sometimes :D", {
-                            user: member.user.tag
-                        })
+                        parseVars(
+                            welcomeMessage ||
+                                "Say hello to `%user%`, everyone! We all need a warm welcome sometimes :D",
+                            {
+                                user: member.user.tag
+                            }
+                        )
                     );
                 }
             } else {

@@ -102,8 +102,18 @@ export default new Command({
                         }),
                         channel: new Command({
                             description: "Sets the welcome channel for your server. Type `#` to reference the channel.",
-                            usage: "<channel mention>",
-                            run: "You need to specify a channel.",
+                            usage: "(<channel mention>)",
+                            async run($) {
+                                if ($.guild) {
+                                    Storage.getGuild($.guild.id).welcomeChannel = $.channel.id;
+                                    Storage.save();
+                                    $.channel.send(
+                                        `Successfully set ${$.channel} as the welcome channel for this server.`
+                                    );
+                                } else {
+                                    $.channel.send("You must use this command in a server.");
+                                }
+                            },
                             // If/when channel types come out, this will be the perfect candidate to test it.
                             any: new Command({
                                 async run($) {
@@ -121,6 +131,32 @@ export default new Command({
                                                 "You must provide a reference channel. You can do this by typing `#` then searching for the proper channel."
                                             );
                                         }
+                                    } else {
+                                        $.channel.send("You must use this command in a server.");
+                                    }
+                                }
+                            })
+                        }),
+                        message: new Command({
+                            description:
+                                "Sets a custom welcome message for your server. Use `%user%` as the placeholder for the user.",
+                            usage: "(<message>)",
+                            async run($) {
+                                if ($.guild) {
+                                    Storage.getGuild($.guild.id).welcomeMessage = null;
+                                    Storage.save();
+                                    $.channel.send("Reset your server's welcome message to the default.");
+                                } else {
+                                    $.channel.send("You must use this command in a server.");
+                                }
+                            },
+                            any: new Command({
+                                async run($) {
+                                    if ($.guild) {
+                                        const message = $.args.join(" ");
+                                        Storage.getGuild($.guild.id).welcomeMessage = message;
+                                        Storage.save();
+                                        $.channel.send(`Set your server's welcome message to \`${message}\`.`);
                                     } else {
                                         $.channel.send("You must use this command in a server.");
                                     }
@@ -275,6 +311,19 @@ export default new Command({
                         );
                 }
             })
+        }),
+        syslog: new Command({
+            description: "Sets up the current channel to receive system logs.",
+            permission: Command.PERMISSIONS.BOT_ADMIN,
+            async run($) {
+                if ($.guild) {
+                    Config.systemLogsChannel = $.channel.id;
+                    Config.save();
+                    $.channel.send(`Successfully set ${$.channel} as the system logs channel.`);
+                } else {
+                    $.channel.send("DM system log channels aren't supported.");
+                }
+            }
         })
     }
 });
