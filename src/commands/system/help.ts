@@ -1,6 +1,6 @@
 import Command from "../../core/command";
 import {toTitleCase} from "../../core/lib";
-import {loadableCommands, categories} from "../../core/command";
+import {loadableCommands, categories} from "../../core/loader";
 import {getPermissionName} from "../../core/permissions";
 
 export default new Command({
@@ -32,69 +32,7 @@ export default new Command({
     },
     any: new Command({
         async run($) {
-            const commands = await loadableCommands;
-            let header = $.args.shift() as string;
-            let command = commands.get(header);
-
-            if (!command || header === "test") {
-                $.channel.send(`No command found by the name \`${header}\`!`);
-                return;
-            }
-
-            if (command.originalCommandName) header = command.originalCommandName;
-            else console.warn(`originalCommandName isn't defined for ${header}?!`);
-
-            let permLevel = command.permission ?? 0;
-            let usage = command.usage;
-            let invalid = false;
-
-            let selectedCategory = "Unknown";
-
-            for (const [category, headers] of categories) {
-                if (headers.includes(header)) {
-                    if (selectedCategory !== "Unknown")
-                        console.warn(
-                            `Command "${header}" is somehow in multiple categories. This means that the command loading stage probably failed in properly adding categories.`
-                        );
-                    else selectedCategory = toTitleCase(category);
-                }
-            }
-
-            for (const param of $.args) {
-                const type = command.resolve(param);
-                command = command.get(param);
-                permLevel = command.permission ?? permLevel;
-
-                if (permLevel === -1) permLevel = command.permission;
-
-                switch (type) {
-                    case Command.TYPES.SUBCOMMAND:
-                        header += ` ${command.originalCommandName}`;
-                        break;
-                    case Command.TYPES.USER:
-                        header += " <user>";
-                        break;
-                    case Command.TYPES.NUMBER:
-                        header += " <number>";
-                        break;
-                    case Command.TYPES.ANY:
-                        header += " <any>";
-                        break;
-                    default:
-                        header += ` ${param}`;
-                        break;
-                }
-
-                if (type === Command.TYPES.NONE) {
-                    invalid = true;
-                    break;
-                }
-            }
-
-            if (invalid) {
-                $.channel.send(`No command found by the name \`${header}\`!`);
-                return;
-            }
+            // [category, commandName, command, subcommandInfo] = resolveCommandInfo();
 
             let append = "";
 
@@ -123,18 +61,10 @@ export default new Command({
                 append = "Usages:" + (list.length > 0 ? `\n${list.join("\n")}` : " None.");
             } else append = `Usage: \`${header} ${usage}\``;
 
-            let aliases = "None";
-
-            if (command.aliases.length > 0) {
-                aliases = "";
-
-                for (let i = 0; i < command.aliases.length; i++) {
-                    const alias = command.aliases[i];
-                    aliases += `\`${alias}\``;
-
-                    if (i !== command.aliases.length - 1) aliases += ", ";
-                }
-            }
+            const formattedAliases: string[] = [];
+            for (const alias of command.aliases) formattedAliases.push(`\`${alias}\``);
+            // Short circuit an empty string, in this case, if there are no aliases.
+            const aliases = formattedAliases.join(", ") || "None";
 
             $.channel.send(
                 `Command: \`${header}\`\nAliases: ${aliases}\nCategory: \`${selectedCategory}\`\nPermission Required: \`${getPermissionName(

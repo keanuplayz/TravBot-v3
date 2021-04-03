@@ -2,7 +2,8 @@ import {parseVars} from "./lib";
 import {Collection} from "discord.js";
 import {Client, Message, TextChannel, DMChannel, NewsChannel, Guild, User, GuildMember} from "discord.js";
 import {getPrefix} from "../core/structures";
-import glob from "glob";
+import {SingleMessageOptions} from "./libd";
+import {hasPermission, getPermissionLevel, getPermissionName} from "./permissions";
 
 interface CommandMenu {
     args: any[];
@@ -27,7 +28,7 @@ interface CommandOptions {
     any?: Command;
 }
 
-export enum TYPES {
+enum TYPES {
     SUBCOMMAND,
     USER,
     NUMBER,
@@ -47,7 +48,6 @@ export default class Command {
     public user: Command | null;
     public number: Command | null;
     public any: Command | null;
-    public static readonly TYPES = TYPES;
 
     constructor(options?: CommandOptions) {
         this.description = options?.description || "No description.";
@@ -120,6 +120,67 @@ export default class Command {
         } else this.run($).catch(handler.bind($));
     }
 
+    // Will return null if it successfully executes, SingleMessageOptions if there's an error (to let the user know what it is).
+    public async actualExecute(args: string[], tmp: any): Promise<SingleMessageOptions | null> {
+        // Subcommand Recursion //
+        let command = commands.get(header)!;
+        //resolveSubcommand()
+        const params: any[] = [];
+        let isEndpoint = false;
+        let permLevel = command.permission ?? 0;
+
+        for (const param of args) {
+            if (command.endpoint) {
+                if (command.subcommands.size > 0 || command.user || command.number || command.any)
+                    console.warn("An endpoint cannot have subcommands!");
+                isEndpoint = true;
+                break;
+            }
+
+            const type = command.resolve(param);
+            command = command.get(param);
+            permLevel = command.permission ?? permLevel;
+
+            if (type === TYPES.USER) {
+                const id = param.match(/\d+/g)![0];
+                try {
+                    params.push(await message.client.users.fetch(id));
+                } catch (error) {
+                    return message.channel.send(`No user found by the ID \`${id}\`!`);
+                }
+            } else if (type === TYPES.NUMBER) params.push(Number(param));
+            else if (type !== TYPES.SUBCOMMAND) params.push(param);
+        }
+
+        if (!message.member)
+            return console.warn("This command was likely called from a DM channel meaning the member object is null.");
+
+        if (!hasPermission(message.member, permLevel)) {
+            const userPermLevel = getPermissionLevel(message.member);
+            return message.channel.send(
+                `You don't have access to this command! Your permission level is \`${getPermissionName(
+                    userPermLevel
+                )}\` (${userPermLevel}), but this command requires a permission level of \`${getPermissionName(
+                    permLevel
+                )}\` (${permLevel}).`
+            );
+        }
+
+        if (isEndpoint) return message.channel.send("Too many arguments!");
+
+        command.execute({
+            args: params,
+            author: message.author,
+            channel: message.channel,
+            client: message.client,
+            guild: message.guild,
+            member: message.member,
+            message: message
+        });
+
+        return null;
+    }
+
     public resolve(param: string): TYPES {
         if (this.subcommands.has(param)) return TYPES.SUBCOMMAND;
         // Any Discord ID format will automatically format to a user ID.
@@ -154,84 +215,73 @@ export default class Command {
 
         return command;
     }
-}
 
-// Internally, it'll keep its original capitalization. It's up to you to convert it to title case when you make a help command.
-export const categories = new Collection<string, string[]>();
+    // Returns: [category, command name, command, available subcommands: [type, subcommand]]
+    public resolveCommandInfo(args: string[]): [string, string, Command, Collection<string, Command>] {
+        const commands = await loadableCommands;
+        let header = args.shift();
+        let command = commands.get(header);
 
-/** Returns the cache of the commands if it exists and searches the directory if not. */
-export const loadableCommands = (async () => {
-    const commands = new Collection<string, Command>();
-    // Include all .ts files recursively in "src/commands/".
-    const files = await globP("src/commands/**/*.ts");
-    // Extract the usable parts from "src/commands/" if:
-    // - The path is 1 to 2 subdirectories (a or a/b, not a/b/c)
-    // - Any leading directory isn't "modules"
-    // - The filename doesn't end in .test.ts (for jest testing)
-    // - The filename cannot be the hardcoded top-level "template.ts", reserved for generating templates
-    const pattern = /src\/commands\/(?!template\.ts)(?!modules\/)(\w+(?:\/\w+)?)(?:test\.)?\.ts/;
-    const lists: {[category: string]: string[]} = {};
+        if (!command || header === "test") {
+            $.channel.send(`No command found by the name \`${header}\`!`);
+            return;
+        }
 
-    for (const path of files) {
-        const match = pattern.exec(path);
+        if (command.originalCommandName) header = command.originalCommandName;
+        else console.warn(`originalCommandName isn't defined for ${header}?!`);
 
-        if (match) {
-            const commandID = match[1]; // e.g. "utilities/info"
-            const slashIndex = commandID.indexOf("/");
-            const isMiscCommand = slashIndex !== -1;
-            const category = isMiscCommand ? commandID.substring(0, slashIndex) : "miscellaneous";
-            const commandName = isMiscCommand ? commandID.substring(slashIndex + 1) : commandID; // e.g. "info"
-            // If the dynamic import works, it must be an object at the very least. Then, just test to see if it's a proper instance.
-            const command = (await import(`../commands/${commandID}`)).default as unknown;
+        let permLevel = command.permission ?? 0;
+        let usage = command.usage;
+        let invalid = false;
 
-            if (command instanceof Command) {
-                command.originalCommandName = commandName;
+        let selectedCategory = "Unknown";
 
-                if (commands.has(commandName)) {
+        for (const [category, headers] of categories) {
+            if (headers.includes(header)) {
+                if (selectedCategory !== "Unknown")
                     console.warn(
-                        `Command "${commandName}" already exists! Make sure to make each command uniquely identifiable across categories!`
+                        `Command "${header}" is somehow in multiple categories. This means that the command loading stage probably failed in properly adding categories.`
                     );
-                } else {
-                    commands.set(commandName, command);
-                }
-
-                for (const alias of command.aliases) {
-                    if (commands.has(alias)) {
-                        console.warn(
-                            `Top-level alias "${alias}" from command "${commandID}" already exists either as a command or alias!`
-                        );
-                    } else {
-                        commands.set(alias, command);
-                    }
-                }
-
-                if (!(category in lists)) lists[category] = [];
-                lists[category].push(commandName);
-
-                console.log(`Loading Command: ${commandID}`);
-            } else {
-                console.warn(`Command "${commandID}" has no default export which is a Command instance!`);
+                else selectedCategory = toTitleCase(category);
             }
         }
-    }
 
-    for (const category in lists) {
-        categories.set(category, lists[category]);
-    }
+        for (const param of args) {
+            const type = command.resolve(param);
+            command = command.get(param);
+            permLevel = command.permission ?? permLevel;
 
-    return commands;
-})();
+            if (permLevel === -1) permLevel = command.permission;
 
-function globP(path: string) {
-    return new Promise<string[]>((resolve, reject) => {
-        glob(path, (error, files) => {
-            if (error) {
-                reject(error);
-            } else {
-                resolve(files);
+            switch (type) {
+                case TYPES.SUBCOMMAND:
+                    header += ` ${command.originalCommandName}`;
+                    break;
+                case TYPES.USER:
+                    header += " <user>";
+                    break;
+                case TYPES.NUMBER:
+                    header += " <number>";
+                    break;
+                case TYPES.ANY:
+                    header += " <any>";
+                    break;
+                default:
+                    header += ` ${param}`;
+                    break;
             }
-        });
-    });
+
+            if (type === TYPES.NONE) {
+                invalid = true;
+                break;
+            }
+        }
+
+        if (invalid) {
+            $.channel.send(`No command found by the name \`${header}\`!`);
+            return;
+        }
+    }
 }
 
 // If you use promises, use this function to display the error in chat.
