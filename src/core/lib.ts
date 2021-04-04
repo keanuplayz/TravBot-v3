@@ -224,3 +224,13 @@ export function split<T>(array: T[], lengthOfEachSection: number): T[][] {
 
     return sections;
 }
+
+/**
+ * Utility function to require all possible cases to be handled at compile time.
+ *
+ * To use this function, place it in the "default" case of a switch statement or the "else" statement of an if-else branch.
+ * If all cases are handled, the variable being tested for should be of type "never", and if it isn't, that means not all cases are handled yet.
+ */
+export function requireAllCasesHandledFor(variable: never): never {
+    throw new Error(`This function should never be called but got the value: ${variable}`);
+}

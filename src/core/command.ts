@@ -1,9 +1,29 @@
-import {parseVars} from "./lib";
+import {parseVars, requireAllCasesHandledFor} from "./lib";
 import {Collection} from "discord.js";
 import {Client, Message, TextChannel, DMChannel, NewsChannel, Guild, User, GuildMember} from "discord.js";
 import {getPrefix} from "../core/structures";
 import {SingleMessageOptions} from "./libd";
 import {hasPermission, getPermissionLevel, getPermissionName} from "./permissions";
+
+export enum TYPES {
+    SUBCOMMAND,
+    USER,
+    NUMBER,
+    ANY,
+    NONE
+}
+
+// Callbacks don't work with discriminated unions:
+// - https://github.com/microsoft/TypeScript/issues/41759
+// - https://github.com/microsoft/TypeScript/issues/35769
+// Therefore, there won't by any type narrowing on channel or guild of CommandMenu until this is fixed.
+// Otherwise, you'd have to define channelType for every single subcommand, which would get very tedious.
+// Just use type assertions when you specify a channel type.
+export enum CHANNEL_TYPE {
+    ANY,
+    GUILD,
+    DM
+}
 
 interface CommandMenu {
     args: any[];
@@ -12,97 +32,101 @@ interface CommandMenu {
     channel: TextChannel | DMChannel | NewsChannel;
     guild: Guild | null;
     author: User;
+    // According to the documentation, a message can be part of a guild while also not having a
+    // member object for the author. This will happen if the author of a message left the guild.
     member: GuildMember | null;
 }
 
-interface CommandOptions {
+interface CommandOptionsBase {
     description?: string;
     endpoint?: boolean;
     usage?: string;
     permission?: number;
-    aliases?: string[];
+    nsfw?: boolean;
+    channelType?: CHANNEL_TYPE;
     run?: (($: CommandMenu) => Promise<any>) | string;
-    subcommands?: {[key: string]: Command};
+}
+
+interface CommandOptionsEndpoint {
+    endpoint: true;
+}
+
+// Prevents subcommands from being added by compile-time.
+interface CommandOptionsNonEndpoint {
+    endpoint?: false;
+    subcommands?: {[key: string]: NamedCommand};
     user?: Command;
     number?: Command;
     any?: Command;
 }
 
-enum TYPES {
-    SUBCOMMAND,
-    USER,
-    NUMBER,
-    ANY,
-    NONE
-}
+type CommandOptions = CommandOptionsBase & (CommandOptionsEndpoint | CommandOptionsNonEndpoint);
+type NamedCommandOptions = CommandOptions & {aliases?: string[]};
 
-export default class Command {
+// RegEx patterns used for identifying/extracting each type from a string argument.
+const patterns = {
+    //
+};
+
+export class Command {
     public readonly description: string;
     public readonly endpoint: boolean;
     public readonly usage: string;
     public readonly permission: number; // -1 (default) indicates to inherit, 0 is the lowest rank, 1 is second lowest rank, and so on.
-    public readonly aliases: string[]; // This is to keep the array intact for parent Command instances to use. It'll also be used when loading top-level aliases.
-    public originalCommandName: string | null; // If the command is an alias, what's the original name?
-    public run: (($: CommandMenu) => Promise<any>) | string;
-    public readonly subcommands: Collection<string, Command>; // This is the final data structure you'll actually use to work with the commands the aliases point to.
-    public user: Command | null;
-    public number: Command | null;
-    public any: Command | null;
+    public readonly nsfw: boolean;
+    public readonly channelType: CHANNEL_TYPE;
+    protected run: (($: CommandMenu) => Promise<any>) | string;
+    protected readonly subcommands: Collection<string, Command>; // This is the final data structure you'll actually use to work with the commands the aliases point to.
+    protected user: Command | null;
+    protected number: Command | null;
+    protected any: Command | null;
+    public static readonly CHANNEL_TYPE = CHANNEL_TYPE;
 
     constructor(options?: CommandOptions) {
         this.description = options?.description || "No description.";
-        this.endpoint = options?.endpoint || false;
-        this.usage = options?.usage || "";
+        this.endpoint = !!options?.endpoint;
+        this.usage = options?.usage ?? "";
         this.permission = options?.permission ?? -1;
-        this.aliases = options?.aliases ?? [];
-        this.originalCommandName = null;
+        this.nsfw = !!options?.nsfw;
+        this.channelType = options?.channelType ?? CHANNEL_TYPE.ANY;
         this.run = options?.run || "No action was set on this command!";
         this.subcommands = new Collection(); // Populate this collection after setting subcommands.
-        this.user = options?.user || null;
-        this.number = options?.number || null;
-        this.any = options?.any || null;
+        this.user = null;
+        this.number = null;
+        this.any = null;
 
-        if (options?.subcommands) {
-            const baseSubcommands = Object.keys(options.subcommands);
+        if (options && !options.endpoint) {
+            this.user = options?.user || null;
+            this.number = options?.number || null;
+            this.any = options?.any || null;
 
-            // Loop once to set the base subcommands.
-            for (const name in options.subcommands) this.subcommands.set(name, options.subcommands[name]);
+            if (options?.subcommands) {
+                const baseSubcommands = Object.keys(options.subcommands);
 
-            // Then loop again to make aliases point to the base subcommands and warn if something's not right.
-            // This shouldn't be a problem because I'm hoping that JS stores these as references that point to the same object.
-            for (const name in options.subcommands) {
-                const subcmd = options.subcommands[name];
-                subcmd.originalCommandName = name;
-                const aliases = subcmd.aliases;
+                // Loop once to set the base subcommands.
+                for (const name in options.subcommands) this.subcommands.set(name, options.subcommands[name]);
 
-                for (const alias of aliases) {
-                    if (baseSubcommands.includes(alias))
-                        console.warn(
-                            `"${alias}" in subcommand "${name}" was attempted to be declared as an alias but it already exists in the base commands! (Look at the next "Loading Command" line to see which command is affected.)`
-                        );
-                    else if (this.subcommands.has(alias))
-                        console.warn(
-                            `Duplicate alias "${alias}" at subcommand "${name}"! (Look at the next "Loading Command" line to see which command is affected.)`
-                        );
-                    else this.subcommands.set(alias, subcmd);
+                // Then loop again to make aliases point to the base subcommands and warn if something's not right.
+                // This shouldn't be a problem because I'm hoping that JS stores these as references that point to the same object.
+                for (const name in options.subcommands) {
+                    const subcmd = options.subcommands[name];
+                    subcmd.originalCommandName = name;
+                    const aliases = subcmd.aliases;
+
+                    for (const alias of aliases) {
+                        if (baseSubcommands.includes(alias))
+                            console.warn(
+                                `"${alias}" in subcommand "${name}" was attempted to be declared as an alias but it already exists in the base commands! (Look at the next "Loading Command" line to see which command is affected.)`
+                            );
+                        else if (this.subcommands.has(alias))
+                            console.warn(
+                                `Duplicate alias "${alias}" at subcommand "${name}"! (Look at the next "Loading Command" line to see which command is affected.)`
+                            );
+                        else this.subcommands.set(alias, subcmd);
+                    }
                 }
             }
         }
-
-        if (this.user && this.user.aliases.length > 0)
-            console.warn(
-                `There are aliases defined for a "user"-type subcommand, but those aliases won't be used. (Look at the next "Loading Command" line to see which command is affected.)`
-            );
-
-        if (this.number && this.number.aliases.length > 0)
-            console.warn(
-                `There are aliases defined for a "number"-type subcommand, but those aliases won't be used. (Look at the next "Loading Command" line to see which command is affected.)`
-            );
-
-        if (this.any && this.any.aliases.length > 0)
-            console.warn(
-                `There are aliases defined for an "any"-type subcommand, but those aliases won't be used. (Look at the next "Loading Command" line to see which command is affected.)`
-            );
     }
 
     public execute($: CommandMenu) {
@@ -120,23 +144,18 @@ export default class Command {
         } else this.run($).catch(handler.bind($));
     }
 
+    // Go through the arguments provided and find the right subcommand, then execute with the given arguments.
     // Will return null if it successfully executes, SingleMessageOptions if there's an error (to let the user know what it is).
     public async actualExecute(args: string[], tmp: any): Promise<SingleMessageOptions | null> {
+        // For debug info, use this.originalCommandName?
         // Subcommand Recursion //
-        let command = commands.get(header)!;
+        let command: Command = new Command(); // = commands.get(header)!;
         //resolveSubcommand()
         const params: any[] = [];
         let isEndpoint = false;
         let permLevel = command.permission ?? 0;
 
         for (const param of args) {
-            if (command.endpoint) {
-                if (command.subcommands.size > 0 || command.user || command.number || command.any)
-                    console.warn("An endpoint cannot have subcommands!");
-                isEndpoint = true;
-                break;
-            }
-
             const type = command.resolve(param);
             command = command.get(param);
             permLevel = command.permission ?? permLevel;
@@ -181,7 +200,7 @@ export default class Command {
         return null;
     }
 
-    public resolve(param: string): TYPES {
+    private resolve(param: string): TYPES {
         if (this.subcommands.has(param)) return TYPES.SUBCOMMAND;
         // Any Discord ID format will automatically format to a user ID.
         else if (this.user && /\d{17,19}/.test(param)) return TYPES.USER;
@@ -191,33 +210,35 @@ export default class Command {
         else return TYPES.NONE;
     }
 
-    public get(param: string): Command {
+    private get(param: string): Command {
         const type = this.resolve(param);
         let command: Command;
 
         switch (type) {
             case TYPES.SUBCOMMAND:
-                command = this.subcommands.get(param) as Command;
+                command = this.subcommands.get(param)!;
                 break;
             case TYPES.USER:
-                command = this.user as Command;
+                command = this.user!;
                 break;
             case TYPES.NUMBER:
-                command = this.number as Command;
+                command = this.number!;
                 break;
             case TYPES.ANY:
-                command = this.any as Command;
+                command = this.any!;
                 break;
-            default:
+            case TYPES.NONE:
                 command = this;
                 break;
+            default:
+                requireAllCasesHandledFor(type);
         }
 
         return command;
     }
 
     // Returns: [category, command name, command, available subcommands: [type, subcommand]]
-    public resolveCommandInfo(args: string[]): [string, string, Command, Collection<string, Command>] {
+    public async resolveInfo(args: string[]): [string, string, Command, Collection<string, Command>] | null {
         const commands = await loadableCommands;
         let header = args.shift();
         let command = commands.get(header);
@@ -253,6 +274,7 @@ export default class Command {
 
             if (permLevel === -1) permLevel = command.permission;
 
+            // Switch over to doing `$help info <user>`
             switch (type) {
                 case TYPES.SUBCOMMAND:
                     header += ` ${command.originalCommandName}`;
@@ -266,9 +288,11 @@ export default class Command {
                 case TYPES.ANY:
                     header += " <any>";
                     break;
-                default:
+                case TYPES.NONE:
                     header += ` ${param}`;
                     break;
+                default:
+                    requireAllCasesHandledFor(type);
             }
 
             if (type === TYPES.NONE) {
@@ -281,6 +305,17 @@ export default class Command {
             $.channel.send(`No command found by the name \`${header}\`!`);
             return;
         }
+    }
+}
+
+export class NamedCommand extends Command {
+    public readonly aliases: string[]; // This is to keep the array intact for parent Command instances to use. It'll also be used when loading top-level aliases.
+    public originalCommandName: string | null; // If the command is an alias, what's the original name?
+
+    constructor(options?: NamedCommandOptions) {
+        super(options);
+        this.aliases = options?.aliases || [];
+        this.originalCommandName = null;
     }
 }
 

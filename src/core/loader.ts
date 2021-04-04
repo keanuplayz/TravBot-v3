@@ -1,6 +1,6 @@
 import {Collection} from "discord.js";
 import glob from "glob";
-import Command from "./command";
+import {Command, NamedCommand} from "./command";
 
 // Internally, it'll keep its original capitalization. It's up to you to convert it to title case when you make a help command.
 export const categories = new Collection<string, string[]>();
@@ -30,7 +30,7 @@ export const loadableCommands = (async () => {
             // If the dynamic import works, it must be an object at the very least. Then, just test to see if it's a proper instance.
             const command = (await import(`../commands/${commandID}`)).default as unknown;
 
-            if (command instanceof Command) {
+            if (command instanceof NamedCommand) {
                 command.originalCommandName = commandName;
 
                 if (commands.has(commandName)) {
@@ -56,7 +56,7 @@ export const loadableCommands = (async () => {
 
                 console.log(`Loading Command: ${commandID}`);
             } else {
-                console.warn(`Command "${commandID}" has no default export which is a Command instance!`);
+                console.warn(`Command "${commandID}" has no default export which is a NamedCommand instance!`);
             }
         }
     }
