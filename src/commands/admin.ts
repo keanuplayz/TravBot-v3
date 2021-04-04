@@ -164,6 +164,26 @@ export default new Command({
                             })
                         })
                     }
+                }),
+                stream: new Command({
+                    description: "Set a channel to send stream notifications.",
+                    async run($) {
+                        if ($.guild) {
+                            const guild = Storage.getGuild($.guild.id);
+
+                            if (guild.streamingChannel) {
+                                guild.streamingChannel = null;
+                                $.channel.send("Removed your server's stream notifications channel.");
+                            } else {
+                                guild.streamingChannel = $.channel.id;
+                                $.channel.send(`Set your server's stream notifications channel to ${$.channel}.`);
+                            }
+
+                            Storage.save();
+                        } else {
+                            $.channel.send("You must use this command in a server.");
+                        }
+                    }
                 })
             }
         }),

@@ -58,11 +58,13 @@ class Guild {
     public welcomeType: "none" | "text" | "graphical";
     public welcomeChannel: string | null;
     public welcomeMessage: string | null;
+    public streamingChannel: string | null;
 
     constructor(data?: GenericJSON) {
         this.prefix = select(data?.prefix, null, String);
         this.welcomeChannel = select(data?.welcomeChannel, null, String);
         this.welcomeMessage = select(data?.welcomeMessage, null, String);
+        this.streamingChannel = select(data?.streamingChannel, null, String);
 
         switch (data?.welcomeType) {
             case "text":
