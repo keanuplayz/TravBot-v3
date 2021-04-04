@@ -29,7 +29,8 @@ const registry: {[id: string]: string} = {
     "328223274133880833": "The stealthiest hitman.",
     "219661798742163467": "An extremely talented artist and modder.",
     "440399719076855818":
-        "You are, uhh, Stay Put, Soft Puppy, Es-Pee, Swift Pacemaker, Smug Poyo, and many more.\n...Seriously, this woman has too many names."
+        "You are, uhh, Stay Put, Soft Puppy, Es-Pee, Swift Pacemaker, Smug Poyo, and many more.\n...Seriously, this woman has too many names.",
+    "243061915281129472": "Some random conlanger, worldbuilder and programmer doofus. ~~May also secretly be a nyan. :3~~"
 };
 
 export default new Command({
