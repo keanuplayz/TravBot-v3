@@ -15,7 +15,7 @@ export const PermissionLevels: PermissionLevel[] = [
     {
         // MOD //
         name: "Moderator",
-        check: (_, member) =>
+        check: (_user, member) =>
             !!member &&
             (member.hasPermission(Permissions.FLAGS.MANAGE_ROLES) ||
                 member.hasPermission(Permissions.FLAGS.MANAGE_MESSAGES) ||
@@ -25,12 +25,12 @@ export const PermissionLevels: PermissionLevel[] = [
     {
         // ADMIN //
         name: "Administrator",
-        check: (_, member) => !!member && member.hasPermission(Permissions.FLAGS.ADMINISTRATOR)
+        check: (_user, member) => !!member && member.hasPermission(Permissions.FLAGS.ADMINISTRATOR)
     },
     {
         // OWNER //
         name: "Server Owner",
-        check: (_, member) => !!member && member.guild.ownerID === member.id
+        check: (_user, member) => !!member && member.guild.ownerID === member.id
     },
     {
         // BOT_SUPPORT //
@@ -52,13 +52,13 @@ export const PermissionLevels: PermissionLevel[] = [
 // After checking the lengths of these three objects, use this as the length for consistency.
 const length = PermissionLevels.length;
 
-export function hasPermission(member: GuildMember, permission: number): boolean {
-    for (let i = length - 1; i >= permission; i--) if (PermissionLevels[i].check(member.user, member)) return true;
+export function hasPermission(user: User, member: GuildMember | null, permission: number): boolean {
+    for (let i = length - 1; i >= permission; i--) if (PermissionLevels[i].check(user, member)) return true;
     return false;
 }
 
-export function getPermissionLevel(member: GuildMember): number {
-    for (let i = length - 1; i >= 0; i--) if (PermissionLevels[i].check(member.user, member)) return i;
+export function getPermissionLevel(user: User, member: GuildMember | null): number {
+    for (let i = length - 1; i >= 0; i--) if (PermissionLevels[i].check(user, member)) return i;
     return 0;
 }
 

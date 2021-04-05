@@ -1,9 +1,10 @@
 import {parseVars, requireAllCasesHandledFor} from "./lib";
 import {Collection} from "discord.js";
-import {Client, Message, TextChannel, DMChannel, NewsChannel, Guild, User, GuildMember} from "discord.js";
+import {Client, Message, TextChannel, DMChannel, NewsChannel, Guild, User, GuildMember, GuildChannel} from "discord.js";
 import {getPrefix} from "../core/structures";
 import {SingleMessageOptions} from "./libd";
 import {hasPermission, getPermissionLevel, getPermissionName} from "./permissions";
+import {client} from "../index";
 
 export enum TYPES {
     SUBCOMMAND,
@@ -12,6 +13,16 @@ export enum TYPES {
     ANY,
     NONE
 }
+
+// RegEx patterns used for identifying/extracting each type from a string argument.
+const patterns = {
+    channel: /^<#(\d{17,19})>$/,
+    role: /^<@&(\d{17,19})>$/,
+    emote: /^<a?:.*?:(\d{17,19})>$/,
+    message: /(?:\d{17,19}\/(\d{17,19})\/(\d{17,19})$)|(?:^(\d{17,19})-(\d{17,19})$)/,
+    user: /^<@!?(\d{17,19})>$/,
+    id: /^(\d{17,19})$/
+};
 
 // Callbacks don't work with discriminated unions:
 // - https://github.com/microsoft/TypeScript/issues/41759
@@ -26,55 +37,58 @@ export enum CHANNEL_TYPE {
 }
 
 interface CommandMenu {
-    args: any[];
-    client: Client;
-    message: Message;
-    channel: TextChannel | DMChannel | NewsChannel;
-    guild: Guild | null;
-    author: User;
+    readonly args: any[];
+    readonly client: Client;
+    readonly message: Message;
+    readonly channel: TextChannel | DMChannel | NewsChannel;
+    readonly guild: Guild | null;
+    readonly author: User;
     // According to the documentation, a message can be part of a guild while also not having a
     // member object for the author. This will happen if the author of a message left the guild.
-    member: GuildMember | null;
+    readonly member: GuildMember | null;
 }
 
 interface CommandOptionsBase {
-    description?: string;
-    endpoint?: boolean;
-    usage?: string;
-    permission?: number;
-    nsfw?: boolean;
-    channelType?: CHANNEL_TYPE;
-    run?: (($: CommandMenu) => Promise<any>) | string;
+    readonly description?: string;
+    readonly endpoint?: boolean;
+    readonly usage?: string;
+    readonly permission?: number;
+    readonly nsfw?: boolean;
+    readonly channelType?: CHANNEL_TYPE;
+    readonly run?: (($: CommandMenu) => Promise<any>) | string;
 }
 
 interface CommandOptionsEndpoint {
-    endpoint: true;
+    readonly endpoint: true;
 }
 
 // Prevents subcommands from being added by compile-time.
 interface CommandOptionsNonEndpoint {
-    endpoint?: false;
-    subcommands?: {[key: string]: NamedCommand};
-    user?: Command;
-    number?: Command;
-    any?: Command;
+    readonly endpoint?: false;
+    readonly subcommands?: {[key: string]: NamedCommand};
+    readonly user?: Command;
+    readonly number?: Command;
+    readonly any?: Command;
 }
 
 type CommandOptions = CommandOptionsBase & (CommandOptionsEndpoint | CommandOptionsNonEndpoint);
 type NamedCommandOptions = CommandOptions & {aliases?: string[]};
 
-// RegEx patterns used for identifying/extracting each type from a string argument.
-const patterns = {
-    //
-};
+interface ExecuteCommandMetadata {
+    readonly header: string;
+    readonly args: string[];
+    permission: number;
+    nsfw: boolean;
+    channelType: CHANNEL_TYPE;
+}
 
 export class Command {
     public readonly description: string;
     public readonly endpoint: boolean;
     public readonly usage: string;
     public readonly permission: number; // -1 (default) indicates to inherit, 0 is the lowest rank, 1 is second lowest rank, and so on.
-    public readonly nsfw: boolean;
-    public readonly channelType: CHANNEL_TYPE;
+    public readonly nsfw: boolean | null; // null (default) indicates to inherit
+    public readonly channelType: CHANNEL_TYPE | null; // null (default) indicates to inherit
     protected run: (($: CommandMenu) => Promise<any>) | string;
     protected readonly subcommands: Collection<string, Command>; // This is the final data structure you'll actually use to work with the commands the aliases point to.
     protected user: Command | null;
@@ -87,8 +101,8 @@ export class Command {
         this.endpoint = !!options?.endpoint;
         this.usage = options?.usage ?? "";
         this.permission = options?.permission ?? -1;
-        this.nsfw = !!options?.nsfw;
-        this.channelType = options?.channelType ?? CHANNEL_TYPE.ANY;
+        this.nsfw = options?.nsfw ?? null;
+        this.channelType = options?.channelType ?? null;
         this.run = options?.run || "No action was set on this command!";
         this.subcommands = new Collection(); // Populate this collection after setting subcommands.
         this.user = null;
@@ -129,116 +143,135 @@ export class Command {
         }
     }
 
-    public execute($: CommandMenu) {
-        if (typeof this.run === "string") {
-            $.channel.send(
-                parseVars(
-                    this.run,
-                    {
-                        author: $.author.toString(),
-                        prefix: getPrefix($.guild)
-                    },
-                    "???"
-                )
-            );
-        } else this.run($).catch(handler.bind($));
-    }
-
     // Go through the arguments provided and find the right subcommand, then execute with the given arguments.
     // Will return null if it successfully executes, SingleMessageOptions if there's an error (to let the user know what it is).
-    public async actualExecute(args: string[], tmp: any): Promise<SingleMessageOptions | null> {
-        // For debug info, use this.originalCommandName?
-        // Subcommand Recursion //
-        let command: Command = new Command(); // = commands.get(header)!;
-        //resolveSubcommand()
-        const params: any[] = [];
-        let isEndpoint = false;
-        let permLevel = command.permission ?? 0;
+    public async execute(
+        args: string[],
+        menu: CommandMenu,
+        metadata: ExecuteCommandMetadata
+    ): Promise<SingleMessageOptions | null> {
+        const param = args.shift();
 
-        for (const param of args) {
-            const type = command.resolve(param);
-            command = command.get(param);
-            permLevel = command.permission ?? permLevel;
+        // If there are no arguments left, execute the current command. Otherwise, continue on.
+        if (!param) {
+            // See if there is anything that'll prevent the user from executing the command.
 
-            if (type === TYPES.USER) {
-                const id = param.match(/\d+/g)![0];
-                try {
-                    params.push(await message.client.users.fetch(id));
-                } catch (error) {
-                    return message.channel.send(`No user found by the ID \`${id}\`!`);
+            // 1. Does this command specify a required channel type? If so, does the channel type match?
+            if (
+                metadata.channelType === CHANNEL_TYPE.GUILD &&
+                (!(menu.channel instanceof GuildChannel) || menu.guild === null)
+            ) {
+                return {content: "This command must be executed in a server."};
+            } else if (
+                metadata.channelType === CHANNEL_TYPE.DM &&
+                (menu.channel.type !== "dm" || menu.guild !== null)
+            ) {
+                return {content: "This command must be executed as a direct message."};
+            }
+
+            // 2. Is this an NSFW command where the channel prevents such use? (DM channels bypass this requirement.)
+            if (metadata.nsfw && menu.channel.type !== "dm" && !menu.channel.nsfw) {
+                return {content: "This command must be executed in either an NSFW channel or as a direct message."};
+            }
+
+            // 3. Does the user have permission to execute the command?
+            if (!hasPermission(menu.author, menu.member, metadata.permission)) {
+                const userPermLevel = getPermissionLevel(menu.author, menu.member);
+
+                return {
+                    content: `You don't have access to this command! Your permission level is \`${getPermissionName(
+                        userPermLevel
+                    )}\` (${userPermLevel}), but this command requires a permission level of \`${getPermissionName(
+                        metadata.permission
+                    )}\` (${metadata.permission}).`
+                };
+            }
+
+            // Then capture any potential errors.
+            try {
+                if (typeof this.run === "string") {
+                    await menu.channel.send(
+                        parseVars(
+                            this.run,
+                            {
+                                author: menu.author.toString(),
+                                prefix: getPrefix(menu.guild)
+                            },
+                            "???"
+                        )
+                    );
+                } else {
+                    await this.run(menu);
                 }
-            } else if (type === TYPES.NUMBER) params.push(Number(param));
-            else if (type !== TYPES.SUBCOMMAND) params.push(param);
+
+                return null;
+            } catch (error) {
+                const errorMessage = error.stack ?? error;
+                console.error(`Command Error: ${metadata.header} (${metadata.args})\n${errorMessage}`);
+
+                return {
+                    content: `There was an error while trying to execute that command!\`\`\`${errorMessage}\`\`\``
+                };
+            }
         }
 
-        if (!message.member)
-            return console.warn("This command was likely called from a DM channel meaning the member object is null.");
+        // If the current command is an endpoint but there are still some arguments left, don't continue.
+        if (this.endpoint) return {content: "Too many arguments!"};
 
-        if (!hasPermission(message.member, permLevel)) {
-            const userPermLevel = getPermissionLevel(message.member);
-            return message.channel.send(
-                `You don't have access to this command! Your permission level is \`${getPermissionName(
-                    userPermLevel
-                )}\` (${userPermLevel}), but this command requires a permission level of \`${getPermissionName(
-                    permLevel
-                )}\` (${permLevel}).`
-            );
+        // If the current command's permission level isn't -1 (inherit), then set the permission metadata equal to that.
+        if (this.permission !== -1) metadata.permission = this.permission;
+
+        // If the current command has an NSFW setting specified, set it.
+        if (this.nsfw !== null) metadata.nsfw = this.nsfw;
+
+        // If the current command doesn't inherit its channel type, set it.
+        if (this.channelType !== null) metadata.channelType = this.channelType;
+
+        // Resolve the value of the current command's argument (adding it to the resolved args),
+        // then pass the thread of execution to whichever subcommand is valid (if any).
+        if (this.subcommands.has(param)) {
+            return this.subcommands.get(param)!.execute(args, menu, metadata);
+        } else if (this.user && patterns.user.test(param)) {
+            const id = patterns.user.exec(param)![1];
+
+            try {
+                menu.args.push(await client.users.fetch(id));
+                return this.user.execute(args, menu, metadata);
+            } catch {
+                return {
+                    content: `No user found by the ID \`${id}\`!`
+                };
+            }
+        } else if (this.number && !Number.isNaN(Number(param)) && param !== "Infinity" && param !== "-Infinity") {
+            menu.args.push(Number(param));
+            return this.number.execute(args, menu, metadata);
+        } else if (this.any) {
+            menu.args.push(param);
+            return this.any.execute(args, menu, metadata);
+        } else {
+            // Continue adding on the rest of the arguments if there's no valid subcommand.
+            menu.args.push(param);
+            return this.execute(args, menu, metadata);
         }
 
-        if (isEndpoint) return message.channel.send("Too many arguments!");
-
-        command.execute({
-            args: params,
-            author: message.author,
-            channel: message.channel,
-            client: message.client,
-            guild: message.guild,
-            member: message.member,
-            message: message
-        });
-
-        return null;
+        // Note: Do NOT add a return statement here. In case one of the other sections is missing
+        // a return statement, there'll be a compile error to catch that.
     }
+}
 
-    private resolve(param: string): TYPES {
-        if (this.subcommands.has(param)) return TYPES.SUBCOMMAND;
-        // Any Discord ID format will automatically format to a user ID.
-        else if (this.user && /\d{17,19}/.test(param)) return TYPES.USER;
-        // Disallow infinity and allow for 0.
-        else if (this.number && (Number(param) || param === "0") && !param.includes("Infinity")) return TYPES.NUMBER;
-        else if (this.any) return TYPES.ANY;
-        else return TYPES.NONE;
-    }
+export class NamedCommand extends Command {
+    public readonly aliases: string[]; // This is to keep the array intact for parent Command instances to use. It'll also be used when loading top-level aliases.
+    public originalCommandName: string | null; // If the command is an alias, what's the original name?
 
-    private get(param: string): Command {
-        const type = this.resolve(param);
-        let command: Command;
-
-        switch (type) {
-            case TYPES.SUBCOMMAND:
-                command = this.subcommands.get(param)!;
-                break;
-            case TYPES.USER:
-                command = this.user!;
-                break;
-            case TYPES.NUMBER:
-                command = this.number!;
-                break;
-            case TYPES.ANY:
-                command = this.any!;
-                break;
-            case TYPES.NONE:
-                command = this;
-                break;
-            default:
-                requireAllCasesHandledFor(type);
-        }
-
-        return command;
+    constructor(options?: NamedCommandOptions) {
+        super(options);
+        this.aliases = options?.aliases || [];
+        this.originalCommandName = null;
     }
 
     // Returns: [category, command name, command, available subcommands: [type, subcommand]]
     public async resolveInfo(args: string[]): [string, string, Command, Collection<string, Command>] | null {
+        // For debug info, use this.originalCommandName? (if it exists?)
         const commands = await loadableCommands;
         let header = args.shift();
         let command = commands.get(header);
@@ -306,32 +339,4 @@ export class Command {
             return;
         }
     }
-}
-
-export class NamedCommand extends Command {
-    public readonly aliases: string[]; // This is to keep the array intact for parent Command instances to use. It'll also be used when loading top-level aliases.
-    public originalCommandName: string | null; // If the command is an alias, what's the original name?
-
-    constructor(options?: NamedCommandOptions) {
-        super(options);
-        this.aliases = options?.aliases || [];
-        this.originalCommandName = null;
-    }
-}
-
-// If you use promises, use this function to display the error in chat.
-// Case #1: await $.channel.send(""); --> Automatically caught by Command.execute().
-// Case #2: $.channel.send("").catch(handler.bind($)); --> Manually caught by the user.
-// TODO: Find a way to catch unhandled rejections automatically, forgoing the need for this.
-export function handler(this: CommandMenu, error: Error) {
-    if (this)
-        this.channel.send(
-            `There was an error while trying to execute that command!\`\`\`${error.stack ?? error}\`\`\``
-        );
-    else
-        console.warn(
-            "No context was attached to $.handler! Make sure to use .catch($.handler.bind($)) or .catch(error => $.handler(error)) instead!"
-        );
-
-    console.error(error);
 }
