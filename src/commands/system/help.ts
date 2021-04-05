@@ -1,9 +1,9 @@
-import Command from "../../core/command";
+import {Command, NamedCommand} from "../../core/command";
 import {toTitleCase} from "../../core/lib";
 import {loadableCommands, categories} from "../../core/loader";
 import {getPermissionName} from "../../core/permissions";
 
-export default new Command({
+export default new NamedCommand({
     description: "Lists all commands. If a command is specified, their arguments are listed as well.",
     usage: "([command, [subcommand/type], ...])",
     aliases: ["h"],
@@ -16,13 +16,7 @@ export default new Command({
 
             for (const header of headers) {
                 if (header !== "test") {
-                    const command = commands.get(header);
-
-                    if (!command)
-                        return console.warn(
-                            `Command "${header}" of category "${category}" unexpectedly doesn't exist!`
-                        );
-
+                    const command = commands.get(header)!;
                     output += `\n- \`${header}\`: ${command.description}`;
                 }
             }
@@ -32,44 +26,63 @@ export default new Command({
     },
     any: new Command({
         async run($) {
-            // [category, commandName, command, subcommandInfo] = resolveCommandInfo();
+            // Setup the root command
+            const commands = await loadableCommands;
+            let header = $.args.shift() as string;
+            let command = commands.get(header);
+            if (!command || header === "test") return $.channel.send(`No command found by the name \`${header}\`.`);
+            if (!(command instanceof NamedCommand))
+                return $.channel.send(`Command is not a proper instance of NamedCommand.`);
+            if (command.name) header = command.name;
+
+            // Search categories
+            let category = "Unknown";
+            for (const [referenceCategory, headers] of categories) {
+                if (headers.includes(header)) {
+                    category = toTitleCase(referenceCategory);
+                    break;
+                }
+            }
+
+            // Gather info
+            const result = await command.resolveInfo($.args);
+
+            if (result.type === "error") return $.channel.send(result.message);
 
             let append = "";
+            command = result.command;
 
-            if (usage === "") {
+            if (command.usage === "") {
                 const list: string[] = [];
 
-                command.subcommands.forEach((subcmd, subtag) => {
-                    // Don't capture duplicates generated from aliases.
-                    if (subcmd.originalCommandName === subtag) {
-                        const customUsage = subcmd.usage ? ` ${subcmd.usage}` : "";
-                        list.push(`- \`${header} ${subtag}${customUsage}\` - ${subcmd.description}`);
-                    }
-                });
+                for (const [tag, subcommand] of result.keyedSubcommandInfo) {
+                    const customUsage = subcommand.usage ? ` ${subcommand.usage}` : "";
+                    list.push(`- \`${header} ${tag}${customUsage}\` - ${subcommand.description}`);
+                }
 
-                const addDynamicType = (cmd: Command | null, type: string) => {
-                    if (cmd) {
-                        const customUsage = cmd.usage ? ` ${cmd.usage}` : "";
-                        list.push(`- \`${header} <${type}>${customUsage}\` - ${cmd.description}`);
-                    }
-                };
-
-                addDynamicType(command.user, "user");
-                addDynamicType(command.number, "number");
-                addDynamicType(command.any, "any");
+                for (const [type, subcommand] of result.subcommandInfo) {
+                    const customUsage = subcommand.usage ? ` ${subcommand.usage}` : "";
+                    list.push(`- \`${header} ${type}${customUsage}\` - ${subcommand.description}`);
+                }
 
                 append = "Usages:" + (list.length > 0 ? `\n${list.join("\n")}` : " None.");
-            } else append = `Usage: \`${header} ${usage}\``;
+            } else {
+                append = `Usage: \`${header} ${command.usage}\``;
+            }
 
-            const formattedAliases: string[] = [];
-            for (const alias of command.aliases) formattedAliases.push(`\`${alias}\``);
-            // Short circuit an empty string, in this case, if there are no aliases.
-            const aliases = formattedAliases.join(", ") || "None";
+            let aliases = "N/A";
 
-            $.channel.send(
-                `Command: \`${header}\`\nAliases: ${aliases}\nCategory: \`${selectedCategory}\`\nPermission Required: \`${getPermissionName(
-                    permLevel
-                )}\` (${permLevel})\nDescription: ${command.description}\n${append}`,
+            if (command instanceof NamedCommand) {
+                const formattedAliases: string[] = [];
+                for (const alias of command.aliases) formattedAliases.push(`\`${alias}\``);
+                // Short circuit an empty string, in this case, if there are no aliases.
+                aliases = formattedAliases.join(", ") || "None";
+            }
+
+            return $.channel.send(
+                `Command: \`${header}\`\nAliases: ${aliases}\nCategory: \`${category}\`\nPermission Required: \`${getPermissionName(
+                    result.permission
+                )}\` (${result.permission})\nDescription: ${command.description}\n${append}`,
                 {split: true}
             );
         }

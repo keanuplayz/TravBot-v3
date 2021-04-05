@@ -31,7 +31,7 @@ export const loadableCommands = (async () => {
             const command = (await import(`../commands/${commandID}`)).default as unknown;
 
             if (command instanceof NamedCommand) {
-                command.originalCommandName = commandName;
+                command.name = commandName;
 
                 if (commands.has(commandName)) {
                     console.warn(

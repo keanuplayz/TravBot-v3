@@ -1,4 +1,4 @@
-import {parseVars, requireAllCasesHandledFor} from "./lib";
+import {parseVars} from "./lib";
 import {Collection} from "discord.js";
 import {Client, Message, TextChannel, DMChannel, NewsChannel, Guild, User, GuildMember, GuildChannel} from "discord.js";
 import {getPrefix} from "../core/structures";
@@ -82,6 +82,36 @@ interface ExecuteCommandMetadata {
     channelType: CHANNEL_TYPE;
 }
 
+interface CommandInfo {
+    readonly type: "info";
+    readonly command: Command;
+    readonly subcommandInfo: Collection<string, Command>;
+    readonly keyedSubcommandInfo: Collection<string, NamedCommand>;
+    readonly permission: number;
+    readonly nsfw: boolean;
+    readonly channelType: CHANNEL_TYPE;
+    readonly args: string[];
+}
+
+interface CommandInfoError {
+    readonly type: "error";
+    readonly message: string;
+}
+
+interface CommandInfoMetadata {
+    permission: number;
+    nsfw: boolean;
+    channelType: CHANNEL_TYPE;
+    args: string[];
+    usage: string;
+}
+
+export const defaultMetadata = {
+    permission: 0,
+    nsfw: false,
+    channelType: CHANNEL_TYPE.ANY
+};
+
 export class Command {
     public readonly description: string;
     public readonly endpoint: boolean;
@@ -90,7 +120,7 @@ export class Command {
     public readonly nsfw: boolean | null; // null (default) indicates to inherit
     public readonly channelType: CHANNEL_TYPE | null; // null (default) indicates to inherit
     protected run: (($: CommandMenu) => Promise<any>) | string;
-    protected readonly subcommands: Collection<string, Command>; // This is the final data structure you'll actually use to work with the commands the aliases point to.
+    protected readonly subcommands: Collection<string, NamedCommand>; // This is the final data structure you'll actually use to work with the commands the aliases point to.
     protected user: Command | null;
     protected number: Command | null;
     protected any: Command | null;
@@ -124,7 +154,7 @@ export class Command {
                 // This shouldn't be a problem because I'm hoping that JS stores these as references that point to the same object.
                 for (const name in options.subcommands) {
                     const subcmd = options.subcommands[name];
-                    subcmd.originalCommandName = name;
+                    subcmd.name = name;
                     const aliases = subcmd.aliases;
 
                     for (const alias of aliases) {
@@ -153,7 +183,7 @@ export class Command {
         const param = args.shift();
 
         // If there are no arguments left, execute the current command. Otherwise, continue on.
-        if (!param) {
+        if (param === undefined) {
             // See if there is anything that'll prevent the user from executing the command.
 
             // 1. Does this command specify a required channel type? If so, does the channel type match?
@@ -218,13 +248,9 @@ export class Command {
         // If the current command is an endpoint but there are still some arguments left, don't continue.
         if (this.endpoint) return {content: "Too many arguments!"};
 
-        // If the current command's permission level isn't -1 (inherit), then set the permission metadata equal to that.
+        // Update inherited properties if the current command specifies a property.
         if (this.permission !== -1) metadata.permission = this.permission;
-
-        // If the current command has an NSFW setting specified, set it.
         if (this.nsfw !== null) metadata.nsfw = this.nsfw;
-
-        // If the current command doesn't inherit its channel type, set it.
         if (this.channelType !== null) metadata.channelType = this.channelType;
 
         // Resolve the value of the current command's argument (adding it to the resolved args),
@@ -257,11 +283,97 @@ export class Command {
         // Note: Do NOT add a return statement here. In case one of the other sections is missing
         // a return statement, there'll be a compile error to catch that.
     }
+
+    // What this does is resolve the resulting subcommand as well as the inherited properties and the available subcommands.
+    public async resolveInfo(args: string[]): Promise<CommandInfo | CommandInfoError> {
+        return this.resolveInfoInternal(args, {...defaultMetadata, args: [], usage: ""});
+    }
+
+    private async resolveInfoInternal(
+        args: string[],
+        metadata: CommandInfoMetadata
+    ): Promise<CommandInfo | CommandInfoError> {
+        const param = args.shift();
+
+        // If there are no arguments left, return the data or an error message.
+        if (param === undefined) {
+            const keyedSubcommandInfo = new Collection<string, NamedCommand>();
+            const subcommandInfo = new Collection<string, Command>();
+
+            // Get all the subcommands of the current command but without aliases.
+            for (const [tag, command] of this.subcommands.entries()) {
+                // Don't capture duplicates generated from aliases.
+                if (tag === command.name) {
+                    keyedSubcommandInfo.set(tag, command);
+                }
+            }
+
+            // Then get all the generic subcommands.
+            if (this.user) subcommandInfo.set("<user>", this.user);
+            if (this.number) subcommandInfo.set("<number>", this.number);
+            if (this.any) subcommandInfo.set("<any>", this.any);
+
+            return {
+                type: "info",
+                command: this,
+                keyedSubcommandInfo,
+                subcommandInfo,
+                ...metadata
+            };
+        }
+
+        // Update inherited properties if the current command specifies a property.
+        if (this.permission !== -1) metadata.permission = this.permission;
+        if (this.nsfw !== null) metadata.nsfw = this.nsfw;
+        if (this.channelType !== null) metadata.channelType = this.channelType;
+        if (this.usage !== "") metadata.usage = this.usage;
+
+        // Then test if anything fits any hardcoded values, otherwise check if it's a valid keyed subcommand.
+        if (param === "<user>") {
+            if (this.user) {
+                metadata.args.push("<user>");
+                return this.user.resolveInfoInternal(args, metadata);
+            } else {
+                return {
+                    type: "error",
+                    message: `No subcommand found by the argument list: \`${metadata.args.join(" ")}\``
+                };
+            }
+        } else if (param === "<number>") {
+            if (this.number) {
+                metadata.args.push("<number>");
+                return this.number.resolveInfoInternal(args, metadata);
+            } else {
+                return {
+                    type: "error",
+                    message: `No subcommand found by the argument list: \`${metadata.args.join(" ")}\``
+                };
+            }
+        } else if (param === "<any>") {
+            if (this.any) {
+                metadata.args.push("<any>");
+                return this.any.resolveInfoInternal(args, metadata);
+            } else {
+                return {
+                    type: "error",
+                    message: `No subcommand found by the argument list: \`${metadata.args.join(" ")}\``
+                };
+            }
+        } else if (this.subcommands?.has(param)) {
+            metadata.args.push(param);
+            return this.subcommands.get(param)!.resolveInfoInternal(args, metadata);
+        } else {
+            return {
+                type: "error",
+                message: `No subcommand found by the argument list: \`${metadata.args.join(" ")}\``
+            };
+        }
+    }
 }
 
 export class NamedCommand extends Command {
     public readonly aliases: string[]; // This is to keep the array intact for parent Command instances to use. It'll also be used when loading top-level aliases.
-    public originalCommandName: string | null; // If the command is an alias, what's the original name?
+    private originalCommandName: string | null; // If the command is an alias, what's the original name?
 
     constructor(options?: NamedCommandOptions) {
         super(options);
@@ -269,74 +381,14 @@ export class NamedCommand extends Command {
         this.originalCommandName = null;
     }
 
-    // Returns: [category, command name, command, available subcommands: [type, subcommand]]
-    public async resolveInfo(args: string[]): [string, string, Command, Collection<string, Command>] | null {
-        // For debug info, use this.originalCommandName? (if it exists?)
-        const commands = await loadableCommands;
-        let header = args.shift();
-        let command = commands.get(header);
+    public get name(): string {
+        if (this.originalCommandName === null) throw new Error("originalCommandName must be set before accessing it!");
+        else return this.originalCommandName;
+    }
 
-        if (!command || header === "test") {
-            $.channel.send(`No command found by the name \`${header}\`!`);
-            return;
-        }
-
-        if (command.originalCommandName) header = command.originalCommandName;
-        else console.warn(`originalCommandName isn't defined for ${header}?!`);
-
-        let permLevel = command.permission ?? 0;
-        let usage = command.usage;
-        let invalid = false;
-
-        let selectedCategory = "Unknown";
-
-        for (const [category, headers] of categories) {
-            if (headers.includes(header)) {
-                if (selectedCategory !== "Unknown")
-                    console.warn(
-                        `Command "${header}" is somehow in multiple categories. This means that the command loading stage probably failed in properly adding categories.`
-                    );
-                else selectedCategory = toTitleCase(category);
-            }
-        }
-
-        for (const param of args) {
-            const type = command.resolve(param);
-            command = command.get(param);
-            permLevel = command.permission ?? permLevel;
-
-            if (permLevel === -1) permLevel = command.permission;
-
-            // Switch over to doing `$help info <user>`
-            switch (type) {
-                case TYPES.SUBCOMMAND:
-                    header += ` ${command.originalCommandName}`;
-                    break;
-                case TYPES.USER:
-                    header += " <user>";
-                    break;
-                case TYPES.NUMBER:
-                    header += " <number>";
-                    break;
-                case TYPES.ANY:
-                    header += " <any>";
-                    break;
-                case TYPES.NONE:
-                    header += ` ${param}`;
-                    break;
-                default:
-                    requireAllCasesHandledFor(type);
-            }
-
-            if (type === TYPES.NONE) {
-                invalid = true;
-                break;
-            }
-        }
-
-        if (invalid) {
-            $.channel.send(`No command found by the name \`${header}\`!`);
-            return;
-        }
+    public set name(value: string) {
+        if (this.originalCommandName !== null)
+            throw new Error(`originalCommandName cannot be set twice! Attempted to set the value to "${value}".`);
+        else this.originalCommandName = value;
     }
 }

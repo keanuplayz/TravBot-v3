@@ -3,7 +3,7 @@ import {loadableCommands} from "./loader";
 import {Permissions, Message} from "discord.js";
 import {getPrefix} from "./structures";
 import {Config} from "./structures";
-import {CHANNEL_TYPE} from "./command";
+import {defaultMetadata} from "./command";
 
 // For custom message events that want to cancel the command handler on certain conditions.
 const interceptRules: ((message: Message) => boolean)[] = [(message) => message.author.bot];
@@ -11,12 +11,6 @@ const interceptRules: ((message: Message) => boolean)[] = [(message) => message.
 export function addInterceptRule(handler: (message: Message) => boolean) {
     interceptRules.push(handler);
 }
-
-const defaultMetadata = {
-    permission: 0,
-    nsfw: false,
-    channelType: CHANNEL_TYPE.ANY
-};
 
 // Note: client.user is only undefined before the bot logs in, so by this point, client.user cannot be undefined.
 // Note: guild.available will never need to be checked because the message starts in either a DM channel or an already-available guild.
@@ -51,7 +45,7 @@ client.on("message", async (message) => {
             // Send the arguments to the command to resolve and execute.
             const result = await command.execute(args, menu, {
                 header,
-                args,
+                args: [...args],
                 ...defaultMetadata
             });
 
@@ -83,7 +77,7 @@ client.on("message", async (message) => {
                 // Send the arguments to the command to resolve and execute.
                 const result = await command.execute(args, menu, {
                     header,
-                    args,
+                    args: [...args],
                     ...defaultMetadata
                 });
 
