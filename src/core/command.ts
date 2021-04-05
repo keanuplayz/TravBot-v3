@@ -13,7 +13,7 @@ import {
 import {SingleMessageOptions} from "./libd";
 import {hasPermission, getPermissionLevel, getPermissionName} from "./permissions";
 import {getPrefix} from "./interface";
-import {parseVars} from "../lib";
+import {parseVars, requireAllCasesHandledFor} from "../lib";
 
 /**
  * ===[ Command Types ]===
@@ -34,10 +34,14 @@ const patterns = {
     channel: /^<#(\d{17,19})>$/,
     role: /^<@&(\d{17,19})>$/,
     emote: /^<a?:.*?:(\d{17,19})>$/,
-    message: /(?:\d{17,19}\/(\d{17,19})\/(\d{17,19})$)|(?:^(\d{17,19})-(\d{17,19})$)/,
+    messageLink: /^https?:\/\/(?:ptb\.|canary\.)?discord(?:app)?\.com\/channels\/(?:\d{17,19}|@me)\/(\d{17,19})\/(\d{17,19})$/,
+    messagePair: /^(\d{17,19})-(\d{17,19})$/,
     user: /^<@!?(\d{17,19})>$/,
     id: /^(\d{17,19})$/
 };
+
+// Maybe add a guild redirect... somehow?
+type ID = "channel" | "role" | "emote" | "message" | "user";
 
 // Callbacks don't work with discriminated unions:
 // - https://github.com/microsoft/TypeScript/issues/41759
@@ -78,10 +82,17 @@ interface CommandOptionsEndpoint {
 }
 
 // Prevents subcommands from being added by compile-time.
+// Also, contrary to what you might think, channel pings do still work in DM channels.
+// Role pings, maybe not, but it's not a big deal.
 interface CommandOptionsNonEndpoint {
     readonly endpoint?: false;
     readonly subcommands?: {[key: string]: NamedCommand};
+    readonly channel?: Command;
+    readonly role?: Command;
+    readonly emote?: Command;
+    readonly message?: Command;
     readonly user?: Command;
+    readonly id?: ID;
     readonly number?: Command;
     readonly any?: Command;
 }
@@ -119,6 +130,7 @@ interface CommandInfoMetadata {
     channelType: CHANNEL_TYPE;
     args: string[];
     usage: string;
+    readonly originalArgs: string[];
 }
 
 export const defaultMetadata = {
@@ -136,7 +148,13 @@ export class Command {
     public readonly channelType: CHANNEL_TYPE | null; // null (default) indicates to inherit
     protected run: (($: CommandMenu) => Promise<any>) | string;
     protected readonly subcommands: Collection<string, NamedCommand>; // This is the final data structure you'll actually use to work with the commands the aliases point to.
+    protected channel: Command | null;
+    protected role: Command | null;
+    protected emote: Command | null;
+    protected message: Command | null;
     protected user: Command | null;
+    protected id: Command | null;
+    protected idType: ID | null;
     protected number: Command | null;
     protected any: Command | null;
 
@@ -149,14 +167,47 @@ export class Command {
         this.channelType = options?.channelType ?? null;
         this.run = options?.run || "No action was set on this command!";
         this.subcommands = new Collection(); // Populate this collection after setting subcommands.
+        this.channel = null;
+        this.role = null;
+        this.emote = null;
+        this.message = null;
         this.user = null;
+        this.id = null;
+        this.idType = null;
         this.number = null;
         this.any = null;
 
         if (options && !options.endpoint) {
-            this.user = options?.user || null;
-            this.number = options?.number || null;
-            this.any = options?.any || null;
+            if (options?.channel) this.channel = options.channel;
+            if (options?.role) this.role = options.role;
+            if (options?.emote) this.emote = options.emote;
+            if (options?.message) this.message = options.message;
+            if (options?.user) this.user = options.user;
+            if (options?.number) this.number = options.number;
+            if (options?.any) this.any = options.any;
+            if (options?.id) this.idType = options.id;
+
+            if (options?.id) {
+                switch (options.id) {
+                    case "channel":
+                        this.id = this.channel;
+                        break;
+                    case "role":
+                        this.id = this.role;
+                        break;
+                    case "emote":
+                        this.id = this.emote;
+                        break;
+                    case "message":
+                        this.id = this.message;
+                        break;
+                    case "user":
+                        this.id = this.user;
+                        break;
+                    default:
+                        requireAllCasesHandledFor(options.id);
+                }
+            }
 
             if (options?.subcommands) {
                 const baseSubcommands = Object.keys(options.subcommands);
@@ -271,8 +322,85 @@ export class Command {
 
         // Resolve the value of the current command's argument (adding it to the resolved args),
         // then pass the thread of execution to whichever subcommand is valid (if any).
+        const isMessageLink = patterns.messageLink.test(param);
+        const isMessagePair = patterns.messagePair.test(param);
+
         if (this.subcommands.has(param)) {
             return this.subcommands.get(param)!.execute(args, menu, metadata);
+        } else if (this.channel && patterns.channel.test(param)) {
+            const id = patterns.channel.exec(param)![1];
+            const channel = menu.client.channels.cache.get(id);
+
+            // Users can only enter in this format for text channels, so this restricts it to that.
+            if (channel instanceof TextChannel) {
+                menu.args.push(channel);
+                return this.channel.execute(args, menu, metadata);
+            } else {
+                return {
+                    content: `\`${id}\` is not a valid text channel!`
+                };
+            }
+        } else if (this.role && patterns.role.test(param)) {
+            const id = patterns.role.exec(param)![1];
+
+            if (!menu.guild) {
+                return {
+                    content: "You can't use role parameters in DM channels!"
+                };
+            }
+
+            const role = menu.guild.roles.cache.get(id);
+
+            if (role) {
+                menu.args.push(role);
+                return this.role.execute(args, menu, metadata);
+            } else {
+                return {
+                    content: `\`${id}\` is not a valid role in this server!`
+                };
+            }
+        } else if (this.emote && patterns.emote.test(param)) {
+            const id = patterns.emote.exec(param)![1];
+            const emote = menu.client.emojis.cache.get(id);
+
+            if (emote) {
+                menu.args.push(emote);
+                return this.emote.execute(args, menu, metadata);
+            } else {
+                return {
+                    content: `\`${id}\` isn't a valid emote!`
+                };
+            }
+        } else if (this.message && (isMessageLink || isMessagePair)) {
+            let channelID = "";
+            let messageID = "";
+
+            if (isMessageLink) {
+                const result = patterns.messageLink.exec(param)!;
+                channelID = result[1];
+                messageID = result[2];
+            } else if (isMessagePair) {
+                const result = patterns.messagePair.exec(param)!;
+                channelID = result[1];
+                messageID = result[2];
+            }
+
+            const channel = menu.client.channels.cache.get(channelID);
+
+            if (channel instanceof TextChannel || channel instanceof DMChannel) {
+                try {
+                    menu.args.push(await channel.messages.fetch(messageID));
+                    return this.message.execute(args, menu, metadata);
+                } catch {
+                    return {
+                        content: `\`${messageID}\` isn't a valid message of channel ${channel}!`
+                    };
+                }
+            } else {
+                return {
+                    content: `\`${channelID}\` is not a valid text channel!`
+                };
+            }
         } else if (this.user && patterns.user.test(param)) {
             const id = patterns.user.exec(param)![1];
 
@@ -283,6 +411,73 @@ export class Command {
                 return {
                     content: `No user found by the ID \`${id}\`!`
                 };
+            }
+        } else if (this.id && this.idType && patterns.id.test(param)) {
+            const id = patterns.id.exec(param)![1];
+
+            // Probably modularize the findXByY code in general in libd.
+            // Because this part is pretty much a whole bunch of copy pastes.
+            switch (this.idType) {
+                case "channel":
+                    const channel = menu.client.channels.cache.get(id);
+
+                    // Users can only enter in this format for text channels, so this restricts it to that.
+                    if (channel instanceof TextChannel) {
+                        menu.args.push(channel);
+                        return this.id.execute(args, menu, metadata);
+                    } else {
+                        return {
+                            content: `\`${id}\` isn't a valid text channel!`
+                        };
+                    }
+                case "role":
+                    if (!menu.guild) {
+                        return {
+                            content: "You can't use role parameters in DM channels!"
+                        };
+                    }
+
+                    const role = menu.guild.roles.cache.get(id);
+
+                    if (role) {
+                        menu.args.push(role);
+                        return this.id.execute(args, menu, metadata);
+                    } else {
+                        return {
+                            content: `\`${id}\` isn't a valid role in this server!`
+                        };
+                    }
+                case "emote":
+                    const emote = menu.client.emojis.cache.get(id);
+
+                    if (emote) {
+                        menu.args.push(emote);
+                        return this.id.execute(args, menu, metadata);
+                    } else {
+                        return {
+                            content: `\`${id}\` isn't a valid emote!`
+                        };
+                    }
+                case "message":
+                    try {
+                        menu.args.push(await menu.channel.messages.fetch(id));
+                        return this.id.execute(args, menu, metadata);
+                    } catch {
+                        return {
+                            content: `\`${id}\` isn't a valid message of channel ${menu.channel}!`
+                        };
+                    }
+                case "user":
+                    try {
+                        menu.args.push(await menu.client.users.fetch(id));
+                        return this.id.execute(args, menu, metadata);
+                    } catch {
+                        return {
+                            content: `No user found by the ID \`${id}\`!`
+                        };
+                    }
+                default:
+                    requireAllCasesHandledFor(this.idType);
             }
         } else if (this.number && !Number.isNaN(Number(param)) && param !== "Infinity" && param !== "-Infinity") {
             menu.args.push(Number(param));
@@ -302,7 +497,7 @@ export class Command {
 
     // What this does is resolve the resulting subcommand as well as the inherited properties and the available subcommands.
     public async resolveInfo(args: string[]): Promise<CommandInfo | CommandInfoError> {
-        return this.resolveInfoInternal(args, {...defaultMetadata, args: [], usage: ""});
+        return this.resolveInfoInternal(args, {...defaultMetadata, args: [], usage: "", originalArgs: [...args]});
     }
 
     private async resolveInfoInternal(
@@ -333,7 +528,12 @@ export class Command {
             }
 
             // Then get all the generic subcommands.
+            if (this.channel) subcommandInfo.set("<channel>", this.channel);
+            if (this.role) subcommandInfo.set("<role>", this.role);
+            if (this.emote) subcommandInfo.set("<emote>", this.emote);
+            if (this.message) subcommandInfo.set("<message>", this.message);
             if (this.user) subcommandInfo.set("<user>", this.user);
+            if (this.id) subcommandInfo.set(`<id = <${this.idType}>>`, this.id);
             if (this.number) subcommandInfo.set("<number>", this.number);
             if (this.any) subcommandInfo.set("<any>", this.any);
 
@@ -346,45 +546,73 @@ export class Command {
             };
         }
 
+        const invalidSubcommandGenerator: () => CommandInfoError = () => ({
+            type: "error",
+            message: `No subcommand found by the argument list: \`${metadata.originalArgs.join(" ")}\``
+        });
+
         // Then test if anything fits any hardcoded values, otherwise check if it's a valid keyed subcommand.
-        if (param === "<user>") {
+        if (param === "<channel>") {
+            if (this.channel) {
+                metadata.args.push("<channel>");
+                return this.channel.resolveInfoInternal(args, metadata);
+            } else {
+                return invalidSubcommandGenerator();
+            }
+        } else if (param === "<role>") {
+            if (this.role) {
+                metadata.args.push("<role>");
+                return this.role.resolveInfoInternal(args, metadata);
+            } else {
+                return invalidSubcommandGenerator();
+            }
+        } else if (param === "<emote>") {
+            if (this.emote) {
+                metadata.args.push("<emote>");
+                return this.emote.resolveInfoInternal(args, metadata);
+            } else {
+                return invalidSubcommandGenerator();
+            }
+        } else if (param === "<message>") {
+            if (this.message) {
+                metadata.args.push("<message>");
+                return this.message.resolveInfoInternal(args, metadata);
+            } else {
+                return invalidSubcommandGenerator();
+            }
+        } else if (param === "<user>") {
             if (this.user) {
                 metadata.args.push("<user>");
                 return this.user.resolveInfoInternal(args, metadata);
             } else {
-                return {
-                    type: "error",
-                    message: `No subcommand found by the argument list: \`${metadata.args.join(" ")}\``
-                };
+                return invalidSubcommandGenerator();
+            }
+        } else if (param === "<id>") {
+            if (this.id) {
+                metadata.args.push(`<id = <${this.idType}>>`);
+                return this.id.resolveInfoInternal(args, metadata);
+            } else {
+                return invalidSubcommandGenerator();
             }
         } else if (param === "<number>") {
             if (this.number) {
                 metadata.args.push("<number>");
                 return this.number.resolveInfoInternal(args, metadata);
             } else {
-                return {
-                    type: "error",
-                    message: `No subcommand found by the argument list: \`${metadata.args.join(" ")}\``
-                };
+                return invalidSubcommandGenerator();
             }
         } else if (param === "<any>") {
             if (this.any) {
                 metadata.args.push("<any>");
                 return this.any.resolveInfoInternal(args, metadata);
             } else {
-                return {
-                    type: "error",
-                    message: `No subcommand found by the argument list: \`${metadata.args.join(" ")}\``
-                };
+                return invalidSubcommandGenerator();
             }
         } else if (this.subcommands?.has(param)) {
             metadata.args.push(param);
             return this.subcommands.get(param)!.resolveInfoInternal(args, metadata);
         } else {
-            return {
-                type: "error",
-                message: `No subcommand found by the argument list: \`${metadata.args.join(" ")}\``
-            };
+            return invalidSubcommandGenerator();
         }
     }
 }
