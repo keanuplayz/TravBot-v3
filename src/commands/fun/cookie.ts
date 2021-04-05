@@ -1,7 +1,6 @@
 import {User} from "discord.js";
-import Command from "../../core/command";
-import {random} from "../../core/lib";
-import {parseVars} from "../../core/lib";
+import {Command, NamedCommand} from "../../core";
+import {random, parseVars} from "../../lib";
 
 const cookies = [
     `has given %target% a chocolate chip cookie!`,
@@ -26,29 +25,29 @@ const cookies = [
     `bakes %target% fresh cookies, it smells amazing.`
 ];
 
-export default new Command({
+export default new NamedCommand({
     description: "Gives specified user a cookie.",
     usage: "['all'/@user]",
     run: ":cookie: Here's a cookie!",
     subcommands: {
-        all: new Command({
-            async run($) {
-                $.channel.send(`${$.author} gave everybody a cookie!`);
+        all: new NamedCommand({
+            async run({message, channel, guild, author, member, client, args}) {
+                channel.send(`${author} gave everybody a cookie!`);
             }
         })
     },
     user: new Command({
         description: "User to give cookie to.",
-        async run($) {
-            const sender = $.author;
-            const mention: User = $.args[0];
+        async run({message, channel, guild, author, member, client, args}) {
+            const sender = author;
+            const mention: User = args[0];
 
             if (mention.id == sender.id) {
-                $.channel.send("You can't give yourself cookies!");
+                channel.send("You can't give yourself cookies!");
                 return;
             }
 
-            $.channel.send(
+            channel.send(
                 `:cookie: <@${sender.id}> ${parseVars(random(cookies), {
                     target: mention.toString()
                 })}`

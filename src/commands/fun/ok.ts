@@ -1,5 +1,5 @@
-import Command from "../../core/command";
-import {random} from "../../core/lib";
+import {Command, NamedCommand} from "../../core";
+import {random} from "../../lib";
 
 const responses = [
     "boomer",
@@ -59,9 +59,9 @@ const responses = [
     "large man"
 ];
 
-export default new Command({
+export default new NamedCommand({
     description: "Sends random ok message.",
-    async run($) {
-        $.channel.send(`ok ${random(responses)}`);
+    async run({message, channel, guild, author, member, client, args}) {
+        channel.send(`ok ${random(responses)}`);
     }
 });

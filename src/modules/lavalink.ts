@@ -1,5 +1,5 @@
 import attachClientToLavalink from "discord.js-lavalink-lib";
-import {Config} from "../core/structures";
+import {Config} from "../structures";
 import {client} from "../index";
 
 // Although the example showed to do "client.music = LavaLink(...)" and "(client as any).music = Lavalink(...)" was done to match that, nowhere in the library is client.music ever actually used nor does the function return anything. In other words, client.music is undefined and is never used.

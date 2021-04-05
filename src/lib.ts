@@ -1,6 +1,6 @@
 // Library for pure functions
 import {get} from "https";
-import FileManager from "./storage";
+import FileManager from "./modules/storage";
 
 /**
  * Splits a command by spaces while accounting for quotes which capture string arguments.

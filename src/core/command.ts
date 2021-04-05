@@ -1,18 +1,20 @@
-import {parseVars} from "./lib";
-import {Collection} from "discord.js";
-import {Client, Message, TextChannel, DMChannel, NewsChannel, Guild, User, GuildMember, GuildChannel} from "discord.js";
-import {getPrefix} from "../core/structures";
+import {parseVars} from "../lib";
+import {
+    Collection,
+    Client,
+    Message,
+    TextChannel,
+    DMChannel,
+    NewsChannel,
+    Guild,
+    User,
+    GuildMember,
+    GuildChannel
+} from "discord.js";
+import {getPrefix} from "../structures";
 import {SingleMessageOptions} from "./libd";
 import {hasPermission, getPermissionLevel, getPermissionName} from "./permissions";
 import {client} from "../index";
-
-export enum TYPES {
-    SUBCOMMAND,
-    USER,
-    NUMBER,
-    ANY,
-    NONE
-}
 
 // RegEx patterns used for identifying/extracting each type from a string argument.
 const patterns = {
@@ -30,7 +32,7 @@ const patterns = {
 // Therefore, there won't by any type narrowing on channel or guild of CommandMenu until this is fixed.
 // Otherwise, you'd have to define channelType for every single subcommand, which would get very tedious.
 // Just use type assertions when you specify a channel type.
-export enum CHANNEL_TYPE {
+enum CHANNEL_TYPE {
     ANY,
     GUILD,
     DM

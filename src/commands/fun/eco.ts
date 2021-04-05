@@ -1,11 +1,10 @@
-import Command from "../../core/command";
+import {Command, NamedCommand, callMemberByUsername} from "../../core";
 import {isAuthorized, getMoneyEmbed} from "./modules/eco-utils";
 import {DailyCommand, PayCommand, GuildCommand, LeaderboardCommand} from "./modules/eco-core";
 import {BuyCommand, ShopCommand} from "./modules/eco-shop";
 import {MondayCommand} from "./modules/eco-extras";
-import {callMemberByUsername} from "../../core/libd";
 
-export default new Command({
+export default new NamedCommand({
     description: "Economy command for Monika.",
     async run({guild, channel, author}) {
         if (isAuthorized(guild, channel)) channel.send(getMoneyEmbed(author));

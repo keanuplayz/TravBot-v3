@@ -1,12 +1,11 @@
-import Command from "../../../core/command";
-import {pluralise, split} from "../../../core/lib";
-import {paginate} from "../../../core/libd";
-import {Storage, getPrefix} from "../../../core/structures";
+import {Command, NamedCommand, paginate} from "../../../core";
+import {pluralise, split} from "../../../lib";
+import {Storage, getPrefix} from "../../../structures";
 import {isAuthorized, ECO_EMBED_COLOR} from "./eco-utils";
 import {ShopItems, ShopItem} from "./eco-shop-items";
 import {EmbedField} from "discord.js";
 
-export const ShopCommand = new Command({
+export const ShopCommand = new NamedCommand({
     description: "Displays the list of items you can buy in the shop.",
     async run({guild, channel, author}) {
         if (isAuthorized(guild, channel)) {
@@ -45,7 +44,7 @@ export const ShopCommand = new Command({
     }
 });
 
-export const BuyCommand = new Command({
+export const BuyCommand = new NamedCommand({
     description: "Buys an item from the shop.",
     usage: "<item>",
     async run({guild, channel, args, message, author}) {

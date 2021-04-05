@@ -1,9 +1,7 @@
-import Command from "../../core/command";
+import {Command, NamedCommand} from "../../core";
 import {queryClosestEmoteByName} from "./modules/emote-utils";
-import {botHasPermission} from "../../core/libd";
-import {Permissions} from "discord.js";
 
-export default new Command({
+export default new NamedCommand({
     description: "Send the specified emote.",
     run: "Please provide a command name.",
     any: new Command({

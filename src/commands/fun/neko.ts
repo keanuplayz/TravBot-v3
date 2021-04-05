@@ -1,6 +1,6 @@
 import {URL} from "url";
-import Command from "../../core/command";
-import {getContent} from "../../core/lib";
+import {Command, NamedCommand} from "../../core";
+import {getContent} from "../../lib";
 
 const endpoints: {sfw: {[key: string]: string}} = {
     sfw: {
@@ -34,26 +34,26 @@ const endpoints: {sfw: {[key: string]: string}} = {
     }
 };
 
-export default new Command({
+export default new NamedCommand({
     description: "Provides you with a random image with the selected argument.",
-    async run($) {
-        $.channel.send(
+    async run({message, channel, guild, author, member, client, args}) {
+        channel.send(
             `Please provide an image type. Available arguments:\n\`[${Object.keys(endpoints.sfw).join(", ")}]\`.`
         );
     },
     any: new Command({
         description: "Image type to send.",
-        async run($) {
-            const arg = $.args[0];
+        async run({message, channel, guild, author, member, client, args}) {
+            const arg = args[0];
 
             if (!(arg in endpoints.sfw)) {
-                $.channel.send("Couldn't find that endpoint!");
+                channel.send("Couldn't find that endpoint!");
                 return;
             }
 
             let url = new URL(`https://nekos.life/api/v2${endpoints.sfw[arg]}`);
             const content = await getContent(url.toString());
-            $.channel.send(content.url);
+            channel.send(content.url);
         }
     })
 });

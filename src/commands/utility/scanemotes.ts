@@ -1,33 +1,33 @@
-import Command, {handler} from "../../core/command";
-import {pluralise} from "../../core/lib";
+import {Command, NamedCommand} from "../../core";
+import {pluralise} from "../../lib";
 import moment from "moment";
 import {Collection, TextChannel} from "discord.js";
 
 const lastUsedTimestamps: {[id: string]: number} = {};
 
-export default new Command({
+export default new NamedCommand({
     description:
         "Scans all text channels in the current guild and returns the number of times each emoji specific to the guild has been used. Has a cooldown of 24 hours per guild.",
-    async run($) {
-        if (!$.guild) {
-            $.channel.send(`You must use this command on a server!`);
+    async run({message, channel, guild, author, member, client, args}) {
+        if (!guild) {
+            channel.send(`You must use this command on a server!`);
             return;
         }
 
         // Test if the command is on cooldown. This isn't the strictest cooldown possible, because in the event that the bot crashes, the cooldown will be reset. But for all intends and purposes, it's a good enough cooldown. It's a per-server cooldown.
         const startTime = Date.now();
         const cooldown = 86400000; // 24 hours
-        const lastUsedTimestamp = lastUsedTimestamps[$.guild.id] ?? 0;
+        const lastUsedTimestamp = lastUsedTimestamps[guild.id] ?? 0;
         const difference = startTime - lastUsedTimestamp;
         const howLong = moment(startTime).to(lastUsedTimestamp + cooldown);
 
         // If it's been less than an hour since the command was last used, prevent it from executing.
         if (difference < cooldown) {
-            $.channel.send(
+            channel.send(
                 `This command requires a day to cooldown. You'll be able to activate this command ${howLong}.`
             );
             return;
-        } else lastUsedTimestamps[$.guild.id] = startTime;
+        } else lastUsedTimestamps[guild.id] = startTime;
 
         const stats: {
             [id: string]: {
@@ -39,20 +39,20 @@ export default new Command({
         } = {};
         let totalUserEmoteUsage = 0;
         // IMPORTANT: You MUST check if the bot actually has access to the channel in the first place. It will get the list of all channels, but that doesn't mean it has access to every channel. Without this, it'll require admin access and throw an annoying unhelpful DiscordAPIError: Missing Access otherwise.
-        const allTextChannelsInCurrentGuild = $.guild.channels.cache.filter(
+        const allTextChannelsInCurrentGuild = guild.channels.cache.filter(
             (channel) => channel.type === "text" && channel.viewable
         ) as Collection<string, TextChannel>;
         let messagesSearched = 0;
         let channelsSearched = 0;
         let currentChannelName = "";
         const totalChannels = allTextChannelsInCurrentGuild.size;
-        const statusMessage = await $.channel.send("Gathering emotes...");
+        const statusMessage = await channel.send("Gathering emotes...");
         let warnings = 0;
-        $.channel.startTyping();
+        channel.startTyping();
 
         // Initialize the emote stats object with every emote in the current guild.
         // The goal here is to cut the need to access guild.emojis.get() which'll make it faster and easier to work with.
-        for (let emote of $.guild.emojis.cache.values()) {
+        for (let emote of guild.emojis.cache.values()) {
             // If you don't include the "a" for animated emotes, it'll not only not show up, but also cause all other emotes in the same message to not show up. The emote name is self-correcting but it's better to keep the right value since it'll be used to calculate message lengths that fit.
             stats[emote.id] = {
                 name: emote.name,
@@ -70,7 +70,7 @@ export default new Command({
 
         for (const channel of allTextChannelsInCurrentGuild.values()) {
             currentChannelName = channel.name;
-            let selected = channel.lastMessageID ?? $.message.id;
+            let selected = channel.lastMessageID ?? message.id;
             let continueLoop = true;
 
             while (continueLoop) {
@@ -167,7 +167,7 @@ export default new Command({
             )}.`
         );
         console.log(`Finished operation in ${finishTime - startTime} ms.`);
-        $.channel.stopTyping();
+        channel.stopTyping();
 
         // Display stats on emote usage.
         // This can work outside the loop now that it's synchronous, and now it's clearer what code is meant to execute at the end.
@@ -186,6 +186,6 @@ export default new Command({
             );
         }
 
-        $.channel.send(lines, {split: true}).catch(handler.bind($));
+        await channel.send(lines, {split: true});
     }
 });

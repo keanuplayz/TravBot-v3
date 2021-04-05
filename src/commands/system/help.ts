@@ -1,13 +1,11 @@
-import {Command, NamedCommand} from "../../core/command";
-import {toTitleCase} from "../../core/lib";
-import {loadableCommands, categories} from "../../core/loader";
-import {getPermissionName} from "../../core/permissions";
+import {Command, NamedCommand, loadableCommands, categories, getPermissionName} from "../../core";
+import {toTitleCase} from "../../lib";
 
 export default new NamedCommand({
     description: "Lists all commands. If a command is specified, their arguments are listed as well.",
     usage: "([command, [subcommand/type], ...])",
     aliases: ["h"],
-    async run($) {
+    async run({message, channel, guild, author, member, client, args}) {
         const commands = await loadableCommands;
         let output = `Legend: \`<type>\`, \`[list/of/stuff]\`, \`(optional)\`, \`(<optional type>)\`, \`([optional/list/...])\``;
 
@@ -22,17 +20,17 @@ export default new NamedCommand({
             }
         }
 
-        $.channel.send(output, {split: true});
+        channel.send(output, {split: true});
     },
     any: new Command({
-        async run($) {
+        async run({message, channel, guild, author, member, client, args}) {
             // Setup the root command
             const commands = await loadableCommands;
-            let header = $.args.shift() as string;
+            let header = args.shift() as string;
             let command = commands.get(header);
-            if (!command || header === "test") return $.channel.send(`No command found by the name \`${header}\`.`);
+            if (!command || header === "test") return channel.send(`No command found by the name \`${header}\`.`);
             if (!(command instanceof NamedCommand))
-                return $.channel.send(`Command is not a proper instance of NamedCommand.`);
+                return channel.send(`Command is not a proper instance of NamedCommand.`);
             if (command.name) header = command.name;
 
             // Search categories
@@ -45,9 +43,9 @@ export default new NamedCommand({
             }
 
             // Gather info
-            const result = await command.resolveInfo($.args);
+            const result = await command.resolveInfo(args);
 
-            if (result.type === "error") return $.channel.send(result.message);
+            if (result.type === "error") return channel.send(result.message);
 
             let append = "";
             command = result.command;
@@ -79,7 +77,7 @@ export default new NamedCommand({
                 aliases = formattedAliases.join(", ") || "None";
             }
 
-            return $.channel.send(
+            return channel.send(
                 `Command: \`${header}\`\nAliases: ${aliases}\nCategory: \`${category}\`\nPermission Required: \`${getPermissionName(
                     result.permission
                 )}\` (${result.permission})\nDescription: ${command.description}\n${append}`,

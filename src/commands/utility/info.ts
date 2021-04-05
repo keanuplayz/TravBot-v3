@@ -1,29 +1,26 @@
-import {MessageEmbed, version as djsversion} from "discord.js";
+import {MessageEmbed, version as djsversion, Guild} from "discord.js";
 import ms from "ms";
 import os from "os";
-import Command from "../../core/command";
-import {formatBytes, trimArray} from "../../core/lib";
-import {getMemberByUsername} from "../../core/libd";
+import {Command, NamedCommand, getMemberByUsername} from "../../core";
+import {formatBytes, trimArray} from "../../lib";
 import {verificationLevels, filterLevels, regions} from "../../defs/info";
-import moment from "moment";
-import utc from "moment";
-import {Guild} from "discord.js";
+import moment, {utc} from "moment";
 
-export default new Command({
+export default new NamedCommand({
     description: "Command to provide all sorts of info about the current server, a user, etc.",
     run: "Please provide an argument.\nFor help, run `%prefix%help info`.",
     subcommands: {
-        avatar: new Command({
+        avatar: new NamedCommand({
             description: "Shows your own, or another user's avatar.",
             usage: "(<user>)",
-            async run($) {
-                $.channel.send($.author.displayAvatarURL({dynamic: true, size: 2048}));
+            async run({message, channel, guild, author, member, client, args}) {
+                channel.send(author.displayAvatarURL({dynamic: true, size: 2048}));
             },
             user: new Command({
                 description: "Shows your own, or another user's avatar.",
-                async run($) {
-                    $.channel.send(
-                        $.args[0].displayAvatarURL({
+                async run({message, channel, guild, author, member, client, args}) {
+                    channel.send(
+                        args[0].displayAvatarURL({
                             dynamic: true,
                             size: 2048
                         })
@@ -32,39 +29,39 @@ export default new Command({
             }),
             any: new Command({
                 description: "Shows another user's avatar by searching their name",
-                async run($) {
-                    if ($.guild) {
-                        const name = $.args.join(" ");
-                        const member = await getMemberByUsername($.guild, name);
+                async run({message, channel, guild, author, member, client, args}) {
+                    if (guild) {
+                        const name = args.join(" ");
+                        const member = await getMemberByUsername(guild, name);
 
                         if (member) {
-                            $.channel.send(
+                            channel.send(
                                 member.user.displayAvatarURL({
                                     dynamic: true,
                                     size: 2048
                                 })
                             );
                         } else {
-                            $.channel.send(`No user found by the name \`${name}\`!`);
+                            channel.send(`No user found by the name \`${name}\`!`);
                         }
                     }
                 }
             })
         }),
-        bot: new Command({
+        bot: new NamedCommand({
             description: "Displays info about the bot.",
-            async run($) {
+            async run({message, channel, guild, author, member, client, args}) {
                 const core = os.cpus()[0];
                 const embed = new MessageEmbed()
-                    .setColor($.guild?.me?.displayHexColor || "BLUE")
+                    .setColor(guild?.me?.displayHexColor || "BLUE")
                     .addField("General", [
-                        `**❯ Client:** ${$.client.user?.tag} (${$.client.user?.id})`,
-                        `**❯ Servers:** ${$.client.guilds.cache.size.toLocaleString()}`,
-                        `**❯ Users:** ${$.client.guilds.cache
+                        `**❯ Client:** ${client.user?.tag} (${client.user?.id})`,
+                        `**❯ Servers:** ${client.guilds.cache.size.toLocaleString()}`,
+                        `**❯ Users:** ${client.guilds.cache
                             .reduce((a: any, b: {memberCount: any}) => a + b.memberCount, 0)
                             .toLocaleString()}`,
-                        `**❯ Channels:** ${$.client.channels.cache.size.toLocaleString()}`,
-                        `**❯ Creation Date:** ${utc($.client.user?.createdTimestamp).format("Do MMMM YYYY HH:mm:ss")}`,
+                        `**❯ Channels:** ${client.channels.cache.size.toLocaleString()}`,
+                        `**❯ Creation Date:** ${utc(client.user?.createdTimestamp).format("Do MMMM YYYY HH:mm:ss")}`,
                         `**❯ Node.JS:** ${process.version}`,
                         `**❯ Version:** v${process.env.npm_package_version}`,
                         `**❯ Discord.JS:** ${djsversion}`,
@@ -84,45 +81,45 @@ export default new Command({
                         `\u3000 • Used: ${formatBytes(process.memoryUsage().heapUsed)}`
                     ])
                     .setTimestamp();
-                const avatarURL = $.client.user?.displayAvatarURL({
+                const avatarURL = client.user?.displayAvatarURL({
                     dynamic: true,
                     size: 2048
                 });
                 if (avatarURL) embed.setThumbnail(avatarURL);
-                $.channel.send(embed);
+                channel.send(embed);
             }
         }),
-        guild: new Command({
+        guild: new NamedCommand({
             description: "Displays info about the current guild or another guild.",
             usage: "(<guild name>/<guild ID>)",
-            async run($) {
-                if ($.guild) {
-                    $.channel.send(await getGuildInfo($.guild, $.guild));
+            async run({message, channel, guild, author, member, client, args}) {
+                if (guild) {
+                    channel.send(await getGuildInfo(guild, guild));
                 } else {
-                    $.channel.send("Please execute this command in a guild.");
+                    channel.send("Please execute this command in a guild.");
                 }
             },
             any: new Command({
                 description: "Display info about a guild by finding its name or ID.",
-                async run($) {
+                async run({message, channel, guild, author, member, client, args}) {
                     // If a guild ID is provided (avoid the "number" subcommand because of inaccuracies), search for that guild
-                    if ($.args.length === 1 && /^\d{17,19}$/.test($.args[0])) {
-                        const id = $.args[0];
-                        const guild = $.client.guilds.cache.get(id);
+                    if (args.length === 1 && /^\d{17,19}$/.test(args[0])) {
+                        const id = args[0];
+                        const guild = client.guilds.cache.get(id);
 
                         if (guild) {
-                            $.channel.send(await getGuildInfo(guild, $.guild));
+                            channel.send(await getGuildInfo(guild, guild));
                         } else {
-                            $.channel.send(`None of the servers I'm in matches the guild ID \`${id}\`!`);
+                            channel.send(`None of the servers I'm in matches the guild ID \`${id}\`!`);
                         }
                     } else {
-                        const query: string = $.args.join(" ").toLowerCase();
-                        const guild = $.client.guilds.cache.find((guild) => guild.name.toLowerCase().includes(query));
+                        const query: string = args.join(" ").toLowerCase();
+                        const guild = client.guilds.cache.find((guild) => guild.name.toLowerCase().includes(query));
 
                         if (guild) {
-                            $.channel.send(await getGuildInfo(guild, $.guild));
+                            channel.send(await getGuildInfo(guild, guild));
                         } else {
-                            $.channel.send(`None of the servers I'm in matches the query \`${query}\`!`);
+                            channel.send(`None of the servers I'm in matches the query \`${query}\`!`);
                         }
                     }
                 }
@@ -131,12 +128,12 @@ export default new Command({
     },
     user: new Command({
         description: "Displays info about mentioned user.",
-        async run($) {
+        async run({message, channel, guild, author, client, args}) {
             // Transforms the User object into a GuildMember object of the current guild.
-            const member = await $.guild?.members.fetch($.args[0]);
+            const member = await guild?.members.fetch(args[0]);
 
             if (!member) {
-                $.channel.send(
+                channel.send(
                     "No member object was found by that user! Are you sure you used this command in a server?"
                 );
                 return;
@@ -166,16 +163,14 @@ export default new Command({
                     `**❯ Game:** ${member.user.presence.activities || "Not playing a game."}`
                 ])
                 .addField("Member", [
-                    `**❯ Highest Role:** ${
-                        member.roles.highest.id === $.guild?.id ? "None" : member.roles.highest.name
-                    }`,
+                    `**❯ Highest Role:** ${member.roles.highest.id === guild?.id ? "None" : member.roles.highest.name}`,
                     `**❯ Server Join Date:** ${moment(member.joinedAt).format("LL LTS")}`,
                     `**❯ Hoist Role:** ${member.roles.hoist ? member.roles.hoist.name : "None"}`,
                     `**❯ Roles:** [${roles.length}]: ${
                         roles.length == 0 ? "None" : roles.length <= 10 ? roles.join(", ") : trimArray(roles).join(", ")
                     }`
                 ]);
-            $.channel.send(embed);
+            channel.send(embed);
         }
     })
 });

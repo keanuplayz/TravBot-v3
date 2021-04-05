@@ -1,8 +1,7 @@
 import {client} from "../index";
 import {loadableCommands} from "./loader";
 import {Permissions, Message} from "discord.js";
-import {getPrefix} from "./structures";
-import {Config} from "./structures";
+import {getPrefix} from "../structures";
 import {defaultMetadata} from "./command";
 
 // For custom message events that want to cancel the command handler on certain conditions.
@@ -97,15 +96,5 @@ client.on("message", async (message) => {
                     : "Try using a different channel or contacting a server admin to change permissions of that channel if you think something's wrong."
             }`
         );
-    }
-});
-
-client.once("ready", () => {
-    if (client.user) {
-        console.ready(`Logged in as ${client.user.tag}.`);
-        client.user.setActivity({
-            type: "LISTENING",
-            name: `${Config.prefix}help`
-        });
     }
 });

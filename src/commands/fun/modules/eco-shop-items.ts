@@ -1,5 +1,5 @@
 import {Message} from "discord.js";
-import {random} from "../../../core/lib";
+import {random} from "../../../lib";
 
 export interface ShopItem {
     cost: number;

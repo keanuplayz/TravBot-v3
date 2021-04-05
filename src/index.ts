@@ -2,7 +2,7 @@
 import "./modules/globals";
 import {Client} from "discord.js";
 import setup from "./modules/setup";
-import {Config} from "./core/structures";
+import {Config} from "./structures";
 
 // This is here in order to make it much less of a headache to access the client from other files.
 // This of course won't actually do anything until the setup process is complete and it logs in.
@@ -16,6 +16,7 @@ setup.init().then(() => {
 // Initialize Modules //
 import "./core/handler"; // Command loading will start as soon as an instance of "core/command" is loaded, which is loaded in "core/handler".
 import "./core/eventListeners";
+import "./modules/ready";
 import "./modules/presence";
 import "./modules/lavalink";
 import "./modules/emoteRegistry";

@@ -1,6 +1,6 @@
 import {client} from "../index";
 import {TextChannel, APIMessage, MessageEmbed} from "discord.js";
-import {getPrefix} from "../core/structures";
+import {getPrefix} from "../structures";
 import {DiscordAPIError} from "discord.js";
 
 client.on("message", async (message) => {

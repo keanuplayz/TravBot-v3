@@ -1,6 +1,6 @@
 import {client} from "../index";
-import FileManager from "../core/storage";
-import {EmoteRegistryDump} from "../core/structures";
+import FileManager from "./storage";
+import {EmoteRegistryDump} from "../structures";
 
 function updateGlobalEmoteRegistry(): void {
     const data: EmoteRegistryDump = {version: 1, list: []};

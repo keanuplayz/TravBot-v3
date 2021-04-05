@@ -1,44 +1,38 @@
-import {GuildEmoji} from "discord.js";
-import {MessageEmbed} from "discord.js";
-import Command from "../../core/command";
-import {split} from "../../core/lib";
-import {paginate} from "../../core/libd";
+import {GuildEmoji, MessageEmbed, TextChannel, DMChannel, NewsChannel, User} from "discord.js";
+import {Command, NamedCommand, paginate} from "../../core";
+import {split} from "../../lib";
 import vm from "vm";
-import {TextChannel} from "discord.js";
-import {DMChannel} from "discord.js";
-import {NewsChannel} from "discord.js";
-import {User} from "discord.js";
 
 const REGEX_TIMEOUT_MS = 1000;
 
-export default new Command({
+export default new NamedCommand({
     description: "Lists all emotes the bot has in it's registry,",
     usage: "<regex pattern> (-flags)",
-    async run($) {
-        displayEmoteList($.client.emojis.cache.array(), $.channel, $.author);
+    async run({message, channel, guild, author, member, client, args}) {
+        displayEmoteList(client.emojis.cache.array(), channel, author);
     },
     any: new Command({
         description:
             "Filters emotes by via a regular expression. Flags can be added by adding a dash at the end. For example, to do a case-insensitive search, do %prefix%lsemotes somepattern -i",
-        async run($) {
+        async run({message, channel, guild, author, member, client, args}) {
             // If a guild ID is provided, filter all emotes by that guild (but only if there aren't any arguments afterward)
-            if ($.args.length === 1 && /^\d{17,19}$/.test($.args[0])) {
-                const guildID: string = $.args[0];
+            if (args.length === 1 && /^\d{17,19}$/.test(args[0])) {
+                const guildID: string = args[0];
 
                 displayEmoteList(
-                    $.client.emojis.cache.filter((emote) => emote.guild.id === guildID).array(),
-                    $.channel,
-                    $.author
+                    client.emojis.cache.filter((emote) => emote.guild.id === guildID).array(),
+                    channel,
+                    author
                 );
             } else {
                 // Otherwise, search via a regex pattern
                 let flags: string | undefined = undefined;
 
-                if (/^-[dgimsuy]{1,7}$/.test($.args[$.args.length - 1])) {
-                    flags = $.args.pop().substring(1);
+                if (/^-[dgimsuy]{1,7}$/.test(args[args.length - 1])) {
+                    flags = args.pop().substring(1);
                 }
 
-                let emoteCollection = $.client.emojis.cache.array();
+                let emoteCollection = client.emojis.cache.array();
                 // Creates a sandbox to stop a regular expression if it takes too much time to search.
                 // To avoid passing in a giant data structure, I'll just pass in the structure {[id: string]: [name: string]}.
                 //let emotes: {[id: string]: string} = {};
@@ -50,7 +44,7 @@ export default new Command({
 
                 // The result will be sandbox.emotes because it'll be modified in-place.
                 const sandbox = {
-                    regex: new RegExp($.args.join(" "), flags),
+                    regex: new RegExp(args.join(" "), flags),
                     emotes
                 };
                 const context = vm.createContext(sandbox);
@@ -64,10 +58,10 @@ export default new Command({
                         script.runInContext(context, {timeout: REGEX_TIMEOUT_MS});
                         emotes = sandbox.emotes;
                         emoteCollection = emoteCollection.filter((emote) => emotes.has(emote.id)); // Only allow emotes that haven't been deleted.
-                        displayEmoteList(emoteCollection, $.channel, $.author);
+                        displayEmoteList(emoteCollection, channel, author);
                     } catch (error) {
                         if (error.code === "ERR_SCRIPT_EXECUTION_TIMEOUT") {
-                            $.channel.send(
+                            channel.send(
                                 `The regular expression you entered exceeded the time limit of ${REGEX_TIMEOUT_MS} milliseconds.`
                             );
                         } else {
@@ -75,7 +69,7 @@ export default new Command({
                         }
                     }
                 } else {
-                    $.channel.send("Failed to initialize sandbox.");
+                    channel.send("Failed to initialize sandbox.");
                 }
             }
         }

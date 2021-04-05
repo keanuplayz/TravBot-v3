@@ -1,10 +1,10 @@
-import Command from "../../../core/command";
-import {Storage} from "../../../core/structures";
+import {Command, NamedCommand} from "../../../core/command";
+import {Storage} from "../../../structures";
 import {isAuthorized, getMoneyEmbed} from "./eco-utils";
 
 const WEEKDAY = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
 
-export const MondayCommand = new Command({
+export const MondayCommand = new NamedCommand({
     description: "Use this on a UTC Monday to get an extra Mon. Does not affect your 22 hour timer for `eco daily`.",
     async run({guild, channel, author}) {
         if (isAuthorized(guild, channel)) {

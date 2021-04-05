@@ -1,5 +1,5 @@
-import {pluralise} from "../../../core/lib";
-import {Storage} from "../../../core/structures";
+import {pluralise} from "../../../lib";
+import {Storage} from "../../../structures";
 import {User, Guild, TextChannel, DMChannel, NewsChannel} from "discord.js";
 
 export const ECO_EMBED_COLOR = 0xf1c40f;

@@ -1,4 +1,4 @@
-import FileManager from "./storage";
+import FileManager from "./modules/storage";
 import {select, GenericJSON, GenericStructure} from "./lib";
 import {watch} from "fs";
 import {Guild as DiscordGuild, Snowflake} from "discord.js";

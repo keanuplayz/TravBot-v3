@@ -1,5 +1,5 @@
 import {User, GuildMember, Permissions} from "discord.js";
-import {Config} from "./structures";
+import {Config} from "../structures";
 
 interface PermissionLevel {
     name: string;

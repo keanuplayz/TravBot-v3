@@ -1,10 +1,9 @@
-import Command from "../../../core/command";
-import {prompt} from "../../../core/libd";
-import {pluralise} from "../../../core/lib";
-import {Storage} from "../../../core/structures";
+import {Command, NamedCommand, prompt} from "../../../core";
+import {pluralise} from "../../../lib";
+import {Storage} from "../../../structures";
 import {isAuthorized, getMoneyEmbed, getSendEmbed, ECO_EMBED_COLOR} from "./eco-utils";
 
-export const DailyCommand = new Command({
+export const DailyCommand = new NamedCommand({
     description: "Pick up your daily Mons. The cooldown is per user and every 22 hours to allow for some leeway.",
     aliases: ["get"],
     async run({author, channel, guild}) {
@@ -38,7 +37,7 @@ export const DailyCommand = new Command({
     }
 });
 
-export const GuildCommand = new Command({
+export const GuildCommand = new NamedCommand({
     description: "Get info on the guild's economy as a whole.",
     async run({guild, channel}) {
         if (isAuthorized(guild, channel)) {
@@ -75,7 +74,7 @@ export const GuildCommand = new Command({
     }
 });
 
-export const LeaderboardCommand = new Command({
+export const LeaderboardCommand = new NamedCommand({
     description: "See the richest players.",
     aliases: ["top"],
     async run({guild, channel, client}) {
@@ -109,7 +108,7 @@ export const LeaderboardCommand = new Command({
     }
 });
 
-export const PayCommand = new Command({
+export const PayCommand = new NamedCommand({
     description: "Send money to someone.",
     usage: "<user> <amount>",
     run: "Who are you sending this money to?",

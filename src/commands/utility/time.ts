@@ -1,6 +1,5 @@
-import Command from "../../core/command";
-import {ask, askYesOrNo, askMultipleChoice, prompt, callMemberByUsername} from "../../core/libd";
-import {Storage} from "../../core/structures";
+import {Command, NamedCommand, ask, askYesOrNo, askMultipleChoice, prompt, callMemberByUsername} from "../../core";
+import {Storage} from "../../structures";
 import {User} from "discord.js";
 import moment from "moment";
 
@@ -167,7 +166,7 @@ function getTimeEmbed(user: User) {
     return embed;
 }
 
-export default new Command({
+export default new NamedCommand({
     description: "Show others what time it is for you.",
     aliases: ["tz"],
     async run({channel, author}) {
@@ -175,7 +174,7 @@ export default new Command({
     },
     subcommands: {
         // Welcome to callback hell. We hope you enjoy your stay here!
-        setup: new Command({
+        setup: new NamedCommand({
             description: "Registers your timezone information for the bot.",
             async run({author, channel}) {
                 const profile = Storage.getUser(author.id);
@@ -327,7 +326,7 @@ export default new Command({
                 );
             }
         }),
-        delete: new Command({
+        delete: new NamedCommand({
             description: "Delete your timezone information.",
             async run({channel, author}) {
                 prompt(
@@ -344,7 +343,7 @@ export default new Command({
                 );
             }
         }),
-        utc: new Command({
+        utc: new NamedCommand({
             description: "Displays UTC time.",
             async run({channel}) {
                 const time = moment().utc();
@@ -370,7 +369,7 @@ export default new Command({
                 });
             }
         }),
-        daylight: new Command({
+        daylight: new NamedCommand({
             description: "Provides information on the daylight savings region",
             run: DST_NOTE_INFO
         })
