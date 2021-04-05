@@ -1,6 +1,6 @@
 import {client} from "../index";
 import {loadableCommands} from "./loader";
-import {Permissions, Message} from "discord.js";
+import {Permissions, Message, TextChannel, DMChannel, NewsChannel} from "discord.js";
 import {getPrefix} from "../structures";
 import {defaultMetadata} from "./command";
 
@@ -10,6 +10,16 @@ const interceptRules: ((message: Message) => boolean)[] = [(message) => message.
 export function addInterceptRule(handler: (message: Message) => boolean) {
     interceptRules.push(handler);
 }
+
+const lastCommandInfo: {
+    header: string;
+    args: string[];
+    channel: TextChannel | DMChannel | NewsChannel | null;
+} = {
+    header: "N/A",
+    args: [],
+    channel: null
+};
 
 // Note: client.user is only undefined before the bot logs in, so by this point, client.user cannot be undefined.
 // Note: guild.available will never need to be checked because the message starts in either a DM channel or an already-available guild.
@@ -40,6 +50,11 @@ client.on("message", async (message) => {
 
         if (commands.has(header)) {
             const command = commands.get(header)!;
+
+            // Set last command info in case of unhandled rejections.
+            lastCommandInfo.header = header;
+            lastCommandInfo.args = [...args];
+            lastCommandInfo.channel = channel;
 
             // Send the arguments to the command to resolve and execute.
             const result = await command.execute(args, menu, {
@@ -73,6 +88,11 @@ client.on("message", async (message) => {
             if (commands.has(header)) {
                 const command = commands.get(header)!;
 
+                // Set last command info in case of unhandled rejections.
+                lastCommandInfo.header = header;
+                lastCommandInfo.args = [...args];
+                lastCommandInfo.channel = channel;
+
                 // Send the arguments to the command to resolve and execute.
                 const result = await command.execute(args, menu, {
                     header,
@@ -95,6 +115,15 @@ client.on("message", async (message) => {
                     ? "Because you're a server admin, you have the ability to change that channel's permissions to match if that's what you intended."
                     : "Try using a different channel or contacting a server admin to change permissions of that channel if you think something's wrong."
             }`
+        );
+    }
+});
+
+process.on("unhandledRejection", (reason: any) => {
+    if (reason?.name === "DiscordAPIError") {
+        console.error(`Command Error: ${lastCommandInfo.header} (${lastCommandInfo.args.join(", ")})\n${reason.stack}`);
+        lastCommandInfo.channel?.send(
+            `There was an error while trying to execute that command!\`\`\`${reason.stack}\`\`\``
         );
     }
 });

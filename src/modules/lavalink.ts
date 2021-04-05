@@ -22,3 +22,27 @@ attachClientToLavalink(client, {
     helpCmd: "mhelp",
     admins: ["717352467280691331"]
 });
+
+// Disable the unhandledRejection listener by Lavalink because it captures every single unhandled
+// rejection and adds its message with it. Then replace it with a better, more selective error handler.
+for (const listener of process.listeners("unhandledRejection")) {
+    if (listener.toString().includes("discord.js-lavalink-musicbot")) {
+        process.off("unhandledRejection", listener);
+    }
+}
+
+process.on("unhandledRejection", (reason: any) => {
+    if (reason?.code === "ECONNREFUSED") {
+        console.error(
+            `[discord.js-lavalink-musicbot] Caught unhandled rejection: ${reason.stack}\nIf this is causing issues, head to the support server at https://discord.gg/dNN4azK`
+        );
+    }
+});
+
+// It's unsafe to process uncaughtException because after an uncaught exception, the system
+// becomes corrupted. So disable Lavalink from adding a hook to it.
+for (const listener of process.listeners("uncaughtException")) {
+    if (listener.toString().includes("discord.js-lavalink-musicbot")) {
+        process.off("uncaughtException", listener);
+    }
+}

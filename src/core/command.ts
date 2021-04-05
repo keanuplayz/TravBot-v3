@@ -32,7 +32,7 @@ const patterns = {
 // Therefore, there won't by any type narrowing on channel or guild of CommandMenu until this is fixed.
 // Otherwise, you'd have to define channelType for every single subcommand, which would get very tedious.
 // Just use type assertions when you specify a channel type.
-enum CHANNEL_TYPE {
+export enum CHANNEL_TYPE {
     ANY,
     GUILD,
     DM
@@ -126,7 +126,6 @@ export class Command {
     protected user: Command | null;
     protected number: Command | null;
     protected any: Command | null;
-    public static readonly CHANNEL_TYPE = CHANNEL_TYPE;
 
     constructor(options?: CommandOptions) {
         this.description = options?.description || "No description.";
@@ -182,6 +181,13 @@ export class Command {
         menu: CommandMenu,
         metadata: ExecuteCommandMetadata
     ): Promise<SingleMessageOptions | null> {
+        // Update inherited properties if the current command specifies a property.
+        // In case there are no initial arguments, these should go first so that it can register.
+        if (this.permission !== -1) metadata.permission = this.permission;
+        if (this.nsfw !== null) metadata.nsfw = this.nsfw;
+        if (this.channelType !== null) metadata.channelType = this.channelType;
+
+        // Take off the leftmost argument from the list.
         const param = args.shift();
 
         // If there are no arguments left, execute the current command. Otherwise, continue on.
@@ -239,7 +245,7 @@ export class Command {
                 return null;
             } catch (error) {
                 const errorMessage = error.stack ?? error;
-                console.error(`Command Error: ${metadata.header} (${metadata.args})\n${errorMessage}`);
+                console.error(`Command Error: ${metadata.header} (${metadata.args.join(", ")})\n${errorMessage}`);
 
                 return {
                     content: `There was an error while trying to execute that command!\`\`\`${errorMessage}\`\`\``
@@ -249,11 +255,6 @@ export class Command {
 
         // If the current command is an endpoint but there are still some arguments left, don't continue.
         if (this.endpoint) return {content: "Too many arguments!"};
-
-        // Update inherited properties if the current command specifies a property.
-        if (this.permission !== -1) metadata.permission = this.permission;
-        if (this.nsfw !== null) metadata.nsfw = this.nsfw;
-        if (this.channelType !== null) metadata.channelType = this.channelType;
 
         // Resolve the value of the current command's argument (adding it to the resolved args),
         // then pass the thread of execution to whichever subcommand is valid (if any).
@@ -295,6 +296,14 @@ export class Command {
         args: string[],
         metadata: CommandInfoMetadata
     ): Promise<CommandInfo | CommandInfoError> {
+        // Update inherited properties if the current command specifies a property.
+        // In case there are no initial arguments, these should go first so that it can register.
+        if (this.permission !== -1) metadata.permission = this.permission;
+        if (this.nsfw !== null) metadata.nsfw = this.nsfw;
+        if (this.channelType !== null) metadata.channelType = this.channelType;
+        if (this.usage !== "") metadata.usage = this.usage;
+
+        // Take off the leftmost argument from the list.
         const param = args.shift();
 
         // If there are no arguments left, return the data or an error message.
@@ -323,12 +332,6 @@ export class Command {
                 ...metadata
             };
         }
-
-        // Update inherited properties if the current command specifies a property.
-        if (this.permission !== -1) metadata.permission = this.permission;
-        if (this.nsfw !== null) metadata.nsfw = this.nsfw;
-        if (this.channelType !== null) metadata.channelType = this.channelType;
-        if (this.usage !== "") metadata.usage = this.usage;
 
         // Then test if anything fits any hardcoded values, otherwise check if it's a valid keyed subcommand.
         if (param === "<user>") {

@@ -1,4 +1,4 @@
-export {Command, NamedCommand} from "./command";
+export {Command, NamedCommand, CHANNEL_TYPE} from "./command";
 export {addInterceptRule} from "./handler";
 export {
     SingleMessageOptions,

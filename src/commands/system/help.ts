@@ -1,5 +1,5 @@
-import {Command, NamedCommand, loadableCommands, categories, getPermissionName} from "../../core";
-import {toTitleCase} from "../../lib";
+import {Command, NamedCommand, loadableCommands, categories, getPermissionName, CHANNEL_TYPE} from "../../core";
+import {toTitleCase, requireAllCasesHandledFor} from "../../lib";
 
 export default new NamedCommand({
     description: "Lists all commands. If a command is specified, their arguments are listed as well.",
@@ -10,14 +10,19 @@ export default new NamedCommand({
         let output = `Legend: \`<type>\`, \`[list/of/stuff]\`, \`(optional)\`, \`(<optional type>)\`, \`([optional/list/...])\``;
 
         for (const [category, headers] of categories) {
-            output += `\n\n===[ ${toTitleCase(category)} ]===`;
+            let tmp = `\n\n===[ ${toTitleCase(category)} ]===`;
+            // Ignore empty categories, including ["test"].
+            let hasActualCommands = false;
 
             for (const header of headers) {
                 if (header !== "test") {
                     const command = commands.get(header)!;
-                    output += `\n- \`${header}\`: ${command.description}`;
+                    tmp += `\n- \`${header}\`: ${command.description}`;
+                    hasActualCommands = true;
                 }
             }
+
+            if (hasActualCommands) output += tmp;
         }
 
         channel.send(output, {split: true});
@@ -50,6 +55,8 @@ export default new NamedCommand({
             let append = "";
             command = result.command;
 
+            if (result.args.length > 0) header += " " + result.args.join(" ");
+
             if (command.usage === "") {
                 const list: string[] = [];
 
@@ -80,9 +87,24 @@ export default new NamedCommand({
             return channel.send(
                 `Command: \`${header}\`\nAliases: ${aliases}\nCategory: \`${category}\`\nPermission Required: \`${getPermissionName(
                     result.permission
-                )}\` (${result.permission})\nDescription: ${command.description}\n${append}`,
+                )}\` (${result.permission})\nChannel Type: ${getChannelTypeName(result.channelType)}\nNSFW Only: ${
+                    result.nsfw ? "Yes" : "No"
+                }\nDescription: ${command.description}\n${append}`,
                 {split: true}
             );
         }
     })
 });
+
+function getChannelTypeName(type: CHANNEL_TYPE): string {
+    switch (type) {
+        case CHANNEL_TYPE.ANY:
+            return "Any";
+        case CHANNEL_TYPE.GUILD:
+            return "Guild Only";
+        case CHANNEL_TYPE.DM:
+            return "DM Only";
+        default:
+            requireAllCasesHandledFor(type);
+    }
+}
