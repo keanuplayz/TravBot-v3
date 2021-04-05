@@ -1,4 +1,4 @@
-import {Command, NamedCommand} from "../../../core/command";
+import {Command, NamedCommand} from "../../../core";
 import {Storage} from "../../../structures";
 import {isAuthorized, getMoneyEmbed} from "./eco-utils";
 

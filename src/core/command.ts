@@ -1,4 +1,3 @@
-import {parseVars} from "../lib";
 import {
     Collection,
     Client,
@@ -11,10 +10,24 @@ import {
     GuildMember,
     GuildChannel
 } from "discord.js";
-import {getPrefix} from "../structures";
 import {SingleMessageOptions} from "./libd";
 import {hasPermission, getPermissionLevel, getPermissionName} from "./permissions";
-import {client} from "../index";
+import {getPrefix} from "./interface";
+import {parseVars} from "../lib";
+
+/**
+ * ===[ Command Types ]===
+ * SUBCOMMAND - Any specifically-defined keywords / string literals.
+ * CHANNEL - <#...>
+ * ROLE - <@&...>
+ * EMOTE - <::ID> (The previous two values, animated and emote name respectively, do not matter at all for finding the emote.)
+ * MESSAGE - Available by using the built-in "Copy Message Link" or "Copy ID" buttons. https://discordapp.com/channels/<Guild ID>/<Channel ID>/<Message ID> or <Channel ID>-<Message ID> (automatically searches all guilds for the channel ID).
+ * USER - <@...> and <@!...>
+ * ID - Any number with 17-19 digits. Only used as a redirect to another subcommand type.
+ * NUMBER - Any valid number via the Number() function, except for NaN and Infinity (because those can really mess with the program).
+ * ANY - Generic argument case.
+ * NONE - No subcommands exist.
+ */
 
 // RegEx patterns used for identifying/extracting each type from a string argument.
 const patterns = {
@@ -264,7 +277,7 @@ export class Command {
             const id = patterns.user.exec(param)![1];
 
             try {
-                menu.args.push(await client.users.fetch(id));
+                menu.args.push(await menu.client.users.fetch(id));
                 return this.user.execute(args, menu, metadata);
             } catch {
                 return {

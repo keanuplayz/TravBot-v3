@@ -79,25 +79,3 @@ function globP(path: string) {
         });
     });
 }
-
-// Gathers a list of categories and top-level commands.
-// Returns: new Collection<string category, Command[] commandList>()
-/*export async function getCommandList(): Promise<Collection<string, Command[]>> {
-    const categorizedCommands = new Collection<string, Command[]>();
-    const commands = await loadableCommands;
-
-    for (const [category, headers] of categories) {
-        const commandList: Command[] = [];
-
-        for (const header of headers) {
-            if (header !== "test") {
-                // If this is somehow undefined, it'll show up as an error when implementing a help command.
-                commandList.push(commands.get(header)!);
-            }
-        }
-
-        categorizedCommands.set(toTitleCase(category), commandList);
-    }
-
-    return categorizedCommands;
-}*/

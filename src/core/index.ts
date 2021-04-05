@@ -1,5 +1,6 @@
 export {Command, NamedCommand, CHANNEL_TYPE} from "./command";
 export {addInterceptRule} from "./handler";
+export {launch} from "./interface";
 export {
     SingleMessageOptions,
     botHasPermission,
