@@ -1,6 +1,6 @@
-import Command from "../../core/command";
+import {Command, NamedCommand} from "../../core";
 
-export default new Command({
+export default new NamedCommand({
     description: "Gives you the Github link.",
     run: "https://github.com/keanuplayz/TravBot-v3"
 });

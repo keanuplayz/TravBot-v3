@@ -1,22 +1,22 @@
-import Command from "../../core/command";
+import {Command, NamedCommand} from "../../core";
 import {MessageEmbed} from "discord.js";
 // Anycasting Alert
 const weather = require("weather-js");
 
-export default new Command({
+export default new NamedCommand({
     description: "Shows weather info of specified location.",
-    async run($) {
-        if ($.args.length == 0) {
-            $.channel.send("You need to provide a city.");
+    async run({message, channel, guild, author, member, client, args}) {
+        if (args.length == 0) {
+            channel.send("You need to provide a city.");
             return;
         }
         weather.find(
             {
-                search: $.args.join(" "),
+                search: args.join(" "),
                 degreeType: "C"
             },
             function (err: any, result: any) {
-                if (err) $.channel.send(err);
+                if (err) channel.send(err);
                 var current = result[0].current;
                 var location = result[0].location;
                 const embed = new MessageEmbed()
@@ -30,7 +30,7 @@ export default new Command({
                     .addField("Feels like", `${current.feelslike} Degrees`, true)
                     .addField("Winds", current.winddisplay, true)
                     .addField("Humidity", `${current.humidity}%`, true);
-                $.channel.send({
+                channel.send({
                     embed
                 });
             }

@@ -1,26 +1,26 @@
-import Command from "../../core/command";
+import {Command, NamedCommand} from "../../core";
 import * as math from "mathjs";
 import {MessageEmbed} from "discord.js";
 
-export default new Command({
+export default new NamedCommand({
     description: "Calculates a specified math expression.",
-    async run($) {
-        if (!$.args[0]) {
-            $.channel.send("Please provide a calculation.");
+    async run({message, channel, guild, author, member, client, args}) {
+        if (!args[0]) {
+            channel.send("Please provide a calculation.");
             return;
         }
         let resp;
         try {
-            resp = math.evaluate($.args.join(" "));
+            resp = math.evaluate(args.join(" "));
         } catch (e) {
-            $.channel.send("Please provide a *valid* calculation.");
+            channel.send("Please provide a *valid* calculation.");
             return;
         }
         const embed = new MessageEmbed()
             .setColor(0xffffff)
             .setTitle("Math Calculation")
-            .addField("Input", `\`\`\`js\n${$.args.join("")}\`\`\``)
+            .addField("Input", `\`\`\`js\n${args.join("")}\`\`\``)
             .addField("Output", `\`\`\`js\n${resp}\`\`\``);
-        $.channel.send(embed);
+        channel.send(embed);
     }
 });

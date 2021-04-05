@@ -1,5 +1,5 @@
 import {User} from "discord.js";
-import Command from "../../core/command";
+import {Command, NamedCommand, getMemberByUsername} from "../../core";
 
 // Quotes must be used here or the numbers will change
 const registry: {[id: string]: string} = {
@@ -34,49 +34,49 @@ const registry: {[id: string]: string} = {
         "Some random conlanger, worldbuilder and programmer doofus. ~~May also secretly be a nyan. :3~~"
 };
 
-export default new Command({
+export default new NamedCommand({
     description: "Tells you who you or the specified user is.",
     aliases: ["whoami"],
-    async run($) {
-        const id = $.author.id;
+    async run({message, channel, guild, author, member, client, args}) {
+        const id = author.id;
 
         if (id in registry) {
-            $.channel.send(registry[id]);
+            channel.send(registry[id]);
         } else {
-            $.channel.send("You haven't been added to the registry yet!");
+            channel.send("You haven't been added to the registry yet!");
         }
     },
     user: new Command({
-        async run($) {
-            const user: User = $.args[0];
+        async run({message, channel, guild, author, member, client, args}) {
+            const user: User = args[0];
             const id = user.id;
 
             if (id in registry) {
-                $.channel.send(`\`${user.username}\` - ${registry[id]}`);
+                channel.send(`\`${user.username}\` - ${registry[id]}`);
             } else {
-                $.channel.send(`\`${user.username}#${user.discriminator}\` hasn't been added to the registry yet!`);
+                channel.send(`\`${user.username}#${user.discriminator}\` hasn't been added to the registry yet!`);
             }
         }
     }),
     any: new Command({
-        async run($) {
-            if ($.guild) {
-                const query: string = $.args.join(" ");
-                const member = await $.getMemberByUsername($.guild, query);
+        async run({message, channel, guild, author, member, client, args}) {
+            if (guild) {
+                const query: string = args.join(" ");
+                const member = await getMemberByUsername(guild, query);
 
                 if (member && member.id in registry) {
                     const id = member.id;
 
                     if (id in registry) {
-                        $.channel.send(`\`${member.user.username}\` - ${registry[member.id]}`);
+                        channel.send(`\`${member.user.username}\` - ${registry[member.id]}`);
                     } else {
-                        $.channel.send(`\`${member.user.username}\` hasn't been added to the registry yet!`);
+                        channel.send(`\`${member.user.username}\` hasn't been added to the registry yet!`);
                     }
                 } else {
-                    $.channel.send(`Couldn't find a user by the name of \`${query}\`!`);
+                    channel.send(`Couldn't find a user by the name of \`${query}\`!`);
                 }
             } else {
-                $.channel.send(
+                channel.send(
                     "You must run this in a guild! (*If you have the user's ID, you don't have to be in a guild.*)"
                 );
             }

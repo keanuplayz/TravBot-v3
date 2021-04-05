@@ -69,3 +69,4 @@ import "./modules/emoteRegistry";
 import "./modules/channelListener";
 import "./modules/intercept";
 import "./modules/messageEmbed";
+import "./modules/guildMemberAdd";

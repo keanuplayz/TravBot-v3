@@ -1,11 +1,11 @@
-import Command from "../../core/command";
+import {Command, NamedCommand} from "../../core";
 
-export default new Command({
+export default new NamedCommand({
     description: "Gives you the invite link.",
-    async run($) {
-        $.channel.send(
-            `https://discordapp.com/api/oauth2/authorize?client_id=${$.client.user!.id}&permissions=${
-                $.args[0] || 8
+    async run({message, channel, guild, author, member, client, args}) {
+        channel.send(
+            `https://discordapp.com/api/oauth2/authorize?client_id=${client.user!.id}&permissions=${
+                args[0] || 8
             }&scope=bot`
         );
     }
