@@ -31,6 +31,7 @@ class User {
     public timezone: number | null; // This is for the standard timezone only, not the daylight savings timezone
     public daylightSavingsRegion: "na" | "eu" | "sh" | null;
     public todoList: {[timestamp: string]: string};
+    public ecoBetInsurance: number;
 
     constructor(data?: GenericJSON) {
         this.money = select(data?.money, 0, Number);
@@ -50,6 +51,7 @@ class User {
                 }
             }
         }
+        this.ecoBetInsurance = select(data?.ecoBetInsurance, 0, Number);
     }
 }
 
