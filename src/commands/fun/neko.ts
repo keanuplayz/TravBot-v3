@@ -45,15 +45,10 @@ export default new NamedCommand({
         description: "Image type to send.",
         async run({message, channel, guild, author, member, client, args}) {
             const arg = args[0];
-
-            if (!(arg in endpoints.sfw)) {
-                channel.send("Couldn't find that endpoint!");
-                return;
-            }
-
+            if (!(arg in endpoints.sfw)) return channel.send("Couldn't find that endpoint!");
             let url = new URL(`https://nekos.life/api/v2${endpoints.sfw[arg]}`);
             const content = await getContent(url.toString());
-            channel.send(content.url);
+            return channel.send(content.url);
         }
     })
 });

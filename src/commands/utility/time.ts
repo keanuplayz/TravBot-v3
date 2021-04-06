@@ -374,6 +374,7 @@ export default new NamedCommand({
             run: DST_NOTE_INFO
         })
     },
+    id: "user",
     user: new Command({
         description: "See what time it is for someone else.",
         async run({channel, args}) {

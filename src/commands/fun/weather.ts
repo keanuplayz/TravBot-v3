@@ -6,11 +6,8 @@ const weather = require("weather-js");
 export default new NamedCommand({
     description: "Shows weather info of specified location.",
     async run({message, channel, guild, author, member, client, args}) {
-        if (args.length == 0) {
-            channel.send("You need to provide a city.");
-            return;
-        }
-        weather.find(
+        if (args.length == 0) return channel.send("You need to provide a city.");
+        return weather.find(
             {
                 search: args.join(" "),
                 degreeType: "C"

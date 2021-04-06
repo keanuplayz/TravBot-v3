@@ -5,22 +5,18 @@ import {MessageEmbed} from "discord.js";
 export default new NamedCommand({
     description: "Calculates a specified math expression.",
     async run({message, channel, guild, author, member, client, args}) {
-        if (!args[0]) {
-            channel.send("Please provide a calculation.");
-            return;
-        }
+        if (!args[0]) return channel.send("Please provide a calculation.");
         let resp;
         try {
             resp = math.evaluate(args.join(" "));
         } catch (e) {
-            channel.send("Please provide a *valid* calculation.");
-            return;
+            return channel.send("Please provide a *valid* calculation.");
         }
         const embed = new MessageEmbed()
             .setColor(0xffffff)
             .setTitle("Math Calculation")
             .addField("Input", `\`\`\`js\n${args.join("")}\`\`\``)
             .addField("Output", `\`\`\`js\n${resp}\`\`\``);
-        channel.send(embed);
+        return channel.send(embed);
     }
 });

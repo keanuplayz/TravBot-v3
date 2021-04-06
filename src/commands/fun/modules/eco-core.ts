@@ -112,6 +112,7 @@ export const PayCommand = new NamedCommand({
     description: "Send money to someone.",
     usage: "<user> <amount>",
     run: "Who are you sending this money to?",
+    id: "user",
     user: new Command({
         run: "You need to enter an amount you're sending!",
         number: new Command({

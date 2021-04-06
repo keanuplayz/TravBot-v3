@@ -1,7 +1,7 @@
-import {Command, NamedCommand, botHasPermission, getPermissionLevel, getPermissionName} from "../../core";
+import {Command, NamedCommand, botHasPermission, getPermissionLevel, getPermissionName, CHANNEL_TYPE} from "../../core";
 import {clean} from "../../lib";
 import {Config, Storage} from "../../structures";
-import {Permissions} from "discord.js";
+import {Permissions, TextChannel} from "discord.js";
 import {logs} from "../../modules/globals";
 
 function getLogBuffer(type: string) {
@@ -22,8 +22,6 @@ export default new NamedCommand({
     description:
         "An all-in-one command to do admin stuff. You need to be either an admin of the server or one of the bot's mechanics to use this command.",
     async run({message, channel, guild, author, member, client, args}) {
-        if (!member)
-            return channel.send("Couldn't find a member object for you! Did you make sure you used this in a server?");
         const permLevel = getPermissionLevel(author, member);
         return channel.send(`${author}, your permission level is \`${getPermissionName(permLevel)}\` (${permLevel}).`);
     },
@@ -32,12 +30,13 @@ export default new NamedCommand({
             description: "Set different per-guild settings for the bot.",
             run: "You have to specify the option you want to set.",
             permission: PERMISSIONS.ADMIN,
+            channelType: CHANNEL_TYPE.GUILD,
             subcommands: {
                 prefix: new NamedCommand({
                     description: "Set a custom prefix for your guild. Removes your custom prefix if none is provided.",
                     usage: "(<prefix>)",
                     async run({message, channel, guild, author, member, client, args}) {
-                        Storage.getGuild(guild?.id || "N/A").prefix = null;
+                        Storage.getGuild(guild!.id).prefix = null;
                         Storage.save();
                         channel.send(
                             `The custom prefix for this guild has been removed. My prefix is now back to \`${Config.prefix}\`.`
@@ -45,7 +44,7 @@ export default new NamedCommand({
                     },
                     any: new Command({
                         async run({message, channel, guild, author, member, client, args}) {
-                            Storage.getGuild(guild?.id || "N/A").prefix = args[0];
+                            Storage.getGuild(guild!.id).prefix = args[0];
                             Storage.save();
                             channel.send(`The custom prefix for this guild is now \`${args[0]}\`.`);
                         }
@@ -61,36 +60,24 @@ export default new NamedCommand({
                                 "Sets how welcome messages are displayed for your server. Removes welcome messages if unspecified.",
                             usage: "`none`/`text`/`graphical`",
                             async run({message, channel, guild, author, member, client, args}) {
-                                if (guild) {
-                                    Storage.getGuild(guild.id).welcomeType = "none";
-                                    Storage.save();
-                                    channel.send("Set this server's welcome type to `none`.");
-                                } else {
-                                    channel.send("You must use this command in a server.");
-                                }
+                                Storage.getGuild(guild!.id).welcomeType = "none";
+                                Storage.save();
+                                channel.send("Set this server's welcome type to `none`.");
                             },
                             // I should probably make this a bit more dynamic... Oh well.
                             subcommands: {
                                 text: new NamedCommand({
                                     async run({message, channel, guild, author, member, client, args}) {
-                                        if (guild) {
-                                            Storage.getGuild(guild.id).welcomeType = "text";
-                                            Storage.save();
-                                            channel.send("Set this server's welcome type to `text`.");
-                                        } else {
-                                            channel.send("You must use this command in a server.");
-                                        }
+                                        Storage.getGuild(guild!.id).welcomeType = "text";
+                                        Storage.save();
+                                        channel.send("Set this server's welcome type to `text`.");
                                     }
                                 }),
                                 graphical: new NamedCommand({
                                     async run({message, channel, guild, author, member, client, args}) {
-                                        if (guild) {
-                                            Storage.getGuild(guild.id).welcomeType = "graphical";
-                                            Storage.save();
-                                            channel.send("Set this server's welcome type to `graphical`.");
-                                        } else {
-                                            channel.send("You must use this command in a server.");
-                                        }
+                                        Storage.getGuild(guild!.id).welcomeType = "graphical";
+                                        Storage.save();
+                                        channel.send("Set this server's welcome type to `graphical`.");
                                     }
                                 })
                             }
@@ -99,34 +86,17 @@ export default new NamedCommand({
                             description: "Sets the welcome channel for your server. Type `#` to reference the channel.",
                             usage: "(<channel mention>)",
                             async run({message, channel, guild, author, member, client, args}) {
-                                if (guild) {
-                                    Storage.getGuild(guild.id).welcomeChannel = channel.id;
-                                    Storage.save();
-                                    channel.send(`Successfully set ${channel} as the welcome channel for this server.`);
-                                } else {
-                                    channel.send("You must use this command in a server.");
-                                }
+                                Storage.getGuild(guild!.id).welcomeChannel = channel.id;
+                                Storage.save();
+                                channel.send(`Successfully set ${channel} as the welcome channel for this server.`);
                             },
-                            // If/when channel types come out, this will be the perfect candidate to test it.
-                            any: new Command({
+                            id: "channel",
+                            channel: new Command({
                                 async run({message, channel, guild, author, member, client, args}) {
-                                    if (guild) {
-                                        const match = args[0].match(/^<#(\d{17,19})>$/);
-
-                                        if (match) {
-                                            Storage.getGuild(guild.id).welcomeChannel = match[1];
-                                            Storage.save();
-                                            channel.send(
-                                                `Successfully set this server's welcome channel to ${match[0]}.`
-                                            );
-                                        } else {
-                                            channel.send(
-                                                "You must provide a reference channel. You can do this by typing `#` then searching for the proper channel."
-                                            );
-                                        }
-                                    } else {
-                                        channel.send("You must use this command in a server.");
-                                    }
+                                    const result = args[0] as TextChannel;
+                                    Storage.getGuild(guild!.id).welcomeChannel = result.id;
+                                    Storage.save();
+                                    channel.send(`Successfully set this server's welcome channel to ${result}.`);
                                 }
                             })
                         }),
@@ -135,24 +105,16 @@ export default new NamedCommand({
                                 "Sets a custom welcome message for your server. Use `%user%` as the placeholder for the user.",
                             usage: "(<message>)",
                             async run({message, channel, guild, author, member, client, args}) {
-                                if (guild) {
-                                    Storage.getGuild(guild.id).welcomeMessage = null;
-                                    Storage.save();
-                                    channel.send("Reset your server's welcome message to the default.");
-                                } else {
-                                    channel.send("You must use this command in a server.");
-                                }
+                                Storage.getGuild(guild!.id).welcomeMessage = null;
+                                Storage.save();
+                                channel.send("Reset your server's welcome message to the default.");
                             },
                             any: new Command({
                                 async run({message, channel, guild, author, member, client, args}) {
-                                    if (guild) {
-                                        const message = args.join(" ");
-                                        Storage.getGuild(guild.id).welcomeMessage = message;
-                                        Storage.save();
-                                        channel.send(`Set your server's welcome message to \`${message}\`.`);
-                                    } else {
-                                        channel.send("You must use this command in a server.");
-                                    }
+                                    const newMessage = args.join(" ");
+                                    Storage.getGuild(guild!.id).welcomeMessage = newMessage;
+                                    Storage.save();
+                                    channel.send(`Set your server's welcome message to \`${newMessage}\`.`);
                                 }
                             })
                         })
@@ -202,9 +164,10 @@ export default new NamedCommand({
         purge: new NamedCommand({
             description: "Purges the bot's own messages.",
             permission: PERMISSIONS.BOT_SUPPORT,
+            channelType: CHANNEL_TYPE.GUILD,
             async run({message, channel, guild, author, member, client, args}) {
                 // It's probably better to go through the bot's own messages instead of calling bulkDelete which requires MANAGE_MESSAGES.
-                if (botHasPermission(guild, Permissions.FLAGS.MANAGE_MESSAGES) && channel.type !== "dm") {
+                if (botHasPermission(guild, Permissions.FLAGS.MANAGE_MESSAGES)) {
                     message.delete();
                     const msgs = await channel.messages.fetch({
                         limit: 100
@@ -216,7 +179,7 @@ export default new NamedCommand({
                             timeout: 5000
                         })
                     );
-                    await channel.bulkDelete(travMessages);
+                    await (channel as TextChannel).bulkDelete(travMessages);
                 } else {
                     channel.send(
                         "This command must be executed in a guild where I have the `MANAGE_MESSAGES` permission."
@@ -227,17 +190,16 @@ export default new NamedCommand({
         clear: new NamedCommand({
             description: "Clears a given amount of messages.",
             usage: "<amount>",
+            channelType: CHANNEL_TYPE.GUILD,
             run: "A number was not provided.",
             number: new Command({
                 description: "Amount of messages to delete.",
                 async run({message, channel, guild, author, member, client, args}) {
-                    if (channel.type === "dm") return channel.send("Can't clear messages in the DMs!");
                     message.delete();
                     const fetched = await channel.messages.fetch({
                         limit: args[0]
                     });
-                    await channel.bulkDelete(fetched);
-                    return;
+                    return await (channel as TextChannel).bulkDelete(fetched);
                 }
             })
         }),
@@ -261,9 +223,10 @@ export default new NamedCommand({
         nick: new NamedCommand({
             description: "Change the bot's nickname.",
             permission: PERMISSIONS.BOT_SUPPORT,
+            channelType: CHANNEL_TYPE.GUILD,
             async run({message, channel, guild, author, member, client, args}) {
                 const nickName = args.join(" ");
-                await guild?.me?.setNickname(nickName);
+                await guild!.me?.setNickname(nickName);
                 if (botHasPermission(guild, Permissions.FLAGS.MANAGE_MESSAGES)) message.delete({timeout: 5000});
                 channel.send(`Nickname set to \`${nickName}\``).then((m) => m.delete({timeout: 5000}));
             }
@@ -308,15 +271,20 @@ export default new NamedCommand({
         syslog: new NamedCommand({
             description: "Sets up the current channel to receive system logs.",
             permission: PERMISSIONS.BOT_ADMIN,
+            channelType: CHANNEL_TYPE.GUILD,
             async run({message, channel, guild, author, member, client, args}) {
-                if (guild) {
-                    Config.systemLogsChannel = channel.id;
+                Config.systemLogsChannel = channel.id;
+                Config.save();
+                channel.send(`Successfully set ${channel} as the system logs channel.`);
+            },
+            channel: new Command({
+                async run({message, channel, guild, author, member, client, args}) {
+                    const targetChannel = args[0] as TextChannel;
+                    Config.systemLogsChannel = targetChannel.id;
                     Config.save();
-                    channel.send(`Successfully set ${channel} as the system logs channel.`);
-                } else {
-                    channel.send("DM system log channels aren't supported.");
+                    channel.send(`Successfully set ${targetChannel} as the system logs channel.`);
                 }
-            }
+            })
         })
     }
 });

@@ -18,6 +18,7 @@ export default new NamedCommand({
         shop: ShopCommand,
         monday: MondayCommand
     },
+    id: "user",
     user: new Command({
         description: "See how much money someone else has by using their user ID or pinging them.",
         async run({guild, channel, args}) {

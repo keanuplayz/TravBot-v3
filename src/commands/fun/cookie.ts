@@ -36,18 +36,16 @@ export default new NamedCommand({
             }
         })
     },
+    id: "user",
     user: new Command({
         description: "User to give cookie to.",
         async run({message, channel, guild, author, member, client, args}) {
             const sender = author;
             const mention: User = args[0];
 
-            if (mention.id == sender.id) {
-                channel.send("You can't give yourself cookies!");
-                return;
-            }
+            if (mention.id == sender.id) return channel.send("You can't give yourself cookies!");
 
-            channel.send(
+            return channel.send(
                 `:cookie: <@${sender.id}> ${parseVars(random(cookies), {
                     target: mention.toString()
                 })}`

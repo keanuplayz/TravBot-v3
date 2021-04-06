@@ -1,14 +1,16 @@
-import {MessageEmbed, version as djsversion, Guild} from "discord.js";
+import {MessageEmbed, version as djsversion, Guild, User, GuildMember} from "discord.js";
 import ms from "ms";
 import os from "os";
-import {Command, NamedCommand, getMemberByUsername} from "../../core";
+import {Command, NamedCommand, getMemberByUsername, CHANNEL_TYPE} from "../../core";
 import {formatBytes, trimArray} from "../../lib";
 import {verificationLevels, filterLevels, regions} from "../../defs/info";
 import moment, {utc} from "moment";
 
 export default new NamedCommand({
     description: "Command to provide all sorts of info about the current server, a user, etc.",
-    run: "Please provide an argument.\nFor help, run `%prefix%help info`.",
+    async run({message, channel, guild, author, member, client, args}) {
+        channel.send(await getUserInfo(author, member));
+    },
     subcommands: {
         avatar: new NamedCommand({
             description: "Shows your own, or another user's avatar.",
@@ -16,6 +18,7 @@ export default new NamedCommand({
             async run({message, channel, guild, author, member, client, args}) {
                 channel.send(author.displayAvatarURL({dynamic: true, size: 2048}));
             },
+            id: "user",
             user: new Command({
                 description: "Shows your own, or another user's avatar.",
                 async run({message, channel, guild, author, member, client, args}) {
@@ -29,21 +32,20 @@ export default new NamedCommand({
             }),
             any: new Command({
                 description: "Shows another user's avatar by searching their name",
-                async run({message, channel, guild, author, member, client, args}) {
-                    if (guild) {
-                        const name = args.join(" ");
-                        const member = await getMemberByUsername(guild, name);
+                channelType: CHANNEL_TYPE.GUILD,
+                async run({message, channel, guild, author, client, args}) {
+                    const name = args.join(" ");
+                    const member = await getMemberByUsername(guild!, name);
 
-                        if (member) {
-                            channel.send(
-                                member.user.displayAvatarURL({
-                                    dynamic: true,
-                                    size: 2048
-                                })
-                            );
-                        } else {
-                            channel.send(`No user found by the name \`${name}\`!`);
-                        }
+                    if (member) {
+                        channel.send(
+                            member.user.displayAvatarURL({
+                                dynamic: true,
+                                size: 2048
+                            })
+                        );
+                    } else {
+                        channel.send(`No user found by the name \`${name}\`!`);
                     }
                 }
             })
@@ -92,12 +94,9 @@ export default new NamedCommand({
         guild: new NamedCommand({
             description: "Displays info about the current guild or another guild.",
             usage: "(<guild name>/<guild ID>)",
+            channelType: CHANNEL_TYPE.GUILD,
             async run({message, channel, guild, author, member, client, args}) {
-                if (guild) {
-                    channel.send(await getGuildInfo(guild, guild));
-                } else {
-                    channel.send("Please execute this command in a guild.");
-                }
+                channel.send(await getGuildInfo(guild!, guild));
             },
             any: new Command({
                 description: "Display info about a guild by finding its name or ID.",
@@ -105,19 +104,21 @@ export default new NamedCommand({
                     // If a guild ID is provided (avoid the "number" subcommand because of inaccuracies), search for that guild
                     if (args.length === 1 && /^\d{17,19}$/.test(args[0])) {
                         const id = args[0];
-                        const guild = client.guilds.cache.get(id);
+                        const targetGuild = client.guilds.cache.get(id);
 
-                        if (guild) {
-                            channel.send(await getGuildInfo(guild, guild));
+                        if (targetGuild) {
+                            channel.send(await getGuildInfo(targetGuild, guild));
                         } else {
                             channel.send(`None of the servers I'm in matches the guild ID \`${id}\`!`);
                         }
                     } else {
                         const query: string = args.join(" ").toLowerCase();
-                        const guild = client.guilds.cache.find((guild) => guild.name.toLowerCase().includes(query));
+                        const targetGuild = client.guilds.cache.find((guild) =>
+                            guild.name.toLowerCase().includes(query)
+                        );
 
-                        if (guild) {
-                            channel.send(await getGuildInfo(guild, guild));
+                        if (targetGuild) {
+                            channel.send(await getGuildInfo(targetGuild, guild));
                         } else {
                             channel.send(`None of the servers I'm in matches the query \`${query}\`!`);
                         }
@@ -126,54 +127,61 @@ export default new NamedCommand({
             })
         })
     },
+    id: "user",
     user: new Command({
         description: "Displays info about mentioned user.",
         async run({message, channel, guild, author, client, args}) {
+            const user = args[0] as User;
             // Transforms the User object into a GuildMember object of the current guild.
-            const member = await guild?.members.fetch(args[0]);
-
-            if (!member) {
-                channel.send(
-                    "No member object was found by that user! Are you sure you used this command in a server?"
-                );
-                return;
-            }
-
-            const roles = member.roles.cache
-                .sort((a: {position: number}, b: {position: number}) => b.position - a.position)
-                .map((role: {toString: () => any}) => role.toString())
-                .slice(0, -1);
-            const userFlags = (await member.user.fetchFlags()).toArray();
-
-            const embed = new MessageEmbed()
-                .setThumbnail(member.user.displayAvatarURL({dynamic: true, size: 512}))
-                .setColor(member.displayHexColor || "BLUE")
-                .addField("User", [
-                    `**❯ Username:** ${member.user.username}`,
-                    `**❯ Discriminator:** ${member.user.discriminator}`,
-                    `**❯ ID:** ${member.id}`,
-                    `**❯ Flags:** ${userFlags.length ? userFlags.join(", ") : "None"}`,
-                    `**❯ Avatar:** [Link to avatar](${member.user.displayAvatarURL({
-                        dynamic: true
-                    })})`,
-                    `**❯ Time Created:** ${moment(member.user.createdTimestamp).format("LT")} ${moment(
-                        member.user.createdTimestamp
-                    ).format("LL")} ${moment(member.user.createdTimestamp).fromNow()}`,
-                    `**❯ Status:** ${member.user.presence.status}`,
-                    `**❯ Game:** ${member.user.presence.activities || "Not playing a game."}`
-                ])
-                .addField("Member", [
-                    `**❯ Highest Role:** ${member.roles.highest.id === guild?.id ? "None" : member.roles.highest.name}`,
-                    `**❯ Server Join Date:** ${moment(member.joinedAt).format("LL LTS")}`,
-                    `**❯ Hoist Role:** ${member.roles.hoist ? member.roles.hoist.name : "None"}`,
-                    `**❯ Roles:** [${roles.length}]: ${
-                        roles.length == 0 ? "None" : roles.length <= 10 ? roles.join(", ") : trimArray(roles).join(", ")
-                    }`
-                ]);
-            channel.send(embed);
+            const member = guild?.members.resolve(args[0]);
+            channel.send(await getUserInfo(user, member));
         }
     })
 });
+
+async function getUserInfo(user: User, member: GuildMember | null | undefined): Promise<MessageEmbed> {
+    const userFlags = (await user.fetchFlags()).toArray();
+
+    const embed = new MessageEmbed()
+        .setThumbnail(user.displayAvatarURL({dynamic: true, size: 512}))
+        .setColor("BLUE")
+        .addField("User", [
+            `**❯ Username:** ${user.username}`,
+            `**❯ Discriminator:** ${user.discriminator}`,
+            `**❯ ID:** ${user.id}`,
+            `**❯ Flags:** ${userFlags.length ? userFlags.join(", ") : "None"}`,
+            `**❯ Avatar:** [Link to avatar](${user.displayAvatarURL({
+                dynamic: true
+            })})`,
+            `**❯ Time Created:** ${moment(user.createdTimestamp).format("LT")} ${moment(user.createdTimestamp).format(
+                "LL"
+            )} ${moment(user.createdTimestamp).fromNow()}`,
+            `**❯ Status:** ${user.presence.status}`,
+            `**❯ Game:** ${user.presence.activities || "Not playing a game."}`
+        ]);
+
+    if (member) {
+        const roles = member.roles.cache
+            .sort((a: {position: number}, b: {position: number}) => b.position - a.position)
+            .map((role: {toString: () => any}) => role.toString())
+            .slice(0, -1);
+
+        embed
+            .setColor(member.displayHexColor)
+            .addField("Member", [
+                `**❯ Highest Role:** ${
+                    member.roles.highest.id === member.guild.id ? "None" : member.roles.highest.name
+                }`,
+                `**❯ Server Join Date:** ${moment(member.joinedAt).format("LL LTS")}`,
+                `**❯ Hoist Role:** ${member.roles.hoist ? member.roles.hoist.name : "None"}`,
+                `**❯ Roles:** [${roles.length}]: ${
+                    roles.length == 0 ? "None" : roles.length <= 10 ? roles.join(", ") : trimArray(roles).join(", ")
+                }`
+            ]);
+    }
+
+    return embed;
+}
 
 async function getGuildInfo(guild: Guild, currentGuild: Guild | null) {
     const members = await guild.members.fetch({
