@@ -182,12 +182,16 @@ export async function loadCommands(): Promise<Collection<string, Command>> {
                 if (cmd.isDirectory()) {
                     if (cmd.name === "subcommands") continue;
                     else $.warn(`You can't have multiple levels of directories! From: "dist/commands/${cmd.name}"`);
-                } else loadCommand(cmd.name, list, selected.name);
+                } else if (cmd.name.endsWith(".js")) {
+                    loadCommand(cmd.name, list, selected.name);
+                }
             }
 
             subdir.close();
             categories.set(category, list);
-        } else loadCommand(selected.name, listMisc);
+        } else if (selected.name.endsWith(".js")) {
+            loadCommand(selected.name, listMisc);
+        }
     }
 
     dir.close();
@@ -236,7 +240,7 @@ export default new Command({
 	permission: null,
 	aliases: [],
 	async run($: CommonLibrary): Promise<any> {
-		
+
 	},
 	subcommands: {
 		layer: new Command({
@@ -246,7 +250,7 @@ export default new Command({
 			permission: null,
 			aliases: [],
 			async run($: CommonLibrary): Promise<any> {
-				
+
 			}
 		})
 	},
@@ -256,7 +260,7 @@ export default new Command({
 		usage: '',
 		permission: null,
 		async run($: CommonLibrary): Promise<any> {
-			
+
 		}
 	}),
 	number: new Command({
@@ -265,7 +269,7 @@ export default new Command({
 		usage: '',
 		permission: null,
 		async run($: CommonLibrary): Promise<any> {
-			
+
 		}
 	}),
 	any: new Command({
@@ -274,7 +278,7 @@ export default new Command({
 		usage: '',
 		permission: null,
 		async run($: CommonLibrary): Promise<any> {
-			
+
 		}
 	})
 });`;

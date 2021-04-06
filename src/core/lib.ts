@@ -172,7 +172,7 @@ export function formatUTCTimestamp(now = new Date()) {
 }
 
 export function botHasPermission(guild: Guild | null, permission: number): boolean {
-    return !!(client.user && guild?.members.resolve(client.user)?.hasPermission(permission));
+    return !!guild?.me?.hasPermission(permission);
 }
 
 export function updateGlobalEmoteRegistry(): void {
@@ -216,20 +216,22 @@ $.paginate = async (
 
         callback(page);
     };
+    const BACKWARDS_EMOJI = "⬅️";
+    const FORWARDS_EMOJI = "➡️";
     const handle = (emote: string, reacterID: string) => {
         switch (emote) {
-            case "⬅️":
+            case BACKWARDS_EMOJI:
                 turn(-1);
                 break;
-            case "➡️":
+            case FORWARDS_EMOJI:
                 turn(1);
                 break;
         }
     };
 
     // Listen for reactions and call the handler.
-    await message.react("⬅️");
-    await message.react("➡️");
+    let backwardsReaction = await message.react(BACKWARDS_EMOJI);
+    let forwardsReaction = await message.react(FORWARDS_EMOJI);
     eventListeners.set(message.id, handle);
     await message.awaitReactions(
         (reaction, user) => {
@@ -248,8 +250,8 @@ $.paginate = async (
     );
     // When time's up, remove the bot's own reactions.
     eventListeners.delete(message.id);
-    message.reactions.cache.get("⬅️")?.users.remove(message.author);
-    message.reactions.cache.get("➡️")?.users.remove(message.author);
+    backwardsReaction.users.remove(message.author);
+    forwardsReaction.users.remove(message.author);
 };
 
 // Waits for the sender to either confirm an action or let it pass (and delete the message).
