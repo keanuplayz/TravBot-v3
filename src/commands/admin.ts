@@ -166,7 +166,8 @@ export default new Command({
                     }
                 }),
                 stream: new Command({
-                    description: "Set a channel to send stream notifications.",
+                    description: "Set a channel to send stream notifications. Type `#` to reference the channel.",
+                    usage: "(<channel mention>)",
                     async run($) {
                         if ($.guild) {
                             const guild = Storage.getGuild($.guild.id);
@@ -183,7 +184,27 @@ export default new Command({
                         } else {
                             $.channel.send("You must use this command in a server.");
                         }
-                    }
+                    },
+                    // If/when channel types come out, this will be the perfect candidate to test it.
+                    any: new Command({
+                        async run($) {
+                            if ($.guild) {
+                                const match = $.args[0].match(/^<#(\d{17,19})>$/);
+
+                                if (match) {
+                                    Storage.getGuild($.guild.id).streamingChannel = match[1];
+                                    Storage.save();
+                                    $.channel.send(`Successfully set this server's welcome channel to ${match[0]}.`);
+                                } else {
+                                    $.channel.send(
+                                        "You must provide a reference channel. You can do this by typing `#` then searching for the proper channel."
+                                    );
+                                }
+                            } else {
+                                $.channel.send("You must use this command in a server.");
+                            }
+                        }
+                    })
                 })
             }
         }),

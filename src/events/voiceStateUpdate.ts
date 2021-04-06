@@ -9,13 +9,14 @@ type Stream = {
     channel: VoiceChannel;
     description?: string;
     message: Message;
+    update: () => void;
 };
 
 // A list of user IDs and message embeds.
 export const streamList = new Collection<string, Stream>();
 
 // Probably find a better, DRY way of doing this.
-export function getStreamEmbed(streamer: GuildMember, channel: VoiceChannel, description?: string): MessageEmbed {
+function getStreamEmbed(streamer: GuildMember, channel: VoiceChannel, description?: string): MessageEmbed {
     const user = streamer.user;
     const embed = new MessageEmbed()
         .setTitle(`Stream: \`#${channel.name}\``)
@@ -49,12 +50,15 @@ export default new Event<"voiceStateUpdate">({
                 const voiceChannel = after.channel!;
                 const textChannel = client.channels.cache.get(streamingChannel);
 
-                if (textChannel && textChannel instanceof TextChannel) {
+                if (textChannel instanceof TextChannel) {
                     if (isStartStreamEvent) {
                         streamList.set(member.id, {
                             streamer: member,
                             channel: voiceChannel,
-                            message: await textChannel.send(getStreamEmbed(member, voiceChannel))
+                            message: await textChannel.send(getStreamEmbed(member, voiceChannel)),
+                            update(this: Stream) {
+                                this.message.edit(getStreamEmbed(this.streamer, this.channel, this.description));
+                            }
                         });
                     } else if (isStopStreamEvent) {
                         if (streamList.has(member.id)) {
