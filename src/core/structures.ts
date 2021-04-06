@@ -26,7 +26,7 @@ class User {
     public lastMonday: number;
     public timezone: number | null; // This is for the standard timezone only, not the daylight savings timezone
     public daylightSavingsRegion: "na" | "eu" | "sh" | null;
-    public quoteUnquoteSoCalledInsuranceForEcoBetIfItEvenCanBeSoCalled: number;
+    public ecoBetInsurance: number;
 
     constructor(data?: GenericJSON) {
         this.money = select(data?.money, 0, Number);
@@ -36,7 +36,7 @@ class User {
         this.daylightSavingsRegion = /^((na)|(eu)|(sh))$/.test(data?.daylightSavingsRegion)
             ? data?.daylightSavingsRegion
             : null;
-        this.quoteUnquoteSoCalledInsuranceForEcoBetIfItEvenCanBeSoCalled = select(data?.quoteUnquoteSoCalledInsuranceForEcoBetIfItEvenCanBeSoCalled, 0, Number);
+        this.ecoBetInsurance = select(data?.ecoBetInsurance, 0, Number);
     }
 }
 

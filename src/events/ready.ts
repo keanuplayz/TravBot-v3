@@ -19,10 +19,10 @@ export default new Event<"ready">({
         for (const id in Storage.users) {
             const user = Storage.users[id];
 
-            if(user.quoteUnquoteSoCalledInsuranceForEcoBetIfItEvenCanBeSoCalled > 0) {
-                client.users.cache.get(id)?.send(`Because my system either crashed or restarted while you had a pending bet, the total amount of money that you bet, which was \`${user.quoteUnquoteSoCalledInsuranceForEcoBetIfItEvenCanBeSoCalled}\`, has been restored.`);
-                user.money += user.quoteUnquoteSoCalledInsuranceForEcoBetIfItEvenCanBeSoCalled;
-                user.quoteUnquoteSoCalledInsuranceForEcoBetIfItEvenCanBeSoCalled = 0;
+            if(user.ecoBetInsurance > 0) {
+                client.users.cache.get(id)?.send(`Because my system either crashed or restarted while you had a pending bet, the total amount of money that you bet, which was \`${user.ecoBetInsurance}\`, has been restored.`);
+                user.money += user.ecoBetInsurance;
+                user.ecoBetInsurance = 0;
             }
         }
         Storage.save();

@@ -96,8 +96,8 @@ export const BetCommand = new Command({
                             sender.money -= amount;
                             receiver.money -= amount;
                             // Very hacky solution for persistence but better than no solution, backup returns runs during the bot's setup code.
-                            sender.quoteUnquoteSoCalledInsuranceForEcoBetIfItEvenCanBeSoCalled += amount;
-                            receiver.quoteUnquoteSoCalledInsuranceForEcoBetIfItEvenCanBeSoCalled += amount;
+                            sender.ecoBetInsurance += amount;
+                            receiver.ecoBetInsurance += amount;
                             Storage.save();
 
                             // Notify both users.
@@ -141,8 +141,8 @@ export const BetCommand = new Command({
                                         receiver.money += amount;
                                         channel.send(`By the people's votes, <@${target.id}> couldn't be determined to have won or lost the bet that <@${author.id}> had sent them.`);
                                     }
-                                    sender.quoteUnquoteSoCalledInsuranceForEcoBetIfItEvenCanBeSoCalled -= amount;
-                                    receiver.quoteUnquoteSoCalledInsuranceForEcoBetIfItEvenCanBeSoCalled -= amount;
+                                    sender.ecoBetInsurance -= amount;
+                                    receiver.ecoBetInsurance -= amount;
                                     Storage.save();
                                 });
                             }, duration);
