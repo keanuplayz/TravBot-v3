@@ -10,6 +10,7 @@ LICENSE
 dist/
 data/
 docs/
+*.md
 tmp/
 test*
 !test/

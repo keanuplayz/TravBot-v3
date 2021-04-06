@@ -1,8 +1,17 @@
 {
-    "name": "d.js-v12-bot",
+    "name": "travebot",
     "version": "0.0.1",
-    "description": "A Discord bot built on Discord.JS v12",
+    "description": "TravBot Discord bot.",
     "main": "dist/index.js",
+    "scripts": {
+        "build": "tsc --project tsconfig.prod.json && npm prune --production",
+        "start": "node .",
+        "once": "tsc && npm start",
+        "dev": "tsc-watch --onSuccess \"node . dev\"",
+        "test": "jest",
+        "format": "prettier --write **/*",
+        "postinstall": "husky install"
+    },
     "dependencies": {
         "canvas": "^2.7.0",
         "chalk": "^4.1.0",
@@ -34,19 +43,10 @@
         "tsc-watch": "^4.2.9",
         "typescript": "^3.9.7"
     },
-    "scripts": {
-        "build": "tsc --project tsconfig.prod.json && npm prune --production",
-        "start": "node .",
-        "once": "tsc && npm start",
-        "dev": "tsc-watch --onSuccess \"node . dev\"",
-        "test": "jest",
-        "format": "prettier --write **/*",
-        "postinstall": "husky install"
-    },
+    "author": "Keanu Timmermans",
+    "license": "MIT",
     "keywords": [
         "discord.js",
         "bot"
-    ],
-    "author": "Keanu Timmermans",
-    "license": "MIT"
+    ]
 }
