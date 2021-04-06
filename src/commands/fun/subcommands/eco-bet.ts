@@ -5,10 +5,11 @@ import {isAuthorized, getMoneyEmbed, getSendEmbed, ECO_EMBED_COLOR} from "./eco-
 import {User} from "discord.js";
 
 export const BetCommand = new Command({
-    description: "Bet your Mons with other people [TBD]",
+    description: "Bet your Mons with other people.",
     usage: "<user> <amount> <duration>",
     run: "Who are you betting with?",
     user: new Command({
+        description: "User to bet with.",
         // handles missing amount argument
         async run({args, author, channel, guild}): Promise<any> {
             if (isAuthorized(guild, channel)) {
@@ -24,6 +25,7 @@ export const BetCommand = new Command({
             }
         },
         number: new Command({
+            description: "Amount of Mons to bet.",
             // handles missing duration argument
             async run({args, author, channel, guild}): Promise<any> {
                 if (isAuthorized(guild, channel)) {
@@ -50,6 +52,7 @@ export const BetCommand = new Command({
                 }
             },
             any: new Command({
+                description: "Duration of the bet.",
                 async run({client, args, author, message, channel, guild, askYesOrNo}): Promise<any> {
                     if (isAuthorized(guild, channel)) {
                         // [Pertinence to make configurable on the fly.]
