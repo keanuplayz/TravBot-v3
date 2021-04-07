@@ -1,5 +1,5 @@
 import {Command, NamedCommand} from "../../core";
-import {queryClosestEmoteByName} from "./modules/emote-utils";
+import {processEmoteQueryFormatted} from "./modules/emote-utils";
 
 export default new NamedCommand({
     description: "Send the specified emote.",
@@ -8,9 +8,8 @@ export default new NamedCommand({
         description: "The emote(s) to send.",
         usage: "<emotes...>",
         async run({guild, channel, message, args}) {
-            let output = "";
-            for (const query of args) output += queryClosestEmoteByName(query).toString();
-            channel.send(output);
+            const output = processEmoteQueryFormatted(args);
+            if (output.length > 0) channel.send(output);
         }
     })
 });
