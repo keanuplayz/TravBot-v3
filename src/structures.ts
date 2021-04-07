@@ -31,6 +31,7 @@ class User {
     public timezone: number | null; // This is for the standard timezone only, not the daylight savings timezone
     public daylightSavingsRegion: "na" | "eu" | "sh" | null;
     public todoList: {[timestamp: string]: string};
+    public ecoBetInsurance: number;
 
     constructor(data?: GenericJSON) {
         this.money = select(data?.money, 0, Number);
@@ -41,6 +42,7 @@ class User {
             ? data?.daylightSavingsRegion
             : null;
         this.todoList = {};
+        this.ecoBetInsurance = select(data?.ecoBetInsurance, 0, Number);
 
         if (data) {
             for (const timestamp in data.todoList) {
@@ -58,11 +60,13 @@ class Guild {
     public welcomeType: "none" | "text" | "graphical";
     public welcomeChannel: string | null;
     public welcomeMessage: string | null;
+    public streamingChannel: string | null;
 
     constructor(data?: GenericJSON) {
         this.prefix = select(data?.prefix, null, String);
         this.welcomeChannel = select(data?.welcomeChannel, null, String);
         this.welcomeMessage = select(data?.welcomeMessage, null, String);
+        this.streamingChannel = select(data?.streamingChannel, null, String);
 
         switch (data?.welcomeType) {
             case "text":

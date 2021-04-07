@@ -10,7 +10,18 @@ export default new NamedCommand({
         let target: Message | undefined;
         let distance = 1;
 
-        if (args.length >= 2) {
+        // allows reactions by using an in-line reply
+        if (message.reference) {
+            const messageID = message.reference.messageID;
+            try {
+                target = await channel.messages.fetch(messageID!);
+            } catch {
+                return channel.send("Unknown error occurred!");
+            }
+        }
+
+        // handles reacts by message id/distance
+        else if (args.length >= 2) {
             const last = args[args.length - 1]; // Because this is optional, do not .pop() unless you're sure it's a message link indicator.
             const URLPattern = /^(?:https:\/\/discord.com\/channels\/(\d{17,19})\/(\d{17,19})\/(\d{17,19}))$/;
             const copyIDPattern = /^(?:(\d{17,19})-(\d{17,19}))$/;

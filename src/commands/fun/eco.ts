@@ -3,6 +3,7 @@ import {isAuthorized, getMoneyEmbed} from "./modules/eco-utils";
 import {DailyCommand, PayCommand, GuildCommand, LeaderboardCommand} from "./modules/eco-core";
 import {BuyCommand, ShopCommand} from "./modules/eco-shop";
 import {MondayCommand} from "./modules/eco-extras";
+import {BetCommand} from "./modules/eco-bet";
 
 export default new NamedCommand({
     description: "Economy command for Monika.",
@@ -16,7 +17,8 @@ export default new NamedCommand({
         leaderboard: LeaderboardCommand,
         buy: BuyCommand,
         shop: ShopCommand,
-        monday: MondayCommand
+        monday: MondayCommand,
+        bet: BetCommand
     },
     id: "user",
     user: new Command({

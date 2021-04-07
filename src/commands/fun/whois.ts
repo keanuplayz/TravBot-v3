@@ -32,6 +32,8 @@ const registry: {[id: string]: string} = {
         "You are, uhh, Stay Put, Soft Puppy, Es-Pee, Swift Pacemaker, Smug Poyo, and many more.\n...Seriously, this woman has too many names.",
     "243061915281129472":
         "Some random conlanger, worldbuilder and programmer doofus. ~~May also secretly be a nyan. :3~~",
+    "792751612904603668":
+        "Some random nyan. :3 ~~May also secretly be a conlanger, worldbuilder and programmer doofus.~~",
     "367439475153829892": "A weeb.",
     "760375501775700038": "˙qǝǝʍ ∀",
     "389178357302034442": "In his dreams, he is the star. its him. <:itsMe:808174425253871657>",

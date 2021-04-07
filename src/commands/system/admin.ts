@@ -119,6 +119,32 @@ export default new NamedCommand({
                             })
                         })
                     }
+                }),
+                stream: new NamedCommand({
+                    description: "Set a channel to send stream notifications. Type `#` to reference the channel.",
+                    usage: "(<channel mention>)",
+                    async run({message, channel, guild, author, member, client, args}) {
+                        const targetGuild = Storage.getGuild(guild!.id);
+
+                        if (targetGuild.streamingChannel) {
+                            targetGuild.streamingChannel = null;
+                            channel.send("Removed your server's stream notifications channel.");
+                        } else {
+                            targetGuild.streamingChannel = channel.id;
+                            channel.send(`Set your server's stream notifications channel to ${channel}.`);
+                        }
+
+                        Storage.save();
+                    },
+                    id: "channel",
+                    channel: new Command({
+                        async run({message, channel, guild, author, member, client, args}) {
+                            const result = args[0] as TextChannel;
+                            Storage.getGuild(guild!.id).streamingChannel = result.id;
+                            Storage.save();
+                            channel.send(`Successfully set this server's stream notifications channel to ${result}.`);
+                        }
+                    })
                 })
             }
         }),
