@@ -139,6 +139,7 @@ export const defaultMetadata = {
     channelType: CHANNEL_TYPE.ANY
 };
 
+// Each Command instance represents a block that links other Command instances under it.
 export class Command {
     public readonly description: string;
     public readonly endpoint: boolean;
@@ -146,17 +147,19 @@ export class Command {
     public readonly permission: number; // -1 (default) indicates to inherit, 0 is the lowest rank, 1 is second lowest rank, and so on.
     public readonly nsfw: boolean | null; // null (default) indicates to inherit
     public readonly channelType: CHANNEL_TYPE | null; // null (default) indicates to inherit
-    protected run: (($: CommandMenu) => Promise<any>) | string;
-    protected readonly subcommands: Collection<string, NamedCommand>; // This is the final data structure you'll actually use to work with the commands the aliases point to.
-    protected channel: Command | null;
-    protected role: Command | null;
-    protected emote: Command | null;
-    protected message: Command | null;
-    protected user: Command | null;
-    protected id: Command | null;
-    protected idType: ID | null;
-    protected number: Command | null;
-    protected any: Command | null;
+    // The execute and subcommand properties are restricted to the class because subcommand recursion could easily break when manually handled.
+    // The class will handle checking for null fields.
+    private run: (($: CommandMenu) => Promise<any>) | string;
+    private readonly subcommands: Collection<string, NamedCommand>; // This is the final data structure you'll actually use to work with the commands the aliases point to.
+    private channel: Command | null;
+    private role: Command | null;
+    private emote: Command | null;
+    private message: Command | null;
+    private user: Command | null;
+    private id: Command | null;
+    private idType: ID | null;
+    private number: Command | null;
+    private any: Command | null;
 
     constructor(options?: CommandOptions) {
         this.description = options?.description || "No description.";
@@ -240,6 +243,9 @@ export class Command {
 
     // Go through the arguments provided and find the right subcommand, then execute with the given arguments.
     // Will return null if it successfully executes, SingleMessageOptions if there's an error (to let the user know what it is).
+    //
+    // Calls the resulting subcommand's execute method in order to make more modular code, basically pushing the chain of execution to the subcommand.
+    // For example, a numeric subcommand would accept args of [4] then execute on it.
     public async execute(
         args: string[],
         menu: CommandMenu,
@@ -261,12 +267,12 @@ export class Command {
             // 1. Does this command specify a required channel type? If so, does the channel type match?
             if (
                 metadata.channelType === CHANNEL_TYPE.GUILD &&
-                (!(menu.channel instanceof GuildChannel) || menu.guild === null)
+                (!(menu.channel instanceof GuildChannel) || menu.guild === null || menu.member === null)
             ) {
                 return {content: "This command must be executed in a server."};
             } else if (
                 metadata.channelType === CHANNEL_TYPE.DM &&
-                (menu.channel.type !== "dm" || menu.guild !== null)
+                (menu.channel.type !== "dm" || menu.guild !== null || menu.member !== null)
             ) {
                 return {content: "This command must be executed as a direct message."};
             }

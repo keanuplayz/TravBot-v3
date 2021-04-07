@@ -247,3 +247,14 @@ export async function callMemberByUsername(
         else send(`Couldn't find a user by the name of \`${username}\`!`);
     } else send("You must execute this command in a server!");
 }
+
+// TO DO Section //
+
+// getGuildByID() - checks for guild.available (boolean)
+// getGuildByName()
+// findMemberByNickname() - gets a member by their nickname or their username
+// findUserByUsername()
+
+// For "get x by y" methods:
+// Caching: All guilds, channels, and roles are fully cached, while the caches for messages, users, and members aren't complete.
+// It's more reliable to get users/members by fetching their IDs. fetch() will searching through the cache anyway.

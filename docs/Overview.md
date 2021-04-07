@@ -72,7 +72,7 @@ export default new NamedCommand({
 
 Here, . For example, if this file was named `test.ts`, `$test <@237359961842253835>` would get the user by the ID `237359961842253835` into `args[0]` as a [User](https://discord.js.org/#/docs/main/stable/class/User) object. `$test experiment` would run as if you just called `$test` *(given that [endpoint](Documentation.md#) isn't set to `true`)*.
 
-If you want, you can typecast the argument to be more strongly typed, because the type of `args` is `any[]`. *([See why if you're curious.](DesignDecisions.md#))*
+If you want, you can typecast the argument to be more strongly typed, because the type of `args` is `any[]`. *([See why if you're curious.](DesignDecisions.md#any[]-parameters-for-subcommand-run))*
 
 ```ts
 import {Command, NamedCommand} from "../core";
@@ -201,7 +201,7 @@ This will just run whatever code is in there.
 
 ## Listening for events
 
-Rather than have an `events` folder which contains dynamically loaded events, you add an event listener directly via `client.on("...", () => {})`. *([See why if you're curious.](DesignDecisions.md#))* The client can be imported from the index file.
+Rather than have an `events` folder which contains dynamically loaded events, you add an event listener directly via `client.on("...", () => {})`. *([See why if you're curious.](DesignDecisions.md#static-event-loading))* The client can be imported from the index file.
 
 ```ts
 import {client} from "..";

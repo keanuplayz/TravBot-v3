@@ -31,6 +31,13 @@ Because versions are assigned to batches of changes rather than single changes (
 
 *Note: This system doesn't retroactively apply to TravBot-v2, which is why this version naming system won't make sense for v2's changelog.*
 
+# Message Subcommand Type
+
+- `https://discord.com/channels/<id>/<id>/<id>` comes from the `Copy Message Link` button.
+- `<id>-<id>` comes from holding `Shift` on the desktop application and clicking on the `Copy ID` button.
+
+
+
 # Cleanup is Soon™
 
 ## Convenience Functions
