@@ -1,7 +1,7 @@
 import Command from "../../core/command";
 import {CommonLibrary} from "../../core/lib";
 import {Message, Channel, TextChannel} from "discord.js";
-import {queryClosestEmoteByName} from "./subcommands/emote-utils";
+import {processEmoteQueryArray} from "./subcommands/emote-utils";
 
 export default new Command({
     description:
@@ -10,17 +10,11 @@ export default new Command({
     async run($: CommonLibrary): Promise<any> {
         let target: Message | undefined;
         let distance = 1;
-        
-        // allows reactions by using an in-line reply
-        if($.message.reference){
-            const messageID = $.message.reference.messageID;
-            try{
-                target = await $.channel.messages.fetch(messageID!)
-            }catch{
-                return $.channel.send("Unknown error occurred!")
-            }
+
+        if ($.message.reference) {
+            // If the command message is a reply to another message, use that as the react target.
+            target = await $.channel.messages.fetch($.message.reference.messageID!);
         }
-        
         // handles reacts by message id/distance
         else if ($.args.length >= 2) {
             const last = $.args[$.args.length - 1]; // Because this is optional, do not .pop() unless you're sure it's a message link indicator.
@@ -106,9 +100,8 @@ export default new Command({
             ).last();
         }
 
-        for (const search of $.args) {
+        for (const emote of processEmoteQueryArray($.args)) {
             // Even though the bot will always grab *some* emote, the user can choose not to keep that emote there if it isn't what they want
-            const emote = queryClosestEmoteByName(search);
             const reaction = await target!.react(emote);
 
             // This part is called with a promise because you don't want to wait 5 seconds between each reaction.
