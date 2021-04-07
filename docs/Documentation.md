@@ -13,6 +13,24 @@
 - `data`: Holds all the dynamic/private data used by the bot. This folder is not meant to hold definitions.
 - `docs`: Information for developers who want to contribute.
 
+# Version Numbers
+
+When a new version is ready to be declared...
+- ...update the [changelog](../CHANGELOG.md).
+- ...update the version numbers in [package.json](../package.json) and [package-lock.json](../package-lock.json).
+
+## Naming Versions
+
+Because versions are assigned to batches of changes rather than single changes (or even single commits), versioning is used a bit differently in order to avoid wasting version numbers.
+
+`<prototype>.<major>.<minor>-<patch>`
+- `<prototype>` is a defined as the overarching version group of TravBot. TravBot-v2 went by `2.x.x` and all versions of TravBot-v3 will go by `3.x.x`.
+- `<major>` includes any big overhauls or revisions of the entire codebase.
+- `<minor>` includes any feature additions in a specific area of the codebase.
+- `<patch>` will be pretty much for any very small changes like a quick bug fix or typos. *Note: Normally, these would probably get grouped up, but if there hasn't been a proper version in a while, this will get pushed as a patch.*
+
+*Note: This system doesn't retroactively apply to TravBot-v2, which is why this version naming system won't make sense for v2's changelog.*
+
 # Cleanup is Soon™
 
 ## Convenience Functions

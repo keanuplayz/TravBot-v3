@@ -16,10 +16,7 @@ This is a brief overview that'll describe where and how to add new features to T
 
 *Note: Make sure to avoid using `npm run build`! This will remove all your dev dependencies (in order to reduce space used). Instead, use `npm run once` to compile and build in non-dev mode.*
 
-## Don't forget to...
-
-- ...update the [changelog](../CHANGELOG.md) and any other necessary docs.
-- ...update the version numbers in [package.json](../package.json) and [package-lock.json](../package-lock.json).
+*Note: If you update one of the APIs or utility functions, make sure to update the [documentation](Documentation.md).*
 
 # Adding a new command
 
