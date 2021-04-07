@@ -1,3 +1,4 @@
+// Contains all the code handling dynamic JSON data. Has a one-to-one connection with each file generated, for example, `Config` which calls `super("config")` meaning it writes to `data/config.json`.
 import FileManager from "./modules/storage";
 import {select, GenericJSON, GenericStructure} from "./lib";
 import {watch} from "fs";
@@ -145,6 +146,9 @@ if (IS_DEV_MODE) {
     });
 }
 
+/**
+ * Get the current prefix of the guild or the bot's prefix if none is found.
+ */
 export function getPrefix(guild: DiscordGuild | null): string {
     let prefix = Config.prefix;
 

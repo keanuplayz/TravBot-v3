@@ -13,6 +13,9 @@ import {unreactEventListeners, replyEventListeners} from "./eventListeners";
 
 export type SingleMessageOptions = MessageOptions & {split?: false};
 
+/**
+ * Tests if a bot has a certain permission in a specified guild.
+ */
 export function botHasPermission(guild: Guild | null, permission: number): boolean {
     return !!guild?.me?.hasPermission(permission);
 }
@@ -21,6 +24,10 @@ export function botHasPermission(guild: Guild | null, permission: number): boole
 
 // Pagination function that allows for customization via a callback.
 // Define your own pages outside the function because this only manages the actual turning of pages.
+
+/**
+ * Takes a message and some additional parameters and makes a reaction page with it. All the pagination logic is taken care of but nothing more, the page index is returned and you have to send a callback to do something with it.
+ */
 export async function paginate(
     channel: TextChannel | DMChannel | NewsChannel,
     senderID: string,
@@ -90,6 +97,9 @@ export async function paginate(
 // Waits for the sender to either confirm an action or let it pass (and delete the message).
 // This should probably be renamed to "confirm" now that I think of it, "prompt" is better used elsewhere.
 // Append "\n*(This message will automatically be deleted after 10 seconds.)*" in the future?
+/**
+ * Prompts the user about a decision before following through.
+ */
 export async function prompt(message: Message, senderID: string, onConfirm: () => void, duration = 10000) {
     let isDeleted = false;
 
@@ -222,6 +232,9 @@ export async function askMultipleChoice(
     if (!isDeleted) message.delete();
 }
 
+/**
+ * Gets a user by their username. Gets the first one then rolls with it.
+ */
 export async function getMemberByUsername(guild: Guild, username: string) {
     return (
         await guild.members.fetch({
@@ -231,7 +244,9 @@ export async function getMemberByUsername(guild: Guild, username: string) {
     ).first();
 }
 
-/** Convenience function to handle false cases automatically. */
+/**
+ * Convenience function to handle cases where someone isn't found by a username automatically.
+ */
 export async function callMemberByUsername(
     message: Message,
     username: string,

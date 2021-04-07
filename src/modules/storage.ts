@@ -1,3 +1,4 @@
+// Handles most of the file system operations, all of the ones related to `data` at least.
 import fs from "fs";
 
 const Storage = {

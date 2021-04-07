@@ -44,7 +44,7 @@ export default new NamedCommand({
 
 ### Quick note on the run property
 
-You can also enter a string for the `run` property which will send a message with that string specified ([you can also specify some variables in that string](Documentation.md#)). The above is functionally equivalent to the below.
+You can also enter a string for the `run` property which will send a message with that string specified ([you can also specify some variables in that string](Documentation.md#command-var-string)). The above is functionally equivalent to the below.
 
 ```ts
 import {Command, NamedCommand} from "../core";
@@ -70,7 +70,7 @@ export default new NamedCommand({
 });
 ```
 
-Here, . For example, if this file was named `test.ts`, `$test <@237359961842253835>` would get the user by the ID `237359961842253835` into `args[0]` as a [User](https://discord.js.org/#/docs/main/stable/class/User) object. `$test experiment` would run as if you just called `$test` *(given that [endpoint](Documentation.md#) isn't set to `true`)*.
+Here, . For example, if this file was named `test.ts`, `$test <@237359961842253835>` would get the user by the ID `237359961842253835` into `args[0]` as a [User](https://discord.js.org/#/docs/main/stable/class/User) object. `$test experiment` would run as if you just called `$test` *(given that [endpoint](Documentation.md#command-metadata) isn't set to `true`)*.
 
 If you want, you can typecast the argument to be more strongly typed, because the type of `args` is `any[]`. *([See why if you're curious.](DesignDecisions.md#any[]-parameters-for-subcommand-run))*
 
@@ -171,7 +171,7 @@ export default new NamedCommand({
 
 Here, the property `channelType` would spread to all subcommands unless a subcommand defines it. Using the above example, the `channelType` for both `$siege` and `$siege pineapple` would be `CHANNEL_TYPE.GUILD`.
 
-*To get a full list of metadata properties, see the [documentation](Documentation.md#).*
+*To get a full list of metadata properties, see the [documentation](Documentation.md#command-menu).*
 
 ## Utility Functions
 
@@ -187,7 +187,7 @@ export default new NamedCommand({
 });
 ```
 
-*To get a full list of utility functions, see the [documentation](Documentation.md#).*
+*To get a full list of utility functions, see the [documentation](Documentation.md#utility-functions).*
 
 # Adding a new non-command feature
 
