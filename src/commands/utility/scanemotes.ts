@@ -182,5 +182,15 @@ export default new NamedCommand({
         }
 
         return await channel.send(lines, {split: true});
+    },
+    subcommands: {
+        forcereset: new NamedCommand({
+            description: "Forces the cooldown timer to reset.",
+            permission: PERMISSIONS.BOT_SUPPORT,
+            async run({message, channel, guild, author, member, client, args}) {
+                lastUsedTimestamps[guild!.id] = 0;
+                channel.send("Reset the cooldown on `scanemotes`.");
+            }
+        })
     }
 });

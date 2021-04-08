@@ -76,6 +76,7 @@ function processEmoteQuery(query: string[], isFormatted: boolean): string[] {
         if (isFormatted) {
             if (emote == "-") return " ";
             if (emote == "+") return "\n";
+            if (emote == "_") return "\u200b";
         }
 
         // Selector number used for disambiguating multiple emotes with same name.

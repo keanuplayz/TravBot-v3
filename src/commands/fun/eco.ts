@@ -2,7 +2,7 @@ import {Command, NamedCommand, callMemberByUsername} from "../../core";
 import {isAuthorized, getMoneyEmbed} from "./modules/eco-utils";
 import {DailyCommand, PayCommand, GuildCommand, LeaderboardCommand} from "./modules/eco-core";
 import {BuyCommand, ShopCommand} from "./modules/eco-shop";
-import {MondayCommand} from "./modules/eco-extras";
+import {MondayCommand, AwardCommand} from "./modules/eco-extras";
 import {BetCommand} from "./modules/eco-bet";
 
 export default new NamedCommand({
@@ -18,7 +18,12 @@ export default new NamedCommand({
         buy: BuyCommand,
         shop: ShopCommand,
         monday: MondayCommand,
-        bet: BetCommand
+        bet: BetCommand,
+        award: AwardCommand,
+        post: new NamedCommand({
+            description: "A play on `eco get`",
+            run: "`405 Method Not Allowed`"
+        })
     },
     id: "user",
     user: new Command({

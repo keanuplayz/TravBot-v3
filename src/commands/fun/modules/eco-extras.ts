@@ -1,6 +1,8 @@
 import {Command, NamedCommand} from "../../../core";
 import {Storage} from "../../../structures";
 import {isAuthorized, getMoneyEmbed} from "./eco-utils";
+import {User} from "discord.js";
+import {pluralise} from "../../../lib";
 
 const WEEKDAY = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
 
@@ -31,4 +33,46 @@ export const MondayCommand = new NamedCommand({
             }
         }
     }
+});
+
+export const AwardCommand = new NamedCommand({
+    description: "Only usable by Mon, awards one or a specified amount of Mons to the user.",
+    usage: "<user> (<amount>)",
+    aliases: ["give"],
+    run: "You need to specify a user!",
+    user: new Command({
+        async run({message, channel, guild, author, member, client, args}) {
+            if (author.id === "394808963356688394" || IS_DEV_MODE) {
+                const target = args[0] as User;
+                const user = Storage.getUser(target.id);
+                user.money++;
+                Storage.save();
+                channel.send(`1 Mon given to ${target.username}.`, getMoneyEmbed(target));
+            } else {
+                channel.send("This command is restricted to the bean.");
+            }
+        },
+        number: new Command({
+            async run({message, channel, guild, author, member, client, args}) {
+                if (author.id === "394808963356688394" || IS_DEV_MODE) {
+                    const target = args[0] as User;
+                    const amount = Math.floor(args[1]);
+
+                    if (amount > 0) {
+                        const user = Storage.getUser(target.id);
+                        user.money += amount;
+                        Storage.save();
+                        channel.send(
+                            `${pluralise(amount, "Mon", "s")} given to ${target.username}.`,
+                            getMoneyEmbed(target)
+                        );
+                    } else {
+                        channel.send("You need to enter a number greater than 0.");
+                    }
+                } else {
+                    channel.send("This command is restricted to the bean.");
+                }
+            }
+        })
+    })
 });

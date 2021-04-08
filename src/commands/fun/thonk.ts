@@ -36,6 +36,13 @@ export default new NamedCommand({
     usage: "thonk ([text])",
     async run({message, channel, guild, author, member, client, args}) {
         if (args.length > 0) phrase = args.join(" ");
-        channel.send(transform(phrase));
+        const msg = await channel.send(transform(phrase));
+        msg.createReactionCollector(
+            (reaction, user) => {
+                if (user.id === author.id && reaction.emoji.name === "❌") msg.delete();
+                return false;
+            },
+            {time: 60000}
+        );
     }
 });

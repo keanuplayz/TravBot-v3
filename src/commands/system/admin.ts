@@ -1,7 +1,7 @@
 import {Command, NamedCommand, botHasPermission, getPermissionLevel, getPermissionName, CHANNEL_TYPE} from "../../core";
 import {clean} from "../../lib";
 import {Config, Storage} from "../../structures";
-import {Permissions, TextChannel} from "discord.js";
+import {Permissions, TextChannel, User} from "discord.js";
 import {logs} from "../../modules/globals";
 
 function getLogBuffer(type: string) {
@@ -34,7 +34,7 @@ export default new NamedCommand({
             subcommands: {
                 prefix: new NamedCommand({
                     description: "Set a custom prefix for your guild. Removes your custom prefix if none is provided.",
-                    usage: "(<prefix>)",
+                    usage: "(<prefix>) (<@bot>)",
                     async run({message, channel, guild, author, member, client, args}) {
                         Storage.getGuild(guild!.id).prefix = null;
                         Storage.save();
@@ -47,7 +47,17 @@ export default new NamedCommand({
                             Storage.getGuild(guild!.id).prefix = args[0];
                             Storage.save();
                             channel.send(`The custom prefix for this guild is now \`${args[0]}\`.`);
-                        }
+                        },
+                        user: new Command({
+                            description: "Specifies the bot in case of conflicting prefixes.",
+                            async run({message, channel, guild, author, member, client, args}) {
+                                if ((args[1] as User).id === client.user!.id) {
+                                    Storage.getGuild(guild!.id).prefix = args[0];
+                                    Storage.save();
+                                    channel.send(`The custom prefix for this guild is now \`${args[0]}\`.`);
+                                }
+                            }
+                        })
                     })
                 }),
                 welcome: new NamedCommand({

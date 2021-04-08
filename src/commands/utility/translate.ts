@@ -1,6 +1,5 @@
 import {Command, NamedCommand} from "../../core";
-// Anycasting Alert
-const translate = require("translate-google");
+import translate from "translate-google";
 
 export default new NamedCommand({
     description: "Translates your input.",
@@ -11,7 +10,7 @@ export default new NamedCommand({
         translate(input, {
             to: lang
         })
-            .then((res: any) => {
+            .then((res) => {
                 channel.send({
                     embed: {
                         title: "Translation",
@@ -28,10 +27,10 @@ export default new NamedCommand({
                     }
                 });
             })
-            .catch((err: any) => {
-                console.error(err);
+            .catch((error) => {
+                console.error(error);
                 channel.send(
-                    `${err}\nPlease use the following list: https://en.wikipedia.org/wiki/List_of_ISO_639-1_codes`
+                    `${error}\nPlease use the following list: https://en.wikipedia.org/wiki/List_of_ISO_639-1_codes`
                 );
             });
     }
