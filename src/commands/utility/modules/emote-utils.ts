@@ -97,7 +97,7 @@ function processEmoteQuery(query: string[], isFormatted: boolean): string[] {
         // Find all similar emote candidates within certian threshold and select Nth top one according to the selector.
         const similarEmotes = searchSimilarEmotes(emote);
         if (similarEmotes.length > 0) {
-            selector = Math.min(selector, similarEmotes.length);
+            selector = Math.min(selector, similarEmotes.length - 1);
             return similarEmotes[selector].toString();
         }
 
