@@ -1,5 +1,5 @@
-import Command from "../../core/command";
-import {CommonLibrary} from "../../core/lib";
+import {Command, NamedCommand} from "../../core";
+import {random} from "../../lib";
 
 const responses = [
     "Most likely,",
@@ -24,16 +24,16 @@ const responses = [
     "Very doubtful,"
 ];
 
-export default new Command({
+export default new NamedCommand({
     description: "Answers your question in an 8-ball manner.",
     endpoint: false,
     usage: "<question>",
     run: "Please provide a question.",
     any: new Command({
         description: "Question to ask the 8-ball.",
-        async run($: CommonLibrary): Promise<any> {
-            const sender = $.message.author;
-            $.channel.send($(responses).random() + ` <@${sender.id}>`);
+        async run({message, channel, guild, author, member, client, args}) {
+            const sender = message.author;
+            channel.send(`${random(responses)} <@${sender.id}>`);
         }
     })
 });

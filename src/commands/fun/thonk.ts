@@ -1,4 +1,4 @@
-import Command from "../../core/command";
+import {Command, NamedCommand} from "../../core";
 
 const letters: {[letter: string]: string[]} = {
     a: "aáàảãạâấầẩẫậăắằẳẵặ".split(""),
@@ -31,11 +31,11 @@ function transform(str: string) {
 
 let phrase = "I have no currently set phrase!";
 
-export default new Command({
+export default new NamedCommand({
     description: "Transforms your text into ｖｉｅｔｎａｍｅｓｅ.",
     usage: "thonk ([text])",
-    async run($) {
-        if ($.args.length > 0) phrase = $.args.join(" ");
-        $.channel.send(transform(phrase));
+    async run({message, channel, guild, author, member, client, args}) {
+        if (args.length > 0) phrase = args.join(" ");
+        channel.send(transform(phrase));
     }
 });

@@ -1,15 +1,12 @@
-import Command from "../../core/command";
+import {Command, NamedCommand} from "../../core";
 import figlet from "figlet";
 
-export default new Command({
+export default new NamedCommand({
     description: "Generates a figlet of your input.",
-    async run($) {
-        const input = $.args.join(" ");
-        if (!$.args[0]) {
-            $.channel.send("You have to provide input for me to create a figlet!");
-            return;
-        }
-        $.channel.send(
+    async run({message, channel, guild, author, member, client, args}) {
+        const input = args.join(" ");
+        if (!args[0]) return channel.send("You have to provide input for me to create a figlet!");
+        return channel.send(
             "```" +
                 figlet.textSync(`${input}`, {
                     horizontalLayout: "full"

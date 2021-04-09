@@ -1,7 +1,6 @@
 # Specific to this repository
 dist/
-data/*
-!data/endpoints.json
+data/
 tmp/
 test*
 !test/

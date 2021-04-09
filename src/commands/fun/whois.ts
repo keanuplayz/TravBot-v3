@@ -1,5 +1,5 @@
 import {User} from "discord.js";
-import Command from "../../core/command";
+import {Command, NamedCommand, getMemberByUsername, CHANNEL_TYPE} from "../../core";
 
 // Quotes must be used here or the numbers will change
 const registry: {[id: string]: string} = {
@@ -30,59 +30,59 @@ const registry: {[id: string]: string} = {
     "219661798742163467": "An extremely talented artist and modder.",
     "440399719076855818":
         "You are, uhh, Stay Put, Soft Puppy, Es-Pee, Swift Pacemaker, Smug Poyo, and many more.\n...Seriously, this woman has too many names.",
-    "243061915281129472": "Some random conlanger, worldbuilder and programmer doofus. ~~May also secretly be a nyan. :3~~",
-    "792751612904603668": "Some random nyan. :3 ~~May also secretly be a conlanger, worldbuilder and programmer doofus.~~",
+    "243061915281129472":
+        "Some random conlanger, worldbuilder and programmer doofus. ~~May also secretly be a nyan. :3~~",
+    "792751612904603668":
+        "Some random nyan. :3 ~~May also secretly be a conlanger, worldbuilder and programmer doofus.~~",
     "367439475153829892": "A weeb.",
     "760375501775700038": "˙qǝǝʍ ∀",
     "389178357302034442": "In his dreams, he is the star. its him. <:itsMe:808174425253871657>",
     "606395763404046349": "Me."
 };
 
-export default new Command({
+export default new NamedCommand({
     description: "Tells you who you or the specified user is.",
     aliases: ["whoami"],
-    async run($) {
-        const id = $.author.id;
+    async run({message, channel, guild, author, member, client, args}) {
+        const id = author.id;
 
         if (id in registry) {
-            $.channel.send(registry[id]);
+            channel.send(registry[id]);
         } else {
-            $.channel.send("You haven't been added to the registry yet!");
+            channel.send("You haven't been added to the registry yet!");
         }
     },
+    id: "user",
     user: new Command({
-        async run($) {
-            const user: User = $.args[0];
+        async run({message, channel, guild, author, member, client, args}) {
+            const user: User = args[0];
             const id = user.id;
 
             if (id in registry) {
-                $.channel.send(`\`${user.username}\` - ${registry[id]}`);
+                channel.send(`\`${user.username}\` - ${registry[id]}`);
             } else {
-                $.channel.send(`\`${user.username}#${user.discriminator}\` hasn't been added to the registry yet!`);
+                channel.send(`\`${user.tag}\` hasn't been added to the registry yet!`);
             }
         }
     }),
     any: new Command({
-        async run($) {
-            if ($.guild) {
-                const query: string = $.args.join(" ");
-                const member = await $.getMemberByUsername($.guild, query);
+        channelType: CHANNEL_TYPE.GUILD,
+        async run({message, channel, guild, author, client, args}) {
+            const query = args.join(" ") as string;
+            const member = await getMemberByUsername(guild!, query);
 
-                if (member && member.id in registry) {
-                    const id = member.id;
+            if (member && member.id in registry) {
+                const id = member.id;
 
-                    if (id in registry) {
-                        $.channel.send(`\`${member.user.username}\` - ${registry[member.id]}`);
-                    } else {
-                        $.channel.send(`\`${member.user.username}\` hasn't been added to the registry yet!`);
-                    }
+                if (id in registry) {
+                    channel.send(`\`${member.nickname ?? member.user.username}\` - ${registry[member.id]}`);
                 } else {
-                    $.channel.send(`Couldn't find a user by the name of \`${query}\`!`);
+                    channel.send(
+                        `\`${member.nickname ?? member.user.username}\` hasn't been added to the registry yet!`
+                    );
                 }
             } else {
-                $.channel.send(
-                    "You must run this in a guild! (*If you have the user's ID, you don't have to be in a guild.*)"
-                );
+                channel.send(`Couldn't find a user by the name of \`${query}\`!`);
             }
         }
     })

@@ -1,11 +1,11 @@
-import Command from "../../core/command";
-import {Random} from "../../core/lib";
+import {Command, NamedCommand} from "../../core";
+import {Random} from "../../lib";
 
-export default new Command({
+export default new NamedCommand({
     description: "Ravioli ravioli...",
     usage: "[number from 1 to 9]",
-    async run($) {
-        $.channel.send({
+    async run({message, channel, guild, author, member, client, args}) {
+        channel.send({
             embed: {
                 title: "Ravioli ravioli...",
                 image: {
@@ -18,11 +18,11 @@ export default new Command({
         });
     },
     number: new Command({
-        async run($) {
-            const arg: number = $.args[0];
+        async run({message, channel, guild, author, member, client, args}) {
+            const arg: number = args[0];
 
             if (arg >= 1 && arg <= 9) {
-                $.channel.send({
+                channel.send({
                     embed: {
                         title: "Ravioli ravioli...",
                         image: {
@@ -31,7 +31,7 @@ export default new Command({
                     }
                 });
             } else {
-                $.channel.send("Please provide a number between 1 and 9.");
+                channel.send("Please provide a number between 1 and 9.");
             }
         }
     })

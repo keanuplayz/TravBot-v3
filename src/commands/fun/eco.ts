@@ -1,11 +1,11 @@
-import Command from "../../core/command";
-import {isAuthorized, getMoneyEmbed} from "./subcommands/eco-utils";
-import {DailyCommand, PayCommand, GuildCommand, LeaderboardCommand} from "./subcommands/eco-core";
-import {BuyCommand, ShopCommand} from "./subcommands/eco-shop";
-import {MondayCommand} from "./subcommands/eco-extras";
-import {BetCommand} from "./subcommands/eco-bet";
+import {Command, NamedCommand, callMemberByUsername} from "../../core";
+import {isAuthorized, getMoneyEmbed} from "./modules/eco-utils";
+import {DailyCommand, PayCommand, GuildCommand, LeaderboardCommand} from "./modules/eco-core";
+import {BuyCommand, ShopCommand} from "./modules/eco-shop";
+import {MondayCommand} from "./modules/eco-extras";
+import {BetCommand} from "./modules/eco-bet";
 
-export default new Command({
+export default new NamedCommand({
     description: "Economy command for Monika.",
     async run({guild, channel, author}) {
         if (isAuthorized(guild, channel)) channel.send(getMoneyEmbed(author));
@@ -20,6 +20,7 @@ export default new Command({
         monday: MondayCommand,
         bet: BetCommand
     },
+    id: "user",
     user: new Command({
         description: "See how much money someone else has by using their user ID or pinging them.",
         async run({guild, channel, args}) {
@@ -28,7 +29,7 @@ export default new Command({
     }),
     any: new Command({
         description: "See how much money someone else has by using their username.",
-        async run({guild, channel, args, callMemberByUsername, message}) {
+        async run({guild, channel, args, message}) {
             if (isAuthorized(guild, channel))
                 callMemberByUsername(message, args.join(" "), (member) => {
                     channel.send(getMoneyEmbed(member.user));

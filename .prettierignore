@@ -2,6 +2,7 @@
 .dockerignore
 .gitignore
 .prettierignore
+.husky/
 Dockerfile
 LICENSE
 
@@ -9,6 +10,7 @@ LICENSE
 dist/
 data/
 docs/
+*.md
 tmp/
 test*
 !test/

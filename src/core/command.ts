@@ -1,284 +1,646 @@
-import $, {isType, parseVars, CommonLibrary} from "./lib";
-import {Collection} from "discord.js";
-import {generateHandler} from "./storage";
-import {promises as ffs, existsSync, writeFile} from "fs";
-import {PERMISSIONS} from "./permissions";
-import {getPrefix} from "../core/structures";
+import {
+    Collection,
+    Client,
+    Message,
+    TextChannel,
+    DMChannel,
+    NewsChannel,
+    Guild,
+    User,
+    GuildMember,
+    GuildChannel
+} from "discord.js";
+import {SingleMessageOptions} from "./libd";
+import {hasPermission, getPermissionLevel, getPermissionName} from "./permissions";
+import {getPrefix} from "./interface";
+import {parseVars, requireAllCasesHandledFor} from "../lib";
 
-interface CommandOptions {
-    description?: string;
-    endpoint?: boolean;
-    usage?: string;
-    permission?: PERMISSIONS | null;
-    aliases?: string[];
-    run?: (($: CommonLibrary) => Promise<any>) | string;
-    subcommands?: {[key: string]: Command};
-    user?: Command;
-    number?: Command;
-    any?: Command;
-}
+/**
+ * ===[ Command Types ]===
+ * SUBCOMMAND - Any specifically-defined keywords / string literals.
+ * CHANNEL - <#...>
+ * ROLE - <@&...>
+ * EMOTE - <::ID> (The previous two values, animated and emote name respectively, do not matter at all for finding the emote.)
+ * MESSAGE - Available by using the built-in "Copy Message Link" or "Copy ID" buttons. https://discordapp.com/channels/<Guild ID>/<Channel ID>/<Message ID> or <Channel ID>-<Message ID> (automatically searches all guilds for the channel ID).
+ * USER - <@...> and <@!...>
+ * ID - Any number with 17-19 digits. Only used as a redirect to another subcommand type.
+ * NUMBER - Any valid number via the Number() function, except for NaN and Infinity (because those can really mess with the program).
+ * ANY - Generic argument case.
+ * NONE - No subcommands exist.
+ */
 
-export enum TYPES {
-    SUBCOMMAND,
-    USER,
-    NUMBER,
+// RegEx patterns used for identifying/extracting each type from a string argument.
+const patterns = {
+    channel: /^<#(\d{17,19})>$/,
+    role: /^<@&(\d{17,19})>$/,
+    emote: /^<a?:.*?:(\d{17,19})>$/,
+    messageLink: /^https?:\/\/(?:ptb\.|canary\.)?discord(?:app)?\.com\/channels\/(?:\d{17,19}|@me)\/(\d{17,19})\/(\d{17,19})$/,
+    messagePair: /^(\d{17,19})-(\d{17,19})$/,
+    user: /^<@!?(\d{17,19})>$/,
+    id: /^(\d{17,19})$/
+};
+
+// Maybe add a guild redirect... somehow?
+type ID = "channel" | "role" | "emote" | "message" | "user";
+
+// Callbacks don't work with discriminated unions:
+// - https://github.com/microsoft/TypeScript/issues/41759
+// - https://github.com/microsoft/TypeScript/issues/35769
+// Therefore, there won't by any type narrowing on channel or guild of CommandMenu until this is fixed.
+// Otherwise, you'd have to define channelType for every single subcommand, which would get very tedious.
+// Just use type assertions when you specify a channel type.
+export enum CHANNEL_TYPE {
     ANY,
-    NONE
+    GUILD,
+    DM
 }
 
-export default class Command {
+interface CommandMenu {
+    readonly args: any[];
+    readonly client: Client;
+    readonly message: Message;
+    readonly channel: TextChannel | DMChannel | NewsChannel;
+    readonly guild: Guild | null;
+    readonly author: User;
+    // According to the documentation, a message can be part of a guild while also not having a
+    // member object for the author. This will happen if the author of a message left the guild.
+    readonly member: GuildMember | null;
+}
+
+interface CommandOptionsBase {
+    readonly description?: string;
+    readonly endpoint?: boolean;
+    readonly usage?: string;
+    readonly permission?: number;
+    readonly nsfw?: boolean;
+    readonly channelType?: CHANNEL_TYPE;
+    readonly run?: (($: CommandMenu) => Promise<any>) | string;
+}
+
+interface CommandOptionsEndpoint {
+    readonly endpoint: true;
+}
+
+// Prevents subcommands from being added by compile-time.
+// Also, contrary to what you might think, channel pings do still work in DM channels.
+// Role pings, maybe not, but it's not a big deal.
+interface CommandOptionsNonEndpoint {
+    readonly endpoint?: false;
+    readonly subcommands?: {[key: string]: NamedCommand};
+    readonly channel?: Command;
+    readonly role?: Command;
+    readonly emote?: Command;
+    readonly message?: Command;
+    readonly user?: Command;
+    readonly id?: ID;
+    readonly number?: Command;
+    readonly any?: Command;
+}
+
+type CommandOptions = CommandOptionsBase & (CommandOptionsEndpoint | CommandOptionsNonEndpoint);
+type NamedCommandOptions = CommandOptions & {aliases?: string[]};
+
+interface ExecuteCommandMetadata {
+    readonly header: string;
+    readonly args: string[];
+    permission: number;
+    nsfw: boolean;
+    channelType: CHANNEL_TYPE;
+}
+
+interface CommandInfo {
+    readonly type: "info";
+    readonly command: Command;
+    readonly subcommandInfo: Collection<string, Command>;
+    readonly keyedSubcommandInfo: Collection<string, NamedCommand>;
+    readonly permission: number;
+    readonly nsfw: boolean;
+    readonly channelType: CHANNEL_TYPE;
+    readonly args: string[];
+}
+
+interface CommandInfoError {
+    readonly type: "error";
+    readonly message: string;
+}
+
+interface CommandInfoMetadata {
+    permission: number;
+    nsfw: boolean;
+    channelType: CHANNEL_TYPE;
+    args: string[];
+    usage: string;
+    readonly originalArgs: string[];
+}
+
+export const defaultMetadata = {
+    permission: 0,
+    nsfw: false,
+    channelType: CHANNEL_TYPE.ANY
+};
+
+// Each Command instance represents a block that links other Command instances under it.
+export class Command {
     public readonly description: string;
     public readonly endpoint: boolean;
     public readonly usage: string;
-    public readonly permission: PERMISSIONS | null;
-    public readonly aliases: string[]; // This is to keep the array intact for parent Command instances to use. It'll also be used when loading top-level aliases.
-    public originalCommandName: string | null; // If the command is an alias, what's the original name?
-    public run: (($: CommonLibrary) => Promise<any>) | string;
-    public readonly subcommands: Collection<string, Command>; // This is the final data structure you'll actually use to work with the commands the aliases point to.
-    public user: Command | null;
-    public number: Command | null;
-    public any: Command | null;
-    public static readonly TYPES = TYPES;
-    public static readonly PERMISSIONS = PERMISSIONS;
+    public readonly permission: number; // -1 (default) indicates to inherit, 0 is the lowest rank, 1 is second lowest rank, and so on.
+    public readonly nsfw: boolean | null; // null (default) indicates to inherit
+    public readonly channelType: CHANNEL_TYPE | null; // null (default) indicates to inherit
+    // The execute and subcommand properties are restricted to the class because subcommand recursion could easily break when manually handled.
+    // The class will handle checking for null fields.
+    private run: (($: CommandMenu) => Promise<any>) | string;
+    private readonly subcommands: Collection<string, NamedCommand>; // This is the final data structure you'll actually use to work with the commands the aliases point to.
+    private channel: Command | null;
+    private role: Command | null;
+    private emote: Command | null;
+    private message: Command | null;
+    private user: Command | null;
+    private id: Command | null;
+    private idType: ID | null;
+    private number: Command | null;
+    private any: Command | null;
 
     constructor(options?: CommandOptions) {
         this.description = options?.description || "No description.";
-        this.endpoint = options?.endpoint || false;
-        this.usage = options?.usage || "";
-        this.permission = options?.permission ?? null;
-        this.aliases = options?.aliases ?? [];
-        this.originalCommandName = null;
+        this.endpoint = !!options?.endpoint;
+        this.usage = options?.usage ?? "";
+        this.permission = options?.permission ?? -1;
+        this.nsfw = options?.nsfw ?? null;
+        this.channelType = options?.channelType ?? null;
         this.run = options?.run || "No action was set on this command!";
         this.subcommands = new Collection(); // Populate this collection after setting subcommands.
-        this.user = options?.user || null;
-        this.number = options?.number || null;
-        this.any = options?.any || null;
+        this.channel = null;
+        this.role = null;
+        this.emote = null;
+        this.message = null;
+        this.user = null;
+        this.id = null;
+        this.idType = null;
+        this.number = null;
+        this.any = null;
 
-        if (options?.subcommands) {
-            const baseSubcommands = Object.keys(options.subcommands);
+        if (options && !options.endpoint) {
+            if (options?.channel) this.channel = options.channel;
+            if (options?.role) this.role = options.role;
+            if (options?.emote) this.emote = options.emote;
+            if (options?.message) this.message = options.message;
+            if (options?.user) this.user = options.user;
+            if (options?.number) this.number = options.number;
+            if (options?.any) this.any = options.any;
+            if (options?.id) this.idType = options.id;
 
-            // Loop once to set the base subcommands.
-            for (const name in options.subcommands) this.subcommands.set(name, options.subcommands[name]);
-
-            // Then loop again to make aliases point to the base subcommands and warn if something's not right.
-            // This shouldn't be a problem because I'm hoping that JS stores these as references that point to the same object.
-            for (const name in options.subcommands) {
-                const subcmd = options.subcommands[name];
-                subcmd.originalCommandName = name;
-                const aliases = subcmd.aliases;
-
-                for (const alias of aliases) {
-                    if (baseSubcommands.includes(alias))
-                        $.warn(
-                            `"${alias}" in subcommand "${name}" was attempted to be declared as an alias but it already exists in the base commands! (Look at the next "Loading Command" line to see which command is affected.)`
-                        );
-                    else if (this.subcommands.has(alias))
-                        $.warn(
-                            `Duplicate alias "${alias}" at subcommand "${name}"! (Look at the next "Loading Command" line to see which command is affected.)`
-                        );
-                    else this.subcommands.set(alias, subcmd);
-                }
-            }
-        }
-
-        if (this.user && this.user.aliases.length > 0)
-            $.warn(
-                `There are aliases defined for a "user"-type subcommand, but those aliases won't be used. (Look at the next "Loading Command" line to see which command is affected.)`
-            );
-
-        if (this.number && this.number.aliases.length > 0)
-            $.warn(
-                `There are aliases defined for a "number"-type subcommand, but those aliases won't be used. (Look at the next "Loading Command" line to see which command is affected.)`
-            );
-
-        if (this.any && this.any.aliases.length > 0)
-            $.warn(
-                `There are aliases defined for an "any"-type subcommand, but those aliases won't be used. (Look at the next "Loading Command" line to see which command is affected.)`
-            );
-    }
-
-    public execute($: CommonLibrary) {
-        if (isType(this.run, String)) {
-            $.channel.send(
-                parseVars(
-                    this.run as string,
-                    {
-                        author: $.author.toString(),
-                        prefix: getPrefix($.guild)
-                    },
-                    "???"
-                )
-            );
-        } else (this.run as Function)($).catch($.handler.bind($));
-    }
-
-    public resolve(param: string): TYPES {
-        if (this.subcommands.has(param)) return TYPES.SUBCOMMAND;
-        // Any Discord ID format will automatically format to a user ID.
-        else if (this.user && /\d{17,19}/.test(param)) return TYPES.USER;
-        // Disallow infinity and allow for 0.
-        else if (this.number && (Number(param) || param === "0") && !param.includes("Infinity")) return TYPES.NUMBER;
-        else if (this.any) return TYPES.ANY;
-        else return TYPES.NONE;
-    }
-
-    public get(param: string): Command {
-        const type = this.resolve(param);
-        let command: Command;
-
-        switch (type) {
-            case TYPES.SUBCOMMAND:
-                command = this.subcommands.get(param) as Command;
-                break;
-            case TYPES.USER:
-                command = this.user as Command;
-                break;
-            case TYPES.NUMBER:
-                command = this.number as Command;
-                break;
-            case TYPES.ANY:
-                command = this.any as Command;
-                break;
-            default:
-                command = this;
-                break;
-        }
-
-        return command;
-    }
-}
-
-let commands: Collection<string, Command> | null = null;
-export const categories: Collection<string, string[]> = new Collection();
-export const aliases: Collection<string, string> = new Collection(); // Top-level aliases only.
-
-/** Returns the cache of the commands if it exists and searches the directory if not. */
-export async function loadCommands(): Promise<Collection<string, Command>> {
-    if (commands) return commands;
-
-    if (process.argv[2] === "dev" && !existsSync("src/commands/test.ts"))
-        writeFile(
-            "src/commands/test.ts",
-            template,
-            generateHandler('"test.ts" (testing/template command) successfully generated.')
-        );
-
-    commands = new Collection();
-    const dir = await ffs.opendir("dist/commands");
-    const listMisc: string[] = [];
-    let selected;
-
-    // There will only be one level of directory searching (per category).
-    while ((selected = await dir.read())) {
-        if (selected.isDirectory()) {
-            if (selected.name === "subcommands") continue;
-
-            const subdir = await ffs.opendir(`dist/commands/${selected.name}`);
-            const category = $(selected.name).toTitleCase();
-            const list: string[] = [];
-            let cmd;
-
-            while ((cmd = await subdir.read())) {
-                if (cmd.isDirectory()) {
-                    if (cmd.name === "subcommands") continue;
-                    else $.warn(`You can't have multiple levels of directories! From: "dist/commands/${cmd.name}"`);
-                } else if (cmd.name.endsWith(".js")) {
-                    loadCommand(cmd.name, list, selected.name);
+            if (options?.id) {
+                switch (options.id) {
+                    case "channel":
+                        this.id = this.channel;
+                        break;
+                    case "role":
+                        this.id = this.role;
+                        break;
+                    case "emote":
+                        this.id = this.emote;
+                        break;
+                    case "message":
+                        this.id = this.message;
+                        break;
+                    case "user":
+                        this.id = this.user;
+                        break;
+                    default:
+                        requireAllCasesHandledFor(options.id);
                 }
             }
 
-            subdir.close();
-            categories.set(category, list);
-        } else if (selected.name.endsWith(".js")) {
-            loadCommand(selected.name, listMisc);
+            if (options?.subcommands) {
+                const baseSubcommands = Object.keys(options.subcommands);
+
+                // Loop once to set the base subcommands.
+                for (const name in options.subcommands) this.subcommands.set(name, options.subcommands[name]);
+
+                // Then loop again to make aliases point to the base subcommands and warn if something's not right.
+                // This shouldn't be a problem because I'm hoping that JS stores these as references that point to the same object.
+                for (const name in options.subcommands) {
+                    const subcmd = options.subcommands[name];
+                    subcmd.name = name;
+                    const aliases = subcmd.aliases;
+
+                    for (const alias of aliases) {
+                        if (baseSubcommands.includes(alias))
+                            console.warn(
+                                `"${alias}" in subcommand "${name}" was attempted to be declared as an alias but it already exists in the base commands! (Look at the next "Loading Command" line to see which command is affected.)`
+                            );
+                        else if (this.subcommands.has(alias))
+                            console.warn(
+                                `Duplicate alias "${alias}" at subcommand "${name}"! (Look at the next "Loading Command" line to see which command is affected.)`
+                            );
+                        else this.subcommands.set(alias, subcmd);
+                    }
+                }
+            }
         }
     }
 
-    dir.close();
-    categories.set("Miscellaneous", listMisc);
+    // Go through the arguments provided and find the right subcommand, then execute with the given arguments.
+    // Will return null if it successfully executes, SingleMessageOptions if there's an error (to let the user know what it is).
+    //
+    // Calls the resulting subcommand's execute method in order to make more modular code, basically pushing the chain of execution to the subcommand.
+    // For example, a numeric subcommand would accept args of [4] then execute on it.
+    public async execute(
+        args: string[],
+        menu: CommandMenu,
+        metadata: ExecuteCommandMetadata
+    ): Promise<SingleMessageOptions | null> {
+        // Update inherited properties if the current command specifies a property.
+        // In case there are no initial arguments, these should go first so that it can register.
+        if (this.permission !== -1) metadata.permission = this.permission;
+        if (this.nsfw !== null) metadata.nsfw = this.nsfw;
+        if (this.channelType !== null) metadata.channelType = this.channelType;
 
-    return commands;
-}
+        // Take off the leftmost argument from the list.
+        const param = args.shift();
 
-async function loadCommand(filename: string, list: string[], category?: string) {
-    if (!commands) return $.error(`Function "loadCommand" was called without first initializing commands!`);
+        // If there are no arguments left, execute the current command. Otherwise, continue on.
+        if (param === undefined) {
+            // See if there is anything that'll prevent the user from executing the command.
 
-    const prefix = category ?? "";
-    const header = filename.substring(0, filename.indexOf(".js"));
-    const command = (await import(`../commands/${prefix}/${header}`)).default as Command | undefined;
+            // 1. Does this command specify a required channel type? If so, does the channel type match?
+            if (
+                metadata.channelType === CHANNEL_TYPE.GUILD &&
+                (!(menu.channel instanceof GuildChannel) || menu.guild === null || menu.member === null)
+            ) {
+                return {content: "This command must be executed in a server."};
+            } else if (
+                metadata.channelType === CHANNEL_TYPE.DM &&
+                (menu.channel.type !== "dm" || menu.guild !== null || menu.member !== null)
+            ) {
+                return {content: "This command must be executed as a direct message."};
+            }
 
-    if (!command) return $.warn(`Command "${header}" has no default export which is a Command instance!`);
+            // 2. Is this an NSFW command where the channel prevents such use? (DM channels bypass this requirement.)
+            if (metadata.nsfw && menu.channel.type !== "dm" && !menu.channel.nsfw) {
+                return {content: "This command must be executed in either an NSFW channel or as a direct message."};
+            }
 
-    command.originalCommandName = header;
-    list.push(header);
+            // 3. Does the user have permission to execute the command?
+            if (!hasPermission(menu.author, menu.member, metadata.permission)) {
+                const userPermLevel = getPermissionLevel(menu.author, menu.member);
 
-    if (commands.has(header))
-        $.warn(
-            `Command "${header}" already exists! Make sure to make each command uniquely identifiable across categories!`
-        );
-    else commands.set(header, command);
+                return {
+                    content: `You don't have access to this command! Your permission level is \`${getPermissionName(
+                        userPermLevel
+                    )}\` (${userPermLevel}), but this command requires a permission level of \`${getPermissionName(
+                        metadata.permission
+                    )}\` (${metadata.permission}).`
+                };
+            }
 
-    for (const alias of command.aliases) {
-        if (commands.has(alias))
-            $.warn(`Top-level alias "${alias}" from command "${header}" already exists either as a command or alias!`);
-        else commands.set(alias, command);
+            // Then capture any potential errors.
+            try {
+                if (typeof this.run === "string") {
+                    await menu.channel.send(
+                        parseVars(
+                            this.run,
+                            {
+                                author: menu.author.toString(),
+                                prefix: getPrefix(menu.guild)
+                            },
+                            "???"
+                        )
+                    );
+                } else {
+                    await this.run(menu);
+                }
+
+                return null;
+            } catch (error) {
+                const errorMessage = error.stack ?? error;
+                console.error(`Command Error: ${metadata.header} (${metadata.args.join(", ")})\n${errorMessage}`);
+
+                return {
+                    content: `There was an error while trying to execute that command!\`\`\`${errorMessage}\`\`\``
+                };
+            }
+        }
+
+        // If the current command is an endpoint but there are still some arguments left, don't continue.
+        if (this.endpoint) return {content: "Too many arguments!"};
+
+        // Resolve the value of the current command's argument (adding it to the resolved args),
+        // then pass the thread of execution to whichever subcommand is valid (if any).
+        const isMessageLink = patterns.messageLink.test(param);
+        const isMessagePair = patterns.messagePair.test(param);
+
+        if (this.subcommands.has(param)) {
+            return this.subcommands.get(param)!.execute(args, menu, metadata);
+        } else if (this.channel && patterns.channel.test(param)) {
+            const id = patterns.channel.exec(param)![1];
+            const channel = menu.client.channels.cache.get(id);
+
+            // Users can only enter in this format for text channels, so this restricts it to that.
+            if (channel instanceof TextChannel) {
+                menu.args.push(channel);
+                return this.channel.execute(args, menu, metadata);
+            } else {
+                return {
+                    content: `\`${id}\` is not a valid text channel!`
+                };
+            }
+        } else if (this.role && patterns.role.test(param)) {
+            const id = patterns.role.exec(param)![1];
+
+            if (!menu.guild) {
+                return {
+                    content: "You can't use role parameters in DM channels!"
+                };
+            }
+
+            const role = menu.guild.roles.cache.get(id);
+
+            if (role) {
+                menu.args.push(role);
+                return this.role.execute(args, menu, metadata);
+            } else {
+                return {
+                    content: `\`${id}\` is not a valid role in this server!`
+                };
+            }
+        } else if (this.emote && patterns.emote.test(param)) {
+            const id = patterns.emote.exec(param)![1];
+            const emote = menu.client.emojis.cache.get(id);
+
+            if (emote) {
+                menu.args.push(emote);
+                return this.emote.execute(args, menu, metadata);
+            } else {
+                return {
+                    content: `\`${id}\` isn't a valid emote!`
+                };
+            }
+        } else if (this.message && (isMessageLink || isMessagePair)) {
+            let channelID = "";
+            let messageID = "";
+
+            if (isMessageLink) {
+                const result = patterns.messageLink.exec(param)!;
+                channelID = result[1];
+                messageID = result[2];
+            } else if (isMessagePair) {
+                const result = patterns.messagePair.exec(param)!;
+                channelID = result[1];
+                messageID = result[2];
+            }
+
+            const channel = menu.client.channels.cache.get(channelID);
+
+            if (channel instanceof TextChannel || channel instanceof DMChannel) {
+                try {
+                    menu.args.push(await channel.messages.fetch(messageID));
+                    return this.message.execute(args, menu, metadata);
+                } catch {
+                    return {
+                        content: `\`${messageID}\` isn't a valid message of channel ${channel}!`
+                    };
+                }
+            } else {
+                return {
+                    content: `\`${channelID}\` is not a valid text channel!`
+                };
+            }
+        } else if (this.user && patterns.user.test(param)) {
+            const id = patterns.user.exec(param)![1];
+
+            try {
+                menu.args.push(await menu.client.users.fetch(id));
+                return this.user.execute(args, menu, metadata);
+            } catch {
+                return {
+                    content: `No user found by the ID \`${id}\`!`
+                };
+            }
+        } else if (this.id && this.idType && patterns.id.test(param)) {
+            const id = patterns.id.exec(param)![1];
+
+            // Probably modularize the findXByY code in general in libd.
+            // Because this part is pretty much a whole bunch of copy pastes.
+            switch (this.idType) {
+                case "channel":
+                    const channel = menu.client.channels.cache.get(id);
+
+                    // Users can only enter in this format for text channels, so this restricts it to that.
+                    if (channel instanceof TextChannel) {
+                        menu.args.push(channel);
+                        return this.id.execute(args, menu, metadata);
+                    } else {
+                        return {
+                            content: `\`${id}\` isn't a valid text channel!`
+                        };
+                    }
+                case "role":
+                    if (!menu.guild) {
+                        return {
+                            content: "You can't use role parameters in DM channels!"
+                        };
+                    }
+
+                    const role = menu.guild.roles.cache.get(id);
+
+                    if (role) {
+                        menu.args.push(role);
+                        return this.id.execute(args, menu, metadata);
+                    } else {
+                        return {
+                            content: `\`${id}\` isn't a valid role in this server!`
+                        };
+                    }
+                case "emote":
+                    const emote = menu.client.emojis.cache.get(id);
+
+                    if (emote) {
+                        menu.args.push(emote);
+                        return this.id.execute(args, menu, metadata);
+                    } else {
+                        return {
+                            content: `\`${id}\` isn't a valid emote!`
+                        };
+                    }
+                case "message":
+                    try {
+                        menu.args.push(await menu.channel.messages.fetch(id));
+                        return this.id.execute(args, menu, metadata);
+                    } catch {
+                        return {
+                            content: `\`${id}\` isn't a valid message of channel ${menu.channel}!`
+                        };
+                    }
+                case "user":
+                    try {
+                        menu.args.push(await menu.client.users.fetch(id));
+                        return this.id.execute(args, menu, metadata);
+                    } catch {
+                        return {
+                            content: `No user found by the ID \`${id}\`!`
+                        };
+                    }
+                default:
+                    requireAllCasesHandledFor(this.idType);
+            }
+        } else if (this.number && !Number.isNaN(Number(param)) && param !== "Infinity" && param !== "-Infinity") {
+            menu.args.push(Number(param));
+            return this.number.execute(args, menu, metadata);
+        } else if (this.any) {
+            menu.args.push(param);
+            return this.any.execute(args, menu, metadata);
+        } else {
+            // Continue adding on the rest of the arguments if there's no valid subcommand.
+            menu.args.push(param);
+            return this.execute(args, menu, metadata);
+        }
+
+        // Note: Do NOT add a return statement here. In case one of the other sections is missing
+        // a return statement, there'll be a compile error to catch that.
     }
 
-    $.log(`Loading Command: ${header} (${category ? $(category).toTitleCase() : "Miscellaneous"})`);
+    // What this does is resolve the resulting subcommand as well as the inherited properties and the available subcommands.
+    public async resolveInfo(args: string[]): Promise<CommandInfo | CommandInfoError> {
+        return this.resolveInfoInternal(args, {...defaultMetadata, args: [], usage: "", originalArgs: [...args]});
+    }
+
+    private async resolveInfoInternal(
+        args: string[],
+        metadata: CommandInfoMetadata
+    ): Promise<CommandInfo | CommandInfoError> {
+        // Update inherited properties if the current command specifies a property.
+        // In case there are no initial arguments, these should go first so that it can register.
+        if (this.permission !== -1) metadata.permission = this.permission;
+        if (this.nsfw !== null) metadata.nsfw = this.nsfw;
+        if (this.channelType !== null) metadata.channelType = this.channelType;
+        if (this.usage !== "") metadata.usage = this.usage;
+
+        // Take off the leftmost argument from the list.
+        const param = args.shift();
+
+        // If there are no arguments left, return the data or an error message.
+        if (param === undefined) {
+            const keyedSubcommandInfo = new Collection<string, NamedCommand>();
+            const subcommandInfo = new Collection<string, Command>();
+
+            // Get all the subcommands of the current command but without aliases.
+            for (const [tag, command] of this.subcommands.entries()) {
+                // Don't capture duplicates generated from aliases.
+                if (tag === command.name) {
+                    keyedSubcommandInfo.set(tag, command);
+                }
+            }
+
+            // Then get all the generic subcommands.
+            if (this.channel) subcommandInfo.set("<channel>", this.channel);
+            if (this.role) subcommandInfo.set("<role>", this.role);
+            if (this.emote) subcommandInfo.set("<emote>", this.emote);
+            if (this.message) subcommandInfo.set("<message>", this.message);
+            if (this.user) subcommandInfo.set("<user>", this.user);
+            if (this.id) subcommandInfo.set(`<id = <${this.idType}>>`, this.id);
+            if (this.number) subcommandInfo.set("<number>", this.number);
+            if (this.any) subcommandInfo.set("<any>", this.any);
+
+            return {
+                type: "info",
+                command: this,
+                keyedSubcommandInfo,
+                subcommandInfo,
+                ...metadata
+            };
+        }
+
+        const invalidSubcommandGenerator: () => CommandInfoError = () => ({
+            type: "error",
+            message: `No subcommand found by the argument list: \`${metadata.originalArgs.join(" ")}\``
+        });
+
+        // Then test if anything fits any hardcoded values, otherwise check if it's a valid keyed subcommand.
+        if (param === "<channel>") {
+            if (this.channel) {
+                metadata.args.push("<channel>");
+                return this.channel.resolveInfoInternal(args, metadata);
+            } else {
+                return invalidSubcommandGenerator();
+            }
+        } else if (param === "<role>") {
+            if (this.role) {
+                metadata.args.push("<role>");
+                return this.role.resolveInfoInternal(args, metadata);
+            } else {
+                return invalidSubcommandGenerator();
+            }
+        } else if (param === "<emote>") {
+            if (this.emote) {
+                metadata.args.push("<emote>");
+                return this.emote.resolveInfoInternal(args, metadata);
+            } else {
+                return invalidSubcommandGenerator();
+            }
+        } else if (param === "<message>") {
+            if (this.message) {
+                metadata.args.push("<message>");
+                return this.message.resolveInfoInternal(args, metadata);
+            } else {
+                return invalidSubcommandGenerator();
+            }
+        } else if (param === "<user>") {
+            if (this.user) {
+                metadata.args.push("<user>");
+                return this.user.resolveInfoInternal(args, metadata);
+            } else {
+                return invalidSubcommandGenerator();
+            }
+        } else if (param === "<id>") {
+            if (this.id) {
+                metadata.args.push(`<id = <${this.idType}>>`);
+                return this.id.resolveInfoInternal(args, metadata);
+            } else {
+                return invalidSubcommandGenerator();
+            }
+        } else if (param === "<number>") {
+            if (this.number) {
+                metadata.args.push("<number>");
+                return this.number.resolveInfoInternal(args, metadata);
+            } else {
+                return invalidSubcommandGenerator();
+            }
+        } else if (param === "<any>") {
+            if (this.any) {
+                metadata.args.push("<any>");
+                return this.any.resolveInfoInternal(args, metadata);
+            } else {
+                return invalidSubcommandGenerator();
+            }
+        } else if (this.subcommands?.has(param)) {
+            metadata.args.push(param);
+            return this.subcommands.get(param)!.resolveInfoInternal(args, metadata);
+        } else {
+            return invalidSubcommandGenerator();
+        }
+    }
 }
 
-// The template should be built with a reductionist mentality.
-// Provide everything the user needs and then let them remove whatever they want.
-// That way, they aren't focusing on what's missing, but rather what they need for their command.
-const template = `import Command from '../core/command';
-import {CommonLibrary} from '../core/lib';
+export class NamedCommand extends Command {
+    public readonly aliases: string[]; // This is to keep the array intact for parent Command instances to use. It'll also be used when loading top-level aliases.
+    private originalCommandName: string | null; // If the command is an alias, what's the original name?
 
-export default new Command({
-	description: "This is a template/testing command providing common functionality. Remove what you don't need, and rename/delete this file to generate a fresh command file here. This command should be automatically excluded from the help command. The \\"usage\\" parameter (string) overrides the default usage for the help command. The \\"endpoint\\" parameter (boolean) prevents further arguments from being passed. Also, as long as you keep the run function async, it'll return a promise allowing the program to automatically catch any synchronous errors. However, you'll have to do manual error handling if you go the then and catch route.",
-	endpoint: false,
-	usage: '',
-	permission: null,
-	aliases: [],
-	async run($: CommonLibrary): Promise<any> {
+    constructor(options?: NamedCommandOptions) {
+        super(options);
+        this.aliases = options?.aliases || [];
+        this.originalCommandName = null;
+    }
 
-	},
-	subcommands: {
-		layer: new Command({
-			description: "This is a named subcommand, meaning that the key name is what determines the keyword to use. With default settings for example, \\"$test layer\\".",
-			endpoint: false,
-			usage: '',
-			permission: null,
-			aliases: [],
-			async run($: CommonLibrary): Promise<any> {
+    public get name(): string {
+        if (this.originalCommandName === null) throw new Error("originalCommandName must be set before accessing it!");
+        else return this.originalCommandName;
+    }
 
-			}
-		})
-	},
-	user: new Command({
-		description: "This is the subcommand for getting users by pinging them or copying their ID. With default settings for example, \\"$test 237359961842253835\\". The argument will be a user object and won't run if no user is found by that ID.",
-		endpoint: false,
-		usage: '',
-		permission: null,
-		async run($: CommonLibrary): Promise<any> {
-
-		}
-	}),
-	number: new Command({
-		description: "This is a numeric subcommand, meaning that any type of number (excluding Infinity/NaN) will route to this command if present. With default settings for example, \\"$test -5.2\\". The argument with the number is already parsed so you can just use it without converting it.",
-		endpoint: false,
-		usage: '',
-		permission: null,
-		async run($: CommonLibrary): Promise<any> {
-
-		}
-	}),
-	any: new Command({
-		description: "This is a generic subcommand, meaning that if there isn't a more specific subcommand that's called, it falls to this. With default settings for example, \\"$test reeee\\".",
-		endpoint: false,
-		usage: '',
-		permission: null,
-		async run($: CommonLibrary): Promise<any> {
-
-		}
-	})
-});`;
+    public set name(value: string) {
+        if (this.originalCommandName !== null)
+            throw new Error(`originalCommandName cannot be set twice! Attempted to set the value to "${value}".`);
+        else this.originalCommandName = value;
+    }
+}
