@@ -1,5 +1,5 @@
-import {GuildEmoji, MessageEmbed, TextChannel, DMChannel, NewsChannel, User} from "discord.js";
-import {Command, NamedCommand, paginate} from "../../core";
+import {GuildEmoji, MessageEmbed, User} from "discord.js";
+import {Command, NamedCommand, paginate, SendFunction} from "../../core";
 import {split} from "../../lib";
 import vm from "vm";
 
@@ -8,20 +8,20 @@ const REGEX_TIMEOUT_MS = 1000;
 export default new NamedCommand({
     description: "Lists all emotes the bot has in it's registry,",
     usage: "<regex pattern> (-flags)",
-    async run({message, channel, guild, author, member, client, args}) {
-        displayEmoteList(client.emojis.cache.array(), channel, author);
+    async run({send, message, channel, guild, author, member, client, args}) {
+        displayEmoteList(client.emojis.cache.array(), send, author);
     },
     any: new Command({
         description:
             "Filters emotes by via a regular expression. Flags can be added by adding a dash at the end. For example, to do a case-insensitive search, do %prefix%lsemotes somepattern -i",
-        async run({message, channel, guild, author, member, client, args}) {
+        async run({send, message, channel, guild, author, member, client, args}) {
             // If a guild ID is provided, filter all emotes by that guild (but only if there aren't any arguments afterward)
             if (args.length === 1 && /^\d{17,}$/.test(args[0])) {
                 const guildID: string = args[0];
 
                 displayEmoteList(
                     client.emojis.cache.filter((emote) => emote.guild.id === guildID).array(),
-                    channel,
+                    send,
                     author
                 );
             } else {
@@ -57,10 +57,10 @@ export default new NamedCommand({
                         script.runInContext(context, {timeout: REGEX_TIMEOUT_MS});
                         emotes = sandbox.emotes;
                         emoteCollection = emoteCollection.filter((emote) => emotes.has(emote.id)); // Only allow emotes that haven't been deleted.
-                        displayEmoteList(emoteCollection, channel, author);
+                        displayEmoteList(emoteCollection, send, author);
                     } catch (error) {
                         if (error.code === "ERR_SCRIPT_EXECUTION_TIMEOUT") {
-                            channel.send(
+                            send(
                                 `The regular expression you entered exceeded the time limit of ${REGEX_TIMEOUT_MS} milliseconds.`
                             );
                         } else {
@@ -68,14 +68,14 @@ export default new NamedCommand({
                         }
                     }
                 } else {
-                    channel.send("Failed to initialize sandbox.");
+                    send("Failed to initialize sandbox.");
                 }
             }
         }
     })
 });
 
-async function displayEmoteList(emotes: GuildEmoji[], channel: TextChannel | DMChannel | NewsChannel, author: User) {
+async function displayEmoteList(emotes: GuildEmoji[], send: SendFunction, author: User) {
     emotes.sort((a, b) => {
         const first = a.name.toLowerCase();
         const second = b.name.toLowerCase();
@@ -90,7 +90,7 @@ async function displayEmoteList(emotes: GuildEmoji[], channel: TextChannel | DMC
 
     // Gather the first page (if it even exists, which it might not if there no valid emotes appear)
     if (pages > 0) {
-        paginate(channel.send, author.id, pages, (page, hasMultiplePages) => {
+        paginate(send, author.id, pages, (page, hasMultiplePages) => {
             embed.setTitle(hasMultiplePages ? `**Emotes** (Page ${page + 1} of ${pages})` : "**Emotes**");
 
             let desc = "";
@@ -102,6 +102,6 @@ async function displayEmoteList(emotes: GuildEmoji[], channel: TextChannel | DMC
             return embed;
         });
     } else {
-        channel.send("No valid emotes found by that query.");
+        send("No valid emotes found by that query.");
     }
 }

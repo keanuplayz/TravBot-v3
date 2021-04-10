@@ -169,21 +169,21 @@ function getTimeEmbed(user: User) {
 export default new NamedCommand({
     description: "Show others what time it is for you.",
     aliases: ["tz"],
-    async run({channel, author}) {
-        channel.send(getTimeEmbed(author));
+    async run({send, channel, author}) {
+        send(getTimeEmbed(author));
     },
     subcommands: {
         // Welcome to callback hell. We hope you enjoy your stay here!
         setup: new NamedCommand({
             description: "Registers your timezone information for the bot.",
-            async run({author, channel}) {
+            async run({send, author, channel}) {
                 const profile = Storage.getUser(author.id);
                 profile.timezone = null;
                 profile.daylightSavingsRegion = null;
                 let hour: number;
 
                 ask(
-                    await channel.send(
+                    await send(
                         "What hour (0 to 23) is it for you right now?\n*(Note: Make sure to use Discord's inline reply feature or this won't work!)*"
                     ),
                     author.id,
@@ -257,7 +257,7 @@ export default new NamedCommand({
                         // I calculate the list beforehand and check for duplicates to reduce unnecessary asking.
                         if (duplicates.includes(hour)) {
                             const isSameDay = await askYesOrNo(
-                                await channel.send(
+                                await send(
                                     `Is the current day of the month the ${moment().utc().format("Do")} for you?`
                                 ),
                                 author.id
@@ -289,13 +289,13 @@ export default new NamedCommand({
 
                         // I should note that error handling should be added sometime because await throws an exception on Promise.reject.
                         const hasDST = await askYesOrNo(
-                            await channel.send("Does your timezone change based on daylight savings?"),
+                            await send("Does your timezone change based on daylight savings?"),
                             author.id
                         );
 
                         const finalize = () => {
                             Storage.save();
-                            channel.send(
+                            send(
                                 "You've finished setting up your timezone! Just check to see if this looks right, and if it doesn't, run this setup again.",
                                 getTimeEmbed(author)
                             );
@@ -313,7 +313,7 @@ export default new NamedCommand({
                                 finalize();
                             };
 
-                            askMultipleChoice(await channel.send(DST_NOTE_SETUP), author.id, [
+                            askMultipleChoice(await send(DST_NOTE_SETUP), author.id, [
                                 () => finalizeDST("na"),
                                 () => finalizeDST("eu"),
                                 () => finalizeDST("sh")
@@ -328,9 +328,9 @@ export default new NamedCommand({
         }),
         delete: new NamedCommand({
             description: "Delete your timezone information.",
-            async run({channel, author}) {
+            async run({send, channel, author}) {
                 prompt(
-                    await channel.send(
+                    await send(
                         "Are you sure you want to delete your timezone information?\n*(This message will automatically be deleted after 10 seconds.)*"
                     ),
                     author.id,
@@ -345,10 +345,10 @@ export default new NamedCommand({
         }),
         utc: new NamedCommand({
             description: "Displays UTC time.",
-            async run({channel}) {
+            async run({send, channel}) {
                 const time = moment().utc();
 
-                channel.send({
+                send({
                     embed: {
                         color: TIME_EMBED_COLOR,
                         fields: [
@@ -377,16 +377,16 @@ export default new NamedCommand({
     id: "user",
     user: new Command({
         description: "See what time it is for someone else.",
-        async run({channel, args}) {
-            channel.send(getTimeEmbed(args[0]));
+        async run({send, channel, args}) {
+            send(getTimeEmbed(args[0]));
         }
     }),
     any: new Command({
         description: "See what time it is for someone else (by their username).",
-        async run({channel, args, guild}) {
+        async run({send, channel, args, guild}) {
             const member = await getMemberByName(guild!, args.join(" "));
-            if (member instanceof GuildMember) channel.send(getTimeEmbed(member.user));
-            else channel.send(member);
+            if (member instanceof GuildMember) send(getTimeEmbed(member.user));
+            else send(member);
         }
     })
 });

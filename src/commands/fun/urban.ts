@@ -6,7 +6,7 @@ export default new NamedCommand({
     description: "Gives you a definition of the inputted word.",
     run: "Please input a word.",
     any: new Command({
-        async run({message, channel, guild, author, member, client, args}) {
+        async run({send, message, channel, guild, author, member, client, args}) {
             // [Bug Fix]: Use encodeURIComponent() when emojis are used: "TypeError [ERR_UNESCAPED_CHARACTERS]: Request path contains unescaped characters"
             urban(encodeURIComponent(args.join(" ")))
                 .then((res) => {
@@ -21,10 +21,10 @@ export default new NamedCommand({
                     if (res.tags && res.tags.length > 0 && res.tags.join(" ").length < 1024)
                         embed.addField("Tags", res.tags.join(", "), true);
 
-                    channel.send(embed);
+                    send(embed);
                 })
                 .catch(() => {
-                    channel.send("Sorry, that word was not found.");
+                    send("Sorry, that word was not found.");
                 });
         }
     })

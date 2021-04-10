@@ -8,7 +8,7 @@ const WEEKDAY = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday
 
 export const MondayCommand = new NamedCommand({
     description: "Use this on a UTC Monday to get an extra Mon. Does not affect your 22 hour timer for `eco daily`.",
-    async run({guild, channel, author}) {
+    async run({send, guild, channel, author}) {
         if (isAuthorized(guild, channel)) {
             const user = Storage.getUser(author.id);
             const now = new Date();
@@ -21,13 +21,13 @@ export const MondayCommand = new NamedCommand({
                     user.money++;
                     user.lastMonday = now.getTime();
                     Storage.save();
-                    channel.send("It is **Mon**day, my dudes.", getMoneyEmbed(author));
-                } else channel.send("You've already claimed your **Mon**day reward for this week.");
+                    send("It is **Mon**day, my dudes.", getMoneyEmbed(author));
+                } else send("You've already claimed your **Mon**day reward for this week.");
             } else {
                 const weekdayName = WEEKDAY[weekday];
                 const hourText = now.getUTCHours().toString().padStart(2, "0");
                 const minuteText = now.getUTCMinutes().toString().padStart(2, "0");
-                channel.send(
+                send(
                     `Come back when it's **Mon**day. Right now, it's ${weekdayName}, ${hourText}:${minuteText} (UTC).`
                 );
             }
@@ -41,19 +41,19 @@ export const AwardCommand = new NamedCommand({
     aliases: ["give"],
     run: "You need to specify a user!",
     user: new Command({
-        async run({message, channel, guild, author, member, client, args}) {
+        async run({send, message, channel, guild, author, member, client, args}) {
             if (author.id === "394808963356688394" || IS_DEV_MODE) {
                 const target = args[0] as User;
                 const user = Storage.getUser(target.id);
                 user.money++;
                 Storage.save();
-                channel.send(`1 Mon given to ${target.username}.`, getMoneyEmbed(target));
+                send(`1 Mon given to ${target.username}.`, getMoneyEmbed(target));
             } else {
-                channel.send("This command is restricted to the bean.");
+                send("This command is restricted to the bean.");
             }
         },
         number: new Command({
-            async run({message, channel, guild, author, member, client, args}) {
+            async run({send, message, channel, guild, author, member, client, args}) {
                 if (author.id === "394808963356688394" || IS_DEV_MODE) {
                     const target = args[0] as User;
                     const amount = Math.floor(args[1]);
@@ -62,15 +62,12 @@ export const AwardCommand = new NamedCommand({
                         const user = Storage.getUser(target.id);
                         user.money += amount;
                         Storage.save();
-                        channel.send(
-                            `${pluralise(amount, "Mon", "s")} given to ${target.username}.`,
-                            getMoneyEmbed(target)
-                        );
+                        send(`${pluralise(amount, "Mon", "s")} given to ${target.username}.`, getMoneyEmbed(target));
                     } else {
-                        channel.send("You need to enter a number greater than 0.");
+                        send("You need to enter a number greater than 0.");
                     }
                 } else {
-                    channel.send("This command is restricted to the bean.");
+                    send("This command is restricted to the bean.");
                 }
             }
         })

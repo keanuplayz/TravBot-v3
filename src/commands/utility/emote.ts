@@ -8,9 +8,9 @@ export default new NamedCommand({
     any: new Command({
         description: "The emote(s) to send.",
         usage: "<emotes...>",
-        async run({guild, channel, message, args}) {
+        async run({send, guild, channel, message, args}) {
             const output = processEmoteQueryFormatted(args);
-            if (output.length > 0) channel.send(output);
+            if (output.length > 0) send(output);
         }
     })
 });

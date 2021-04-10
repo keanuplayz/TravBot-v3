@@ -7,7 +7,7 @@ export default new NamedCommand({
     run: "Please provide a question.",
     any: new Command({
         description: "Question for the poll.",
-        async run({message, channel, guild, author, member, client, args}) {
+        async run({send, message, channel, guild, author, member, client, args}) {
             const embed = new MessageEmbed()
                 .setAuthor(
                     `Poll created by ${message.author.username}`,
@@ -16,7 +16,7 @@ export default new NamedCommand({
                 .setColor(0xffffff)
                 .setFooter("React to vote.")
                 .setDescription(args.join(" "));
-            const msg = await channel.send(embed);
+            const msg = await send(embed);
             await msg.react("✅");
             await msg.react("⛔");
             message.delete({

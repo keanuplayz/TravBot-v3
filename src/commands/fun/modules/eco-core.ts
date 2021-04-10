@@ -6,7 +6,7 @@ import {isAuthorized, getMoneyEmbed, getSendEmbed, ECO_EMBED_COLOR} from "./eco-
 export const DailyCommand = new NamedCommand({
     description: "Pick up your daily Mons. The cooldown is per user and every 22 hours to allow for some leeway.",
     aliases: ["get"],
-    async run({author, channel, guild}) {
+    async run({send, author, channel, guild}) {
         if (isAuthorized(guild, channel)) {
             const user = Storage.getUser(author.id);
             const now = Date.now();
@@ -15,7 +15,7 @@ export const DailyCommand = new NamedCommand({
                 user.money++;
                 user.lastReceived = now;
                 Storage.save();
-                channel.send({
+                send({
                     embed: {
                         title: "Daily Reward",
                         description: "You received 1 Mon!",
@@ -23,7 +23,7 @@ export const DailyCommand = new NamedCommand({
                     }
                 });
             } else
-                channel.send({
+                send({
                     embed: {
                         title: "Daily Reward",
                         description: `It's too soon to pick up your daily Mons. You have about ${(
@@ -39,7 +39,7 @@ export const DailyCommand = new NamedCommand({
 
 export const GuildCommand = new NamedCommand({
     description: "Get info on the guild's economy as a whole.",
-    async run({guild, channel}) {
+    async run({send, guild, channel}) {
         if (isAuthorized(guild, channel)) {
             const users = Storage.users;
             let totalAmount = 0;
@@ -49,7 +49,7 @@ export const GuildCommand = new NamedCommand({
                 totalAmount += user.money;
             }
 
-            channel.send({
+            send({
                 embed: {
                     title: `The Bank of ${guild!.name}`,
                     color: ECO_EMBED_COLOR,
@@ -77,7 +77,7 @@ export const GuildCommand = new NamedCommand({
 export const LeaderboardCommand = new NamedCommand({
     description: "See the richest players.",
     aliases: ["top"],
-    async run({guild, channel, client}) {
+    async run({send, guild, channel, client}) {
         if (isAuthorized(guild, channel)) {
             const users = Storage.users;
             const ids = Object.keys(users);
@@ -94,7 +94,7 @@ export const LeaderboardCommand = new NamedCommand({
                 });
             }
 
-            channel.send({
+            send({
                 embed: {
                     title: "Top 10 Richest Players",
                     color: ECO_EMBED_COLOR,
@@ -116,24 +116,23 @@ export const PayCommand = new NamedCommand({
     user: new Command({
         run: "You need to enter an amount you're sending!",
         number: new Command({
-            async run({args, author, channel, guild}): Promise<any> {
+            async run({send, args, author, channel, guild}): Promise<any> {
                 if (isAuthorized(guild, channel)) {
                     const amount = Math.floor(args[1]);
                     const sender = Storage.getUser(author.id);
                     const target = args[0];
                     const receiver = Storage.getUser(target.id);
 
-                    if (amount <= 0) return channel.send("You must send at least one Mon!");
+                    if (amount <= 0) return send("You must send at least one Mon!");
                     else if (sender.money < amount)
-                        return channel.send("You don't have enough Mons for that.", getMoneyEmbed(author));
-                    else if (target.id === author.id) return channel.send("You can't send Mons to yourself!");
-                    else if (target.bot && process.argv[2] !== "dev")
-                        return channel.send("You can't send Mons to a bot!");
+                        return send("You don't have enough Mons for that.", getMoneyEmbed(author));
+                    else if (target.id === author.id) return send("You can't send Mons to yourself!");
+                    else if (target.bot && process.argv[2] !== "dev") return send("You can't send Mons to a bot!");
 
                     sender.money -= amount;
                     receiver.money += amount;
                     Storage.save();
-                    return channel.send(getSendEmbed(author, target, amount));
+                    return send(getSendEmbed(author, target, amount));
                 }
             }
         })
@@ -142,21 +141,20 @@ export const PayCommand = new NamedCommand({
         run: "You must use the format `eco pay <user> <amount>`!"
     }),
     any: new Command({
-        async run({args, author, channel, guild}) {
+        async run({send, args, author, channel, guild}) {
             if (isAuthorized(guild, channel)) {
                 const last = args.pop();
 
-                if (!/\d+/g.test(last) && args.length === 0)
-                    return channel.send("You need to enter an amount you're sending!");
+                if (!/\d+/g.test(last) && args.length === 0) return send("You need to enter an amount you're sending!");
 
                 const amount = Math.floor(last);
                 const sender = Storage.getUser(author.id);
 
-                if (amount <= 0) return channel.send("You must send at least one Mon!");
+                if (amount <= 0) return send("You must send at least one Mon!");
                 else if (sender.money < amount)
-                    return channel.send("You don't have enough Mons to do that!", getMoneyEmbed(author));
+                    return send("You don't have enough Mons to do that!", getMoneyEmbed(author));
                 else if (!guild)
-                    return channel.send("You have to use this in a server if you want to send Mons with a username!");
+                    return send("You have to use this in a server if you want to send Mons with a username!");
 
                 const username = args.join(" ");
                 const member = (
@@ -167,17 +165,16 @@ export const PayCommand = new NamedCommand({
                 ).first();
 
                 if (!member)
-                    return channel.send(
+                    return send(
                         `Couldn't find a user by the name of \`${username}\`! If you want to send Mons to someone in a different server, you have to use their user ID!`
                     );
-                else if (member.user.id === author.id) return channel.send("You can't send Mons to yourself!");
-                else if (member.user.bot && process.argv[2] !== "dev")
-                    return channel.send("You can't send Mons to a bot!");
+                else if (member.user.id === author.id) return send("You can't send Mons to yourself!");
+                else if (member.user.bot && process.argv[2] !== "dev") return send("You can't send Mons to a bot!");
 
                 const target = member.user;
 
                 return prompt(
-                    await channel.send(
+                    await send(
                         `Are you sure you want to send ${pluralise(
                             amount,
                             "Mon",
@@ -202,7 +199,7 @@ export const PayCommand = new NamedCommand({
                         sender.money -= amount;
                         receiver.money += amount;
                         Storage.save();
-                        channel.send(getSendEmbed(author, target, amount));
+                        send(getSendEmbed(author, target, amount));
                     }
                 );
             }

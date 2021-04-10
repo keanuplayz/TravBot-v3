@@ -6,7 +6,7 @@ export default new NamedCommand({
     description:
         "Reacts to the a previous message in your place. You have to react with the same emote before the bot removes that reaction.",
     usage: 'react <emotes...> (<distance / message ID / "Copy ID" / "Copy Message Link">)',
-    async run({message, channel, guild, author, member, client, args}) {
+    async run({send, message, channel, guild, author, member, client, args}) {
         let target: Message | undefined;
         let distance = 1;
 
@@ -32,18 +32,18 @@ export default new NamedCommand({
                     try {
                         guild = await client.guilds.fetch(guildID);
                     } catch {
-                        return channel.send(`\`${guildID}\` is an invalid guild ID!`);
+                        return send(`\`${guildID}\` is an invalid guild ID!`);
                     }
                 }
 
                 if (tmpChannel.id !== channelID) tmpChannel = guild.channels.cache.get(channelID);
-                if (!tmpChannel) return channel.send(`\`${channelID}\` is an invalid channel ID!`);
+                if (!tmpChannel) return send(`\`${channelID}\` is an invalid channel ID!`);
 
                 if (message.id !== messageID) {
                     try {
                         target = await (tmpChannel as TextChannel).messages.fetch(messageID);
                     } catch {
-                        return channel.send(`\`${messageID}\` is an invalid message ID!`);
+                        return send(`\`${messageID}\` is an invalid message ID!`);
                     }
                 }
 
@@ -57,13 +57,13 @@ export default new NamedCommand({
                 let tmpChannel: Channel | undefined = channel;
 
                 if (tmpChannel.id !== channelID) tmpChannel = guild?.channels.cache.get(channelID);
-                if (!tmpChannel) return channel.send(`\`${channelID}\` is an invalid channel ID!`);
+                if (!tmpChannel) return send(`\`${channelID}\` is an invalid channel ID!`);
 
                 if (message.id !== messageID) {
                     try {
                         target = await (tmpChannel as TextChannel).messages.fetch(messageID);
                     } catch {
-                        return channel.send(`\`${messageID}\` is an invalid message ID!`);
+                        return send(`\`${messageID}\` is an invalid message ID!`);
                     }
                 }
 
@@ -74,7 +74,7 @@ export default new NamedCommand({
                 try {
                     target = await channel.messages.fetch(last);
                 } catch {
-                    return channel.send(`No valid message found by the ID \`${last}\`!`);
+                    return send(`No valid message found by the ID \`${last}\`!`);
                 }
 
                 args.pop();
@@ -84,7 +84,7 @@ export default new NamedCommand({
                 distance = parseInt(last);
 
                 if (distance >= 0 && distance <= 99) args.pop();
-                else return channel.send("Your distance must be between 0 and 99!");
+                else return send("Your distance must be between 0 and 99!");
             }
         }
 

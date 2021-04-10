@@ -34,9 +34,9 @@ let phrase = "I have no currently set phrase!";
 export default new NamedCommand({
     description: "Transforms your text into ｖｉｅｔｎａｍｅｓｅ.",
     usage: "thonk ([text])",
-    async run({message, channel, guild, author, member, client, args}) {
+    async run({send, message, channel, guild, author, member, client, args}) {
         if (args.length > 0) phrase = args.join(" ");
-        const msg = await channel.send(transform(phrase));
+        const msg = await send(transform(phrase));
         msg.createReactionCollector(
             (reaction, user) => {
                 if (user.id === author.id && reaction.emoji.name === "❌") msg.delete();

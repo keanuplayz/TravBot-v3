@@ -7,7 +7,7 @@ import {EmbedField} from "discord.js";
 
 export const ShopCommand = new NamedCommand({
     description: "Displays the list of items you can buy in the shop.",
-    async run({guild, channel, author}) {
+    async run({send, guild, channel, author}) {
         if (isAuthorized(guild, channel)) {
             function getShopEmbed(selection: ShopItem[], title: string) {
                 const fields: EmbedField[] = [];
@@ -34,7 +34,7 @@ export const ShopCommand = new NamedCommand({
             const shopPages = split(ShopItems, 5);
             const pageAmount = shopPages.length;
 
-            paginate(channel.send, author.id, pageAmount, (page, hasMultiplePages) => {
+            paginate(send, author.id, pageAmount, (page, hasMultiplePages) => {
                 return getShopEmbed(
                     shopPages[page],
                     hasMultiplePages ? `Shop (Page ${page + 1} of ${pageAmount})` : "Shop"
@@ -47,7 +47,7 @@ export const ShopCommand = new NamedCommand({
 export const BuyCommand = new NamedCommand({
     description: "Buys an item from the shop.",
     usage: "<item>",
-    async run({guild, channel, args, message, author}) {
+    async run({send, guild, channel, args, message, author}) {
         if (isAuthorized(guild, channel)) {
             let found = false;
 
@@ -65,7 +65,7 @@ export const BuyCommand = new NamedCommand({
                     const cost = item.cost * amount;
 
                     if (cost > user.money) {
-                        channel.send("Not enough Mons!");
+                        send("Not enough Mons!");
                     } else {
                         user.money -= cost;
                         Storage.save();
@@ -77,7 +77,7 @@ export const BuyCommand = new NamedCommand({
                 }
             }
 
-            if (!found) channel.send(`There's no item in the shop that goes by \`${requested}\`!`);
+            if (!found) send(`There's no item in the shop that goes by \`${requested}\`!`);
         }
     }
 });

@@ -6,15 +6,15 @@ export default new NamedCommand({
     description: "Shows weather info of specified location.",
     run: "You need to provide a city.",
     any: new Command({
-        async run({message, channel, guild, author, member, client, args}) {
+        async run({send, message, channel, guild, author, member, client, args}) {
             find(
                 {
                     search: args.join(" "),
                     degreeType: "C"
                 },
                 function (error, result) {
-                    if (error) return channel.send(error.toString());
-                    if (result.length === 0) return channel.send("No city found by that name.");
+                    if (error) return send(error.toString());
+                    if (result.length === 0) return send("No city found by that name.");
                     var current = result[0].current;
                     var location = result[0].location;
                     const embed = new MessageEmbed()
@@ -28,7 +28,7 @@ export default new NamedCommand({
                         .addField("Feels like", `${current.feelslike} Degrees`, true)
                         .addField("Winds", current.winddisplay, true)
                         .addField("Humidity", `${current.humidity}%`, true);
-                    return channel.send({
+                    return send({
                         embed
                     });
                 }

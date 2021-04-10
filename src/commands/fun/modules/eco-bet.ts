@@ -11,21 +11,21 @@ export const BetCommand = new NamedCommand({
     user: new Command({
         description: "User to bet with.",
         // handles missing amount argument
-        async run({args, author, channel, guild}) {
+        async run({send, args, author, channel, guild}) {
             if (isAuthorized(guild, channel)) {
                 const target = args[0];
 
                 // handle invalid target
-                if (target.id == author.id) return channel.send("You can't bet Mons with yourself!");
-                else if (target.bot && process.argv[2] !== "dev") return channel.send("You can't bet Mons with a bot!");
+                if (target.id == author.id) return send("You can't bet Mons with yourself!");
+                else if (target.bot && process.argv[2] !== "dev") return send("You can't bet Mons with a bot!");
 
-                return channel.send("How much are you betting?");
+                return send("How much are you betting?");
             } else return;
         },
         number: new Command({
             description: "Amount of Mons to bet.",
             // handles missing duration argument
-            async run({args, author, channel, guild}) {
+            async run({send, args, author, channel, guild}) {
                 if (isAuthorized(guild, channel)) {
                     const sender = Storage.getUser(author.id);
                     const target = args[0] as User;
@@ -33,23 +33,22 @@ export const BetCommand = new NamedCommand({
                     const amount = Math.floor(args[1]);
 
                     // handle invalid target
-                    if (target.id == author.id) return channel.send("You can't bet Mons with yourself!");
-                    else if (target.bot && process.argv[2] !== "dev")
-                        return channel.send("You can't bet Mons with a bot!");
+                    if (target.id == author.id) return send("You can't bet Mons with yourself!");
+                    else if (target.bot && process.argv[2] !== "dev") return send("You can't bet Mons with a bot!");
 
                     // handle invalid amount
-                    if (amount <= 0) return channel.send("You must bet at least one Mon!");
+                    if (amount <= 0) return send("You must bet at least one Mon!");
                     else if (sender.money < amount)
-                        return channel.send("You don't have enough Mons for that.", getMoneyEmbed(author));
+                        return send("You don't have enough Mons for that.", getMoneyEmbed(author));
                     else if (receiver.money < amount)
-                        return channel.send("They don't have enough Mons for that.", getMoneyEmbed(target));
+                        return send("They don't have enough Mons for that.", getMoneyEmbed(target));
 
-                    return channel.send("How long until the bet ends?");
+                    return send("How long until the bet ends?");
                 } else return;
             },
             any: new Command({
                 description: "Duration of the bet.",
-                async run({client, args, author, message, channel, guild}) {
+                async run({send, client, args, author, message, channel, guild}) {
                     if (isAuthorized(guild, channel)) {
                         // [Pertinence to make configurable on the fly.]
                         // Lower and upper bounds for bet
@@ -62,27 +61,26 @@ export const BetCommand = new NamedCommand({
                         const duration = parseDuration(args[2].trim());
 
                         // handle invalid target
-                        if (target.id == author.id) return channel.send("You can't bet Mons with yourself!");
-                        else if (target.bot && process.argv[2] !== "dev")
-                            return channel.send("You can't bet Mons with a bot!");
+                        if (target.id == author.id) return send("You can't bet Mons with yourself!");
+                        else if (target.bot && process.argv[2] !== "dev") return send("You can't bet Mons with a bot!");
 
                         // handle invalid amount
-                        if (amount <= 0) return channel.send("You must bet at least one Mon!");
+                        if (amount <= 0) return send("You must bet at least one Mon!");
                         else if (sender.money < amount)
-                            return channel.send("You don't have enough Mons for that.", getMoneyEmbed(author));
+                            return send("You don't have enough Mons for that.", getMoneyEmbed(author));
                         else if (receiver.money < amount)
-                            return channel.send("They don't have enough Mons for that.", getMoneyEmbed(target));
+                            return send("They don't have enough Mons for that.", getMoneyEmbed(target));
 
                         // handle invalid duration
-                        if (duration <= 0) return channel.send("Invalid bet duration");
+                        if (duration <= 0) return send("Invalid bet duration");
                         else if (duration <= parseDuration(durationBounds.min))
-                            return channel.send(`Bet duration is too short, maximum duration is ${durationBounds.min}`);
+                            return send(`Bet duration is too short, maximum duration is ${durationBounds.min}`);
                         else if (duration >= parseDuration(durationBounds.max))
-                            return channel.send(`Bet duration is too long, maximum duration is ${durationBounds.max}`);
+                            return send(`Bet duration is too long, maximum duration is ${durationBounds.max}`);
 
                         // Ask target whether or not they want to take the bet.
                         const takeBet = await askYesOrNo(
-                            await channel.send(
+                            await send(
                                 `<@${target.id}>, do you want to take this bet of ${pluralise(amount, "Mon", "s")}`
                             ),
                             target.id
@@ -99,7 +97,7 @@ export const BetCommand = new NamedCommand({
                             Storage.save();
 
                             // Notify both users.
-                            await channel.send(
+                            await send(
                                 `<@${target.id}> has taken <@${author.id}>'s bet, the bet amount of ${pluralise(
                                     amount,
                                     "Mon",
@@ -114,7 +112,7 @@ export const BetCommand = new NamedCommand({
                                 const receiver = Storage.getUser(target.id);
                                 // [TODO: when D.JSv13 comes out, inline reply to clean up.]
                                 // When bet is over, give a vote to ask people their thoughts.
-                                const voteMsg = await channel.send(
+                                const voteMsg = await send(
                                     `VOTE: do you think that <@${
                                         target.id
                                     }> has won the bet?\nhttps://discord.com/channels/${guild!.id}/${channel.id}/${
@@ -142,18 +140,18 @@ export const BetCommand = new NamedCommand({
 
                                         if (ok > no) {
                                             receiver.money += amount * 2;
-                                            channel.send(
+                                            send(
                                                 `By the people's votes, <@${target.id}> has won the bet that <@${author.id}> had sent them.`
                                             );
                                         } else if (ok < no) {
                                             sender.money += amount * 2;
-                                            channel.send(
+                                            send(
                                                 `By the people's votes, <@${target.id}> has lost the bet that <@${author.id}> had sent them.`
                                             );
                                         } else {
                                             sender.money += amount;
                                             receiver.money += amount;
-                                            channel.send(
+                                            send(
                                                 `By the people's votes, <@${target.id}> couldn't be determined to have won or lost the bet that <@${author.id}> had sent them.`
                                             );
                                         }
@@ -162,7 +160,7 @@ export const BetCommand = new NamedCommand({
                                         Storage.save();
                                     });
                             }, duration);
-                        } else return await channel.send(`<@${target.id}> has rejected your bet, <@${author.id}>`);
+                        } else return await send(`<@${target.id}> has rejected your bet, <@${author.id}>`);
                     } else return;
                 }
             })

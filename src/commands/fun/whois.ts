@@ -43,44 +43,42 @@ const registry: {[id: string]: string} = {
 export default new NamedCommand({
     description: "Tells you who you or the specified user is.",
     aliases: ["whoami"],
-    async run({message, channel, guild, author, member, client, args}) {
+    async run({send, message, channel, guild, author, member, client, args}) {
         const id = author.id;
 
         if (id in registry) {
-            channel.send(registry[id]);
+            send(registry[id]);
         } else {
-            channel.send("You haven't been added to the registry yet!");
+            send("You haven't been added to the registry yet!");
         }
     },
     id: "user",
     user: new Command({
-        async run({message, channel, guild, author, member, client, args}) {
+        async run({send, message, channel, guild, author, member, client, args}) {
             const user: User = args[0];
             const id = user.id;
 
             if (id in registry) {
-                channel.send(`\`${user.username}\` - ${registry[id]}`);
+                send(`\`${user.username}\` - ${registry[id]}`);
             } else {
-                channel.send(`\`${user.tag}\` hasn't been added to the registry yet!`);
+                send(`\`${user.tag}\` hasn't been added to the registry yet!`);
             }
         }
     }),
     any: new Command({
         channelType: CHANNEL_TYPE.GUILD,
-        async run({message, channel, guild, author, client, args}) {
+        async run({send, message, channel, guild, author, client, args}) {
             const query = args.join(" ") as string;
             const member = await getMemberByName(guild!, query);
 
             if (member instanceof GuildMember) {
                 if (member.id in registry) {
-                    channel.send(`\`${member.nickname ?? member.user.username}\` - ${registry[member.id]}`);
+                    send(`\`${member.nickname ?? member.user.username}\` - ${registry[member.id]}`);
                 } else {
-                    channel.send(
-                        `\`${member.nickname ?? member.user.username}\` hasn't been added to the registry yet!`
-                    );
+                    send(`\`${member.nickname ?? member.user.username}\` hasn't been added to the registry yet!`);
                 }
             } else {
-                channel.send(member);
+                send(member);
             }
         }
     })

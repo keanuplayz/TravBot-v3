@@ -25,10 +25,10 @@ export default new NamedCommand({
     description: "Transforms your text into ｖａｐｏｒｗａｖｅ.",
     run: "You need to enter some text!",
     any: new Command({
-        async run({message, channel, guild, author, member, client, args}) {
+        async run({send, message, channel, guild, author, member, client, args}) {
             const text = getVaporwaveText(args.join(" "));
-            if (text !== "") channel.send(text);
-            else channel.send("Make sure to enter at least one valid character.");
+            if (text !== "") send(text);
+            else send("Make sure to enter at least one valid character.");
         }
     })
 });

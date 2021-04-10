@@ -31,21 +31,21 @@ export default new NamedCommand({
     run: ":cookie: Here's a cookie!",
     subcommands: {
         all: new NamedCommand({
-            async run({message, channel, guild, author, member, client, args}) {
-                channel.send(`${author} gave everybody a cookie!`);
+            async run({send, message, channel, guild, author, member, client, args}) {
+                send(`${author} gave everybody a cookie!`);
             }
         })
     },
     id: "user",
     user: new Command({
         description: "User to give cookie to.",
-        async run({message, channel, guild, author, member, client, args}) {
+        async run({send, message, channel, guild, author, member, client, args}) {
             const sender = author;
             const mention: User = args[0];
 
-            if (mention.id == sender.id) return channel.send("You can't give yourself cookies!");
+            if (mention.id == sender.id) return send("You can't give yourself cookies!");
 
-            return channel.send(
+            return send(
                 `:cookie: <@${sender.id}> ${parseVars(random(cookies), {
                     target: mention.toString()
                 })}`

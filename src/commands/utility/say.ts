@@ -6,8 +6,8 @@ export default new NamedCommand({
     run: "Please provide a message for me to say!",
     any: new Command({
         description: "Message to repeat.",
-        async run({message, channel, guild, author, member, client, args}) {
-            channel.send(`*${author} says:*\n${args.join(" ")}`);
+        async run({send, message, channel, guild, author, member, client, args}) {
+            send(`*${author} says:*\n${args.join(" ")}`);
         }
     })
 });

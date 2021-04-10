@@ -16,11 +16,11 @@ export default new NamedCommand({
     description: "Lists all commands. If a command is specified, their arguments are listed as well.",
     usage: "([command, [subcommand/type], ...])",
     aliases: ["h"],
-    async run({message, channel, guild, author, member, client, args}) {
+    async run({send, message, channel, guild, author, member, client, args}) {
         const commands = await getCommandList();
         const categoryArray = commands.keyArray();
 
-        paginate(channel.send, author.id, categoryArray.length, (page, hasMultiplePages) => {
+        paginate(send, author.id, categoryArray.length, (page, hasMultiplePages) => {
             const category = categoryArray[page];
             const commandList = commands.get(category)!;
             let output = `Legend: \`<type>\`, \`[list/of/stuff]\`, \`(optional)\`, \`(<optional type>)\`, \`([optional/list/...])\`\n`;
@@ -32,9 +32,9 @@ export default new NamedCommand({
         });
     },
     any: new Command({
-        async run({message, channel, guild, author, member, client, args}) {
+        async run({send, message, channel, guild, author, member, client, args}) {
             const [result, category] = await getCommandInfo(args);
-            if (typeof result === "string") return channel.send(result);
+            if (typeof result === "string") return send(result);
             let append = "";
             const command = result.command;
             const header = result.args.length > 0 ? `${result.header} ${result.args.join(" ")}` : result.header;
@@ -66,7 +66,7 @@ export default new NamedCommand({
                 aliases = formattedAliases.join(", ") || "None";
             }
 
-            return channel.send(
+            return send(
                 new MessageEmbed()
                     .setTitle(header)
                     .setDescription(command.description)

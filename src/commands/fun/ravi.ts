@@ -4,8 +4,8 @@ import {Random} from "../../lib";
 export default new NamedCommand({
     description: "Ravioli ravioli...",
     usage: "[number from 1 to 9]",
-    async run({message, channel, guild, author, member, client, args}) {
-        channel.send({
+    async run({send, message, channel, guild, author, member, client, args}) {
+        send({
             embed: {
                 title: "Ravioli ravioli...",
                 image: {
@@ -18,11 +18,11 @@ export default new NamedCommand({
         });
     },
     number: new Command({
-        async run({message, channel, guild, author, member, client, args}) {
+        async run({send, message, channel, guild, author, member, client, args}) {
             const arg: number = args[0];
 
             if (arg >= 1 && arg <= 9) {
-                channel.send({
+                send({
                     embed: {
                         title: "Ravioli ravioli...",
                         image: {
@@ -31,7 +31,7 @@ export default new NamedCommand({
                     }
                 });
             } else {
-                channel.send("Please provide a number between 1 and 9.");
+                send("Please provide a number between 1 and 9.");
             }
         }
     })

@@ -8,8 +8,8 @@ import {GuildMember} from "discord.js";
 
 export default new NamedCommand({
     description: "Economy command for Monika.",
-    async run({guild, channel, author}) {
-        if (isAuthorized(guild, channel)) channel.send(getMoneyEmbed(author));
+    async run({send, guild, channel, author}) {
+        if (isAuthorized(guild, channel)) send(getMoneyEmbed(author));
     },
     subcommands: {
         daily: DailyCommand,
@@ -29,17 +29,17 @@ export default new NamedCommand({
     id: "user",
     user: new Command({
         description: "See how much money someone else has by using their user ID or pinging them.",
-        async run({guild, channel, args}) {
-            if (isAuthorized(guild, channel)) channel.send(getMoneyEmbed(args[0]));
+        async run({send, guild, channel, args}) {
+            if (isAuthorized(guild, channel)) send(getMoneyEmbed(args[0]));
         }
     }),
     any: new Command({
         description: "See how much money someone else has by using their username.",
-        async run({guild, channel, args, message}) {
+        async run({send, guild, channel, args, message}) {
             if (isAuthorized(guild, channel)) {
                 const member = await getMemberByName(guild!, args.join(" "));
-                if (member instanceof GuildMember) channel.send(getMoneyEmbed(member.user));
-                else channel.send(member);
+                if (member instanceof GuildMember) send(getMoneyEmbed(member.user));
+                else send(member);
             }
         }
     })
