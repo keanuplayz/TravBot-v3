@@ -1,5 +1,5 @@
-import {User} from "discord.js";
-import {Command, NamedCommand, getMemberByUsername, CHANNEL_TYPE} from "../../core";
+import {User, GuildMember} from "discord.js";
+import {Command, NamedCommand, getMemberByName, CHANNEL_TYPE} from "../../core";
 
 // Quotes must be used here or the numbers will change
 const registry: {[id: string]: string} = {
@@ -69,12 +69,10 @@ export default new NamedCommand({
         channelType: CHANNEL_TYPE.GUILD,
         async run({message, channel, guild, author, client, args}) {
             const query = args.join(" ") as string;
-            const member = await getMemberByUsername(guild!, query);
+            const member = await getMemberByName(guild!, query);
 
-            if (member && member.id in registry) {
-                const id = member.id;
-
-                if (id in registry) {
+            if (member instanceof GuildMember) {
+                if (member.id in registry) {
                     channel.send(`\`${member.nickname ?? member.user.username}\` - ${registry[member.id]}`);
                 } else {
                     channel.send(
@@ -82,7 +80,7 @@ export default new NamedCommand({
                     );
                 }
             } else {
-                channel.send(`Couldn't find a user by the name of \`${query}\`!`);
+                channel.send(member);
             }
         }
     })

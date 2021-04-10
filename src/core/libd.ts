@@ -7,9 +7,13 @@ import {
     TextChannel,
     DMChannel,
     NewsChannel,
-    MessageOptions
+    MessageOptions,
+    Channel,
+    GuildChannel,
+    User
 } from "discord.js";
 import {unreactEventListeners, replyEventListeners} from "./eventListeners";
+import {client} from "./interface";
 
 export type SingleMessageOptions = MessageOptions & {split?: false};
 
@@ -20,16 +24,19 @@ export function botHasPermission(guild: Guild | null, permission: number): boole
     return !!guild?.me?.hasPermission(permission);
 }
 
+// The SoonTM Section //
 // Maybe promisify this section to reduce the potential for creating callback hell? Especially if multiple questions in a row are being asked.
-
-// Pagination function that allows for customization via a callback.
-// Define your own pages outside the function because this only manages the actual turning of pages.
+// It's probably a good idea to modularize the base reaction handler so there's less copy pasted code.
+// Maybe also make a reaction handler that listens for when reactions are added and removed.
+// The reaction handler would also run an async function to react in order (parallel to the reaction handler).
 
 const FIVE_BACKWARDS_EMOJI = "⏪";
 const BACKWARDS_EMOJI = "⬅️";
 const FORWARDS_EMOJI = "➡️";
 const FIVE_FORWARDS_EMOJI = "⏩";
 
+// Pagination function that allows for customization via a callback.
+// Define your own pages outside the function because this only manages the actual turning of pages.
 /**
  * Takes a message and some additional parameters and makes a reaction page with it. All the pagination logic is taken care of but nothing more, the page index is returned and you have to send a callback to do something with it.
  */
@@ -251,44 +258,132 @@ export async function askMultipleChoice(
     if (!isDeleted) message.delete();
 }
 
-/**
- * Gets a user by their username. Gets the first one then rolls with it.
- */
-export async function getMemberByUsername(guild: Guild, username: string) {
-    return (
-        await guild.members.fetch({
-            query: username,
-            limit: 1
-        })
-    ).first();
-}
-
-/**
- * Convenience function to handle cases where someone isn't found by a username automatically.
- */
-export async function callMemberByUsername(
-    message: Message,
-    username: string,
-    onSuccess: (member: GuildMember) => void
-) {
-    const guild = message.guild;
-    const send = message.channel.send;
-
-    if (guild) {
-        const member = await getMemberByUsername(guild, username);
-
-        if (member) onSuccess(member);
-        else send(`Couldn't find a user by the name of \`${username}\`!`);
-    } else send("You must execute this command in a server!");
-}
-
-// TO DO Section //
-
-// getGuildByID() - checks for guild.available (boolean)
-// getGuildByName()
-// findMemberByNickname() - gets a member by their nickname or their username
-// findUserByUsername()
-
 // For "get x by y" methods:
 // Caching: All guilds, channels, and roles are fully cached, while the caches for messages, users, and members aren't complete.
 // It's more reliable to get users/members by fetching their IDs. fetch() will searching through the cache anyway.
+// For guilds, do an extra check to make sure there isn't an outage (guild.available).
+
+export function getGuildByID(id: string): Guild | SingleMessageOptions {
+    const guild = client.guilds.cache.get(id);
+
+    if (guild) {
+        if (guild.available) return guild;
+        else return {content: `The guild \`${guild.name}\` (ID: \`${id}\`) is unavailable due to an outage.`};
+    } else {
+        return {
+            content: `No guild found by the ID of \`${id}\`!`
+        };
+    }
+}
+
+export function getGuildByName(name: string): Guild | SingleMessageOptions {
+    const query = name.toLowerCase();
+    const guild = client.guilds.cache.find((guild) => guild.name.toLowerCase().includes(query));
+
+    if (guild) {
+        if (guild.available) return guild;
+        else return {content: `The guild \`${guild.name}\` (ID: \`${guild.id}\`) is unavailable due to an outage.`};
+    } else {
+        return {
+            content: `No guild found by the name of \`${name}\`!`
+        };
+    }
+}
+
+export async function getChannelByID(id: string): Promise<Channel | SingleMessageOptions> {
+    try {
+        return await client.channels.fetch(id);
+    } catch {
+        return {content: `No channel found by the ID of \`${id}\`!`};
+    }
+}
+
+// Only go through the cached channels (non-DM channels). Plus, searching DM channels by name wouldn't really make sense, nor do they have names to search anyway.
+export function getChannelByName(name: string): GuildChannel | SingleMessageOptions {
+    const query = name.toLowerCase();
+    const channel = client.channels.cache.find(
+        (channel) => channel instanceof GuildChannel && channel.name.toLowerCase().includes(query)
+    ) as GuildChannel | undefined;
+    if (channel) return channel;
+    else return {content: `No channel found by the name of \`${name}\`!`};
+}
+
+export async function getMessageByID(
+    channel: TextChannel | DMChannel | NewsChannel | string,
+    id: string
+): Promise<Message | SingleMessageOptions> {
+    if (typeof channel === "string") {
+        const targetChannel = await getChannelByID(channel);
+        if (targetChannel instanceof TextChannel || targetChannel instanceof DMChannel) channel = targetChannel;
+        else if (targetChannel instanceof Channel) return {content: `\`${id}\` isn't a valid text-based channel!`};
+        else return targetChannel;
+    }
+
+    try {
+        return await channel.messages.fetch(id);
+    } catch {
+        return {content: `\`${id}\` isn't a valid message of the channel ${channel}!`};
+    }
+}
+
+export async function getUserByID(id: string): Promise<User | SingleMessageOptions> {
+    try {
+        return await client.users.fetch(id);
+    } catch {
+        return {content: `No user found by the ID of \`${id}\`!`};
+    }
+}
+
+// Also check tags (if provided) to narrow down users.
+export function getUserByName(name: string): User | SingleMessageOptions {
+    let query = name.toLowerCase();
+    const tagMatch = /^(.+?)#(\d{4})$/.exec(name);
+    let tag: string | null = null;
+
+    if (tagMatch) {
+        query = tagMatch[1].toLowerCase();
+        tag = tagMatch[2];
+    }
+
+    const user = client.users.cache.find((user) => {
+        const hasUsernameMatch = user.username.toLowerCase().includes(query);
+        if (tag) return hasUsernameMatch && user.discriminator === tag;
+        else return hasUsernameMatch;
+    });
+
+    if (user) return user;
+    else return {content: `No user found by the name of \`${name}\`!`};
+}
+
+export async function getMemberByID(guild: Guild, id: string): Promise<GuildMember | SingleMessageOptions> {
+    try {
+        return await guild.members.fetch(id);
+    } catch {
+        return {content: `No member found by the ID of \`${id}\`!`};
+    }
+}
+
+// First checks if a member can be found by that nickname, then check if a member can be found by that username.
+export async function getMemberByName(guild: Guild, name: string): Promise<GuildMember | SingleMessageOptions> {
+    const member = (
+        await guild.members.fetch({
+            query: name,
+            limit: 1
+        })
+    ).first();
+
+    // Search by username if no member is found, then resolve the user into a member if possible.
+    if (member) {
+        return member;
+    } else {
+        const user = getUserByName(name);
+
+        if (user instanceof User) {
+            const member = guild.members.resolve(user);
+            if (member) return member;
+            else return {content: `The user \`${user.tag}\` isn't in this guild!`};
+        } else {
+            return {content: `No member found by the name of \`${name}\`!`};
+        }
+    }
+}

@@ -1,7 +1,7 @@
 import {MessageEmbed, version as djsversion, Guild, User, GuildMember} from "discord.js";
 import ms from "ms";
 import os from "os";
-import {Command, NamedCommand, getMemberByUsername, CHANNEL_TYPE} from "../../core";
+import {Command, NamedCommand, getMemberByName, CHANNEL_TYPE} from "../../core";
 import {formatBytes, trimArray} from "../../lib";
 import {verificationLevels, filterLevels, regions} from "../../defs/info";
 import moment, {utc} from "moment";
@@ -35,9 +35,9 @@ export default new NamedCommand({
                 channelType: CHANNEL_TYPE.GUILD,
                 async run({message, channel, guild, author, client, args}) {
                     const name = args.join(" ");
-                    const member = await getMemberByUsername(guild!, name);
+                    const member = await getMemberByName(guild!, name);
 
-                    if (member) {
+                    if (member instanceof GuildMember) {
                         channel.send(
                             member.user.displayAvatarURL({
                                 dynamic: true,
@@ -45,7 +45,7 @@ export default new NamedCommand({
                             })
                         );
                     } else {
-                        channel.send(`No user found by the name \`${name}\`!`);
+                        channel.send(member);
                     }
                 }
             })

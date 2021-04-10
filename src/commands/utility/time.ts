@@ -1,6 +1,6 @@
-import {Command, NamedCommand, ask, askYesOrNo, askMultipleChoice, prompt, callMemberByUsername} from "../../core";
+import {Command, NamedCommand, ask, askYesOrNo, askMultipleChoice, prompt, getMemberByName} from "../../core";
 import {Storage} from "../../structures";
-import {User} from "discord.js";
+import {User, GuildMember} from "discord.js";
 import moment from "moment";
 
 const DATE_FORMAT = "D MMMM YYYY";
@@ -383,10 +383,10 @@ export default new NamedCommand({
     }),
     any: new Command({
         description: "See what time it is for someone else (by their username).",
-        async run({channel, args, message}) {
-            callMemberByUsername(message, args.join(" "), (member) => {
-                channel.send(getTimeEmbed(member.user));
-            });
+        async run({channel, args, guild}) {
+            const member = await getMemberByName(guild!, args.join(" "));
+            if (member instanceof GuildMember) channel.send(getTimeEmbed(member.user));
+            else channel.send(member);
         }
     })
 });

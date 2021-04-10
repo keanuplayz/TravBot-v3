@@ -25,11 +25,13 @@ interface LaunchSettings {
 // Additionally, each method would return the object so multiple methods could be chained, such as OnionCore.setPermissions(...).setPrefixResolver(...).launch(client).
 // I decided to not do this because creating a class then having a bunch of boilerplate around it just wouldn't really be worth it.
 // commandsDirectory requires an absolute path to work, so use __dirname.
-export async function launch(client: Client, commandsDirectory: string, settings?: LaunchSettings) {
+export async function launch(newClient: Client, commandsDirectory: string, settings?: LaunchSettings) {
     // Core Launch Parameters //
+    client.destroy(); // Release any resources/connections being used by the placeholder client.
+    client = newClient;
     loadableCommands = loadCommands(commandsDirectory);
-    attachMessageHandlerToClient(client);
-    attachEventListenersToClient(client);
+    attachMessageHandlerToClient(newClient);
+    attachEventListenersToClient(newClient);
 
     // Additional Configuration //
     if (settings?.permissionLevels) {
@@ -42,6 +44,7 @@ export async function launch(client: Client, commandsDirectory: string, settings
 
 // Placeholder until properly loaded by the user.
 export let loadableCommands = (async () => new Collection<string, NamedCommand>())();
+export let client = new Client();
 export let permissionLevels: PermissionLevel[] = [
     {
         name: "User",

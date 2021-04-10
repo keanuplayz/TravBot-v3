@@ -8,9 +8,10 @@ import {
     Guild,
     User,
     GuildMember,
-    GuildChannel
+    GuildChannel,
+    Channel
 } from "discord.js";
-import {SingleMessageOptions} from "./libd";
+import {getChannelByID, getMessageByID, getUserByID, SingleMessageOptions} from "./libd";
 import {hasPermission, getPermissionLevel, getPermissionName} from "./permissions";
 import {getPrefix} from "./interface";
 import {parseVars, requireAllCasesHandledFor} from "../lib";
@@ -338,17 +339,20 @@ export class Command {
             return this.subcommands.get(param)!.execute(args, menu, metadata);
         } else if (this.channel && patterns.channel.test(param)) {
             const id = patterns.channel.exec(param)![1];
-            const channel = menu.client.channels.cache.get(id);
+            const channel = await getChannelByID(id);
 
-            // Users can only enter in this format for text channels, so this restricts it to that.
-            if (channel instanceof TextChannel) {
-                metadata.symbolicArgs.push("<channel>");
-                menu.args.push(channel);
-                return this.channel.execute(args, menu, metadata);
+            if (channel instanceof Channel) {
+                if (channel instanceof TextChannel || channel instanceof DMChannel) {
+                    metadata.symbolicArgs.push("<channel>");
+                    menu.args.push(channel);
+                    return this.channel.execute(args, menu, metadata);
+                } else {
+                    return {
+                        content: `\`${id}\` is not a valid text channel!`
+                    };
+                }
             } else {
-                return {
-                    content: `\`${id}\` is not a valid text channel!`
-                };
+                return channel;
             }
         } else if (this.role && patterns.role.test(param)) {
             const id = patterns.role.exec(param)![1];
@@ -397,34 +401,25 @@ export class Command {
                 messageID = result[2];
             }
 
-            const channel = menu.client.channels.cache.get(channelID);
+            const message = await getMessageByID(channelID, messageID);
 
-            if (channel instanceof TextChannel || channel instanceof DMChannel) {
-                try {
-                    metadata.symbolicArgs.push("<message>");
-                    menu.args.push(await channel.messages.fetch(messageID));
-                    return this.message.execute(args, menu, metadata);
-                } catch {
-                    return {
-                        content: `\`${messageID}\` isn't a valid message of channel ${channel}!`
-                    };
-                }
+            if (message instanceof Message) {
+                metadata.symbolicArgs.push("<message>");
+                menu.args.push(message);
+                return this.message.execute(args, menu, metadata);
             } else {
-                return {
-                    content: `\`${channelID}\` is not a valid text channel!`
-                };
+                return message;
             }
         } else if (this.user && patterns.user.test(param)) {
             const id = patterns.user.exec(param)![1];
+            const user = await getUserByID(id);
 
-            try {
+            if (user instanceof User) {
                 metadata.symbolicArgs.push("<user>");
-                menu.args.push(await menu.client.users.fetch(id));
+                menu.args.push(user);
                 return this.user.execute(args, menu, metadata);
-            } catch {
-                return {
-                    content: `No user found by the ID \`${id}\`!`
-                };
+            } else {
+                return user;
             }
         } else if (this.id && this.idType && patterns.id.test(param)) {
             metadata.symbolicArgs.push("<id>");
@@ -434,16 +429,20 @@ export class Command {
             // Because this part is pretty much a whole bunch of copy pastes.
             switch (this.idType) {
                 case "channel":
-                    const channel = menu.client.channels.cache.get(id);
+                    const channel = await getChannelByID(id);
 
-                    // Users can only enter in this format for text channels, so this restricts it to that.
-                    if (channel instanceof TextChannel) {
-                        menu.args.push(channel);
-                        return this.id.execute(args, menu, metadata);
+                    if (channel instanceof Channel) {
+                        if (channel instanceof TextChannel || channel instanceof DMChannel) {
+                            metadata.symbolicArgs.push("<channel>");
+                            menu.args.push(channel);
+                            return this.id.execute(args, menu, metadata);
+                        } else {
+                            return {
+                                content: `\`${id}\` is not a valid text channel!`
+                            };
+                        }
                     } else {
-                        return {
-                            content: `\`${id}\` isn't a valid text channel!`
-                        };
+                        return channel;
                     }
                 case "role":
                     if (!menu.guild) {
@@ -474,22 +473,22 @@ export class Command {
                         };
                     }
                 case "message":
-                    try {
-                        menu.args.push(await menu.channel.messages.fetch(id));
+                    const message = await getMessageByID(menu.channel, id);
+
+                    if (message instanceof Message) {
+                        menu.args.push(message);
                         return this.id.execute(args, menu, metadata);
-                    } catch {
-                        return {
-                            content: `\`${id}\` isn't a valid message of channel ${menu.channel}!`
-                        };
+                    } else {
+                        return message;
                     }
                 case "user":
-                    try {
-                        menu.args.push(await menu.client.users.fetch(id));
+                    const user = await getUserByID(id);
+
+                    if (user instanceof User) {
+                        menu.args.push(user);
                         return this.id.execute(args, menu, metadata);
-                    } catch {
-                        return {
-                            content: `No user found by the ID \`${id}\`!`
-                        };
+                    } else {
+                        return user;
                     }
                 default:
                     requireAllCasesHandledFor(this.idType);

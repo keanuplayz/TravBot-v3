@@ -1,9 +1,10 @@
-import {Command, NamedCommand, callMemberByUsername} from "../../core";
+import {Command, NamedCommand, getMemberByName} from "../../core";
 import {isAuthorized, getMoneyEmbed} from "./modules/eco-utils";
 import {DailyCommand, PayCommand, GuildCommand, LeaderboardCommand} from "./modules/eco-core";
 import {BuyCommand, ShopCommand} from "./modules/eco-shop";
 import {MondayCommand, AwardCommand} from "./modules/eco-extras";
 import {BetCommand} from "./modules/eco-bet";
+import {GuildMember} from "discord.js";
 
 export default new NamedCommand({
     description: "Economy command for Monika.",
@@ -35,10 +36,11 @@ export default new NamedCommand({
     any: new Command({
         description: "See how much money someone else has by using their username.",
         async run({guild, channel, args, message}) {
-            if (isAuthorized(guild, channel))
-                callMemberByUsername(message, args.join(" "), (member) => {
-                    channel.send(getMoneyEmbed(member.user));
-                });
+            if (isAuthorized(guild, channel)) {
+                const member = await getMemberByName(guild!, args.join(" "));
+                if (member instanceof GuildMember) channel.send(getMoneyEmbed(member.user));
+                else channel.send(member);
+            }
         }
     })
 });
