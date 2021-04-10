@@ -73,23 +73,15 @@ interface CommandMenu {
 
 interface CommandOptionsBase {
     readonly description?: string;
-    readonly endpoint?: boolean;
     readonly usage?: string;
     readonly permission?: number;
     readonly nsfw?: boolean;
     readonly channelType?: CHANNEL_TYPE;
 }
 
-interface CommandOptionsEndpoint {
-    readonly endpoint: true;
-    readonly run?: (($: CommandMenu) => Promise<any>) | string;
-}
-
-// Prevents subcommands from being added by compile-time.
 // Also, contrary to what you might think, channel pings do still work in DM channels.
 // Role pings, maybe not, but it's not a big deal.
-interface CommandOptionsNonEndpoint {
-    readonly endpoint?: false;
+interface CommandOptions extends CommandOptionsBase {
     readonly run?: (($: CommandMenu) => Promise<any>) | string;
     readonly subcommands?: {[key: string]: NamedCommand};
     readonly channel?: Command;
@@ -103,11 +95,14 @@ interface CommandOptionsNonEndpoint {
     readonly any?: Command | RestCommand;
 }
 
-type CommandOptions = CommandOptionsBase & (CommandOptionsEndpoint | CommandOptionsNonEndpoint);
-type NamedCommandOptions = CommandOptions & {aliases?: string[]; nameOverride?: string};
-type RestCommandOptions = CommandOptionsBase & {
-    run?: (($: CommandMenu & {readonly combined: string}) => Promise<any>) | string;
-};
+interface NamedCommandOptions extends CommandOptions {
+    readonly aliases?: string[];
+    readonly nameOverride?: string;
+}
+
+interface RestCommandOptions extends CommandOptionsBase {
+    readonly run?: (($: CommandMenu & {readonly combined: string}) => Promise<any>) | string;
+}
 
 interface ExecuteCommandMetadata {
     readonly header: string;
@@ -164,7 +159,6 @@ abstract class BaseCommand {
 
 // Each Command instance represents a block that links other Command instances under it.
 export class Command extends BaseCommand {
-    public readonly endpoint: boolean;
     // The execute and subcommand properties are restricted to the class because subcommand recursion could easily break when manually handled.
     // The class will handle checking for null fields.
     private run: (($: CommandMenu) => Promise<any>) | string;
@@ -182,31 +176,20 @@ export class Command extends BaseCommand {
 
     constructor(options?: CommandOptions) {
         super(options);
-        this.endpoint = !!options?.endpoint;
         this.run = options?.run || "No action was set on this command!";
         this.subcommands = new Collection(); // Populate this collection after setting subcommands.
-        this.channel = null;
-        this.role = null;
-        this.emote = null;
-        this.message = null;
-        this.user = null;
-        this.guild = null;
+        this.channel = options?.channel || null;
+        this.role = options?.role || null;
+        this.emote = options?.emote || null;
+        this.message = options?.message || null;
+        this.user = options?.user || null;
+        this.guild = options?.guild || null;
         this.id = null;
-        this.idType = null;
-        this.number = null;
-        this.any = null;
+        this.idType = options?.id || null;
+        this.number = options?.number || null;
+        this.any = options?.any || null;
 
-        if (options && !options.endpoint) {
-            if (options.channel) this.channel = options.channel;
-            if (options.role) this.role = options.role;
-            if (options.emote) this.emote = options.emote;
-            if (options.message) this.message = options.message;
-            if (options.user) this.user = options.user;
-            if (options.guild) this.guild = options.guild;
-            if (options.number) this.number = options.number;
-            if (options.any) this.any = options.any;
-            if (options.id) this.idType = options.id;
-
+        if (options)
             switch (options.id) {
                 case "channel":
                     this.id = this.channel;
@@ -232,30 +215,29 @@ export class Command extends BaseCommand {
                     requireAllCasesHandledFor(options.id);
             }
 
-            if (options.subcommands) {
-                const baseSubcommands = Object.keys(options.subcommands);
+        if (options?.subcommands) {
+            const baseSubcommands = Object.keys(options.subcommands);
 
-                // Loop once to set the base subcommands.
-                for (const name in options.subcommands) this.subcommands.set(name, options.subcommands[name]);
+            // Loop once to set the base subcommands.
+            for (const name in options.subcommands) this.subcommands.set(name, options.subcommands[name]);
 
-                // Then loop again to make aliases point to the base subcommands and warn if something's not right.
-                // This shouldn't be a problem because I'm hoping that JS stores these as references that point to the same object.
-                for (const name in options.subcommands) {
-                    const subcmd = options.subcommands[name];
-                    subcmd.name = name;
-                    const aliases = subcmd.aliases;
+            // Then loop again to make aliases point to the base subcommands and warn if something's not right.
+            // This shouldn't be a problem because I'm hoping that JS stores these as references that point to the same object.
+            for (const name in options.subcommands) {
+                const subcmd = options.subcommands[name];
+                subcmd.name = name;
+                const aliases = subcmd.aliases;
 
-                    for (const alias of aliases) {
-                        if (baseSubcommands.includes(alias))
-                            console.warn(
-                                `"${alias}" in subcommand "${name}" was attempted to be declared as an alias but it already exists in the base commands! (Look at the next "Loading Command" line to see which command is affected.)`
-                            );
-                        else if (this.subcommands.has(alias))
-                            console.warn(
-                                `Duplicate alias "${alias}" at subcommand "${name}"! (Look at the next "Loading Command" line to see which command is affected.)`
-                            );
-                        else this.subcommands.set(alias, subcmd);
-                    }
+                for (const alias of aliases) {
+                    if (baseSubcommands.includes(alias))
+                        console.warn(
+                            `"${alias}" in subcommand "${name}" was attempted to be declared as an alias but it already exists in the base commands! (Look at the next "Loading Command" line to see which command is affected.)`
+                        );
+                    else if (this.subcommands.has(alias))
+                        console.warn(
+                            `Duplicate alias "${alias}" at subcommand "${name}"! (Look at the next "Loading Command" line to see which command is affected.)`
+                        );
+                    else this.subcommands.set(alias, subcmd);
                 }
             }
         }
@@ -318,9 +300,6 @@ export class Command extends BaseCommand {
 
             return null;
         }
-
-        // If the current command is an endpoint but there are still some arguments left, don't continue unless there's a RestCommand.
-        if (this.endpoint) return {content: "Too many arguments!"};
 
         // Resolve the value of the current command's argument (adding it to the resolved args),
         // then pass the thread of execution to whichever subcommand is valid (if any).
@@ -506,11 +485,15 @@ export class Command extends BaseCommand {
         } else if (this.any instanceof RestCommand) {
             metadata.symbolicArgs.push("<...>");
             args.unshift(param);
+            menu.args.push(...args);
             return this.any.execute(args.join(" "), menu, metadata);
         } else {
-            // Continue adding on the rest of the arguments if there's no valid subcommand.
-            menu.args.push(param);
-            return this.execute(args, menu, metadata);
+            metadata.symbolicArgs.push(`"${param}"`);
+            return {
+                content: `No valid command sequence matching \`${metadata.header} ${metadata.symbolicArgs.join(
+                    " "
+                )}\` found.`
+            };
         }
 
         // Note: Do NOT add a return statement here. In case one of the other sections is missing
@@ -726,7 +709,9 @@ export class RestCommand extends BaseCommand {
         } else {
             // Then capture any potential errors.
             try {
-                await this.run({...menu, combined});
+                // Args will still be kept intact. A common pattern is popping some parameters off the end then doing some branching.
+                // That way, you can still declaratively mark an argument list as continuing while also handling the individual args.
+                await this.run({...menu, args: menu.args, combined});
             } catch (error) {
                 const errorMessage = error.stack ?? error;
                 console.error(`Command Error: ${metadata.header} (${metadata.args.join(", ")})\n${errorMessage}`);

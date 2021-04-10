@@ -1,4 +1,4 @@
-import {Command, NamedCommand} from "../../core";
+import {Command, NamedCommand, RestCommand} from "../../core";
 
 const letters: {[letter: string]: string[]} = {
     a: "aáàảãạâấầẩẫậăắằẳẵặ".split(""),
@@ -35,7 +35,6 @@ export default new NamedCommand({
     description: "Transforms your text into ｖｉｅｔｎａｍｅｓｅ.",
     usage: "thonk ([text])",
     async run({send, message, channel, guild, author, member, client, args}) {
-        if (args.length > 0) phrase = args.join(" ");
         const msg = await send(transform(phrase));
         msg.createReactionCollector(
             (reaction, user) => {
@@ -44,5 +43,17 @@ export default new NamedCommand({
             },
             {time: 60000}
         );
-    }
+    },
+    any: new RestCommand({
+        async run({send, message, channel, guild, author, member, client, args, combined}) {
+            const msg = await send(transform(combined));
+            msg.createReactionCollector(
+                (reaction, user) => {
+                    if (user.id === author.id && reaction.emoji.name === "❌") msg.delete();
+                    return false;
+                },
+                {time: 60000}
+            );
+        }
+    })
 });

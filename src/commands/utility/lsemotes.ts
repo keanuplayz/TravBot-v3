@@ -1,5 +1,5 @@
 import {GuildEmoji, MessageEmbed, User} from "discord.js";
-import {Command, NamedCommand, paginate, SendFunction} from "../../core";
+import {Command, NamedCommand, RestCommand, paginate, SendFunction} from "../../core";
 import {split} from "../../lib";
 import vm from "vm";
 
@@ -11,7 +11,7 @@ export default new NamedCommand({
     async run({send, message, channel, guild, author, member, client, args}) {
         displayEmoteList(client.emojis.cache.array(), send, author);
     },
-    any: new Command({
+    any: new RestCommand({
         description:
             "Filters emotes by via a regular expression. Flags can be added by adding a dash at the end. For example, to do a case-insensitive search, do %prefix%lsemotes somepattern -i",
         async run({send, message, channel, guild, author, member, client, args}) {

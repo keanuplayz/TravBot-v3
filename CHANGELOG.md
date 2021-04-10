@@ -11,7 +11,8 @@
 - Various changes to core
 	- Added `guild` subcommand type (only accessible when `id: "guild"`)
 	- Further reduced `channel.send()` to `send()` because it's used in *every, single, command*
-	- Added `rest` subcommand type (only available when `endpoint: true`), declaratively states that the following command will do `args.join(" ")`, preventing any other subcommands from being added
+	- Added a `RestCommand` type, declaratively states that the following command will do `args.join(" ")`, preventing any other subcommands from being added
+	- Is no longer lenient to arguments when no proper subcommand fits (now it doesn't silently fail anymore), you now have to explicitly declare a `RestCommand` to get an arbitrary number of arguments
 
 # 3.2.0 - Internal refactor, more subcommand types, and more command type guards (2021-04-09)
 - The custom logger changed: `$.log` no longer exists, it's just `console.log`. Now you don't have to do `import $ from "../core/lib"` at the top of every file that uses the custom logger.

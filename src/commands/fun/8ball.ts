@@ -26,7 +26,6 @@ const responses = [
 
 export default new NamedCommand({
     description: "Answers your question in an 8-ball manner.",
-    endpoint: false,
     usage: "<question>",
     run: "Please provide a question.",
     any: new Command({

@@ -1,4 +1,4 @@
-import {Command, NamedCommand} from "../../core";
+import {Command, NamedCommand, RestCommand} from "../../core";
 import {streamList} from "../../modules/streamNotifications";
 
 export default new NamedCommand({
@@ -8,12 +8,11 @@ export default new NamedCommand({
 
         if (streamList.has(userID)) {
             const stream = streamList.get(userID)!;
-            const description = args.join(" ") || "No description set.";
-            stream.description = description;
+            stream.description = "No description set.";
             stream.update();
             send(`Successfully set the stream description to:`, {
                 embed: {
-                    description,
+                    description: "No description set.",
                     color: member!.displayColor
                 }
             });
@@ -21,5 +20,25 @@ export default new NamedCommand({
             // Alternatively, I could make descriptions last outside of just one stream.
             send("You can only use this command when streaming.");
         }
-    }
+    },
+    any: new RestCommand({
+        async run({send, message, channel, guild, author, member, client, args, combined}) {
+            const userID = author.id;
+
+            if (streamList.has(userID)) {
+                const stream = streamList.get(userID)!;
+                stream.description = combined;
+                stream.update();
+                send(`Successfully set the stream description to:`, {
+                    embed: {
+                        description: stream.description,
+                        color: member!.displayColor
+                    }
+                });
+            } else {
+                // Alternatively, I could make descriptions last outside of just one stream.
+                send("You can only use this command when streaming.");
+            }
+        }
+    })
 });

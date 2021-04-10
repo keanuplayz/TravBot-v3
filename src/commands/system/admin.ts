@@ -293,7 +293,7 @@ export default new NamedCommand({
                 });
                 send("Activity set to default.");
             },
-            any: new Command({
+            any: new RestCommand({
                 description: `Select an activity type to set. Available levels: \`[${activities.join(", ")}]\``,
                 async run({send, message, channel, guild, author, member, client, args}) {
                     const type = args[0];

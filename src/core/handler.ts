@@ -21,8 +21,7 @@ const lastCommandInfo: {
 const defaultMetadata = {
     permission: 0,
     nsfw: false,
-    channelType: 0, // CHANNEL_TYPE.ANY, apparently isn't initialized at this point yet
-    symbolicArgs: []
+    channelType: 0 // CHANNEL_TYPE.ANY, apparently isn't initialized at this point yet
 };
 
 // Note: client.user is only undefined before the bot logs in, so by this point, client.user cannot be undefined.
@@ -67,7 +66,8 @@ export function attachMessageHandlerToClient(client: Client) {
                 const result = await command.execute(args, menu, {
                     header,
                     args: [...args],
-                    ...defaultMetadata
+                    ...defaultMetadata,
+                    symbolicArgs: []
                 });
 
                 // If something went wrong, let the user know (like if they don't have permission to use a command).
@@ -104,7 +104,8 @@ export function attachMessageHandlerToClient(client: Client) {
                     const result = await command.execute(args, menu, {
                         header,
                         args: [...args],
-                        ...defaultMetadata
+                        ...defaultMetadata,
+                        symbolicArgs: []
                     });
 
                     // If something went wrong, let the user know (like if they don't have permission to use a command).

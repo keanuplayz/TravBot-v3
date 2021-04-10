@@ -128,7 +128,7 @@ export const PayCommand = new NamedCommand({
                     else if (sender.money < amount)
                         return send("You don't have enough Mons for that.", getMoneyEmbed(author));
                     else if (target.id === author.id) return send("You can't send Mons to yourself!");
-                    else if (target.bot && process.argv[2] !== "dev") return send("You can't send Mons to a bot!");
+                    else if (target.bot && !IS_DEV_MODE) return send("You can't send Mons to a bot!");
 
                     sender.money -= amount;
                     receiver.money += amount;

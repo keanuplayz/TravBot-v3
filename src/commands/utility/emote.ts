@@ -1,11 +1,11 @@
-import {Command, NamedCommand} from "../../core";
+import {Command, NamedCommand, RestCommand} from "../../core";
 import {processEmoteQueryFormatted} from "./modules/emote-utils";
 
 export default new NamedCommand({
     description:
         "Send the specified emote list. Enter + to move an emote list to the next line, - to add a space, and _ to add a zero-width space.",
     run: "Please provide a list of emotes.",
-    any: new Command({
+    any: new RestCommand({
         description: "The emote(s) to send.",
         usage: "<emotes...>",
         async run({send, guild, channel, message, args}) {
