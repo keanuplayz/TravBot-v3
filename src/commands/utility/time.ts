@@ -1,4 +1,13 @@
-import {Command, NamedCommand, ask, askYesOrNo, askMultipleChoice, prompt, getMemberByName} from "../../core";
+import {
+    Command,
+    NamedCommand,
+    ask,
+    askYesOrNo,
+    askMultipleChoice,
+    prompt,
+    getMemberByName,
+    RestCommand
+} from "../../core";
 import {Storage} from "../../structures";
 import {User, GuildMember} from "discord.js";
 import moment from "moment";
@@ -381,10 +390,10 @@ export default new NamedCommand({
             send(getTimeEmbed(args[0]));
         }
     }),
-    any: new Command({
+    any: new RestCommand({
         description: "See what time it is for someone else (by their username).",
-        async run({send, channel, args, guild}) {
-            const member = await getMemberByName(guild!, args.join(" "));
+        async run({send, channel, args, guild, combined}) {
+            const member = await getMemberByName(guild!, combined);
             if (member instanceof GuildMember) send(getTimeEmbed(member.user));
             else send(member);
         }

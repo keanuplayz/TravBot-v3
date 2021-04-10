@@ -1,4 +1,12 @@
-import {Command, NamedCommand, botHasPermission, getPermissionLevel, getPermissionName, CHANNEL_TYPE} from "../../core";
+import {
+    Command,
+    NamedCommand,
+    botHasPermission,
+    getPermissionLevel,
+    getPermissionName,
+    CHANNEL_TYPE,
+    RestCommand
+} from "../../core";
 import {clean} from "../../lib";
 import {Config, Storage} from "../../structures";
 import {Permissions, TextChannel, User} from "discord.js";
@@ -119,12 +127,11 @@ export default new NamedCommand({
                                 Storage.save();
                                 send("Reset your server's welcome message to the default.");
                             },
-                            any: new Command({
-                                async run({send, message, channel, guild, author, member, client, args}) {
-                                    const newMessage = args.join(" ");
-                                    Storage.getGuild(guild!.id).welcomeMessage = newMessage;
+                            any: new RestCommand({
+                                async run({send, message, channel, guild, author, member, client, args, combined}) {
+                                    Storage.getGuild(guild!.id).welcomeMessage = combined;
                                     Storage.save();
-                                    send(`Set your server's welcome message to \`${newMessage}\`.`);
+                                    send(`Set your server's welcome message to \`${combined}\`.`);
                                 }
                             })
                         })
@@ -241,29 +248,32 @@ export default new NamedCommand({
             description: "Evaluate code.",
             usage: "<code>",
             permission: PERMISSIONS.BOT_OWNER,
-            // You have to bring everything into scope to use them. AFAIK, there isn't a more maintainable way to do this, but at least TS will let you know if anything gets removed.
-            async run({send, message, channel, guild, author, member, client, args}) {
-                try {
-                    const code = args.join(" ");
-                    let evaled = eval(code);
-
-                    if (typeof evaled !== "string") evaled = require("util").inspect(evaled);
-                    send(clean(evaled), {code: "js", split: true});
-                } catch (err) {
-                    send(clean(err), {code: "js", split: true});
+            run: "You have to enter some code to execute first.",
+            any: new RestCommand({
+                // You have to bring everything into scope to use them. AFAIK, there isn't a more maintainable way to do this, but at least TS will let you know if anything gets removed.
+                async run({send, message, channel, guild, author, member, client, args, combined}) {
+                    try {
+                        let evaled = eval(combined);
+                        if (typeof evaled !== "string") evaled = require("util").inspect(evaled);
+                        send(clean(evaled), {code: "js", split: true});
+                    } catch (err) {
+                        send(clean(err), {code: "js", split: true});
+                    }
                 }
-            }
+            })
         }),
         nick: new NamedCommand({
             description: "Change the bot's nickname.",
             permission: PERMISSIONS.BOT_SUPPORT,
             channelType: CHANNEL_TYPE.GUILD,
-            async run({send, message, channel, guild, author, member, client, args}) {
-                const nickName = args.join(" ");
-                await guild!.me?.setNickname(nickName);
-                if (botHasPermission(guild, Permissions.FLAGS.MANAGE_MESSAGES)) message.delete({timeout: 5000});
-                send(`Nickname set to \`${nickName}\``).then((m) => m.delete({timeout: 5000}));
-            }
+            run: "You have to specify a nickname to set for the bot",
+            any: new RestCommand({
+                async run({send, message, channel, guild, author, member, client, args, combined}) {
+                    await guild!.me?.setNickname(combined);
+                    if (botHasPermission(guild, Permissions.FLAGS.MANAGE_MESSAGES)) message.delete({timeout: 5000});
+                    send(`Nickname set to \`${combined}\``).then((m) => m.delete({timeout: 5000}));
+                }
+            })
         }),
         guilds: new NamedCommand({
             description: "Shows a list of all guilds the bot is a member of.",

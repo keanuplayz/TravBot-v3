@@ -53,7 +53,6 @@ export default new NamedCommand({
                     list.push(`❯ \`${header} ${type}${customUsage}\` - ${subcommand.description}`);
                 }
 
-                if (result.hasRestCommand) list.push(`❯ \`${header} <...>\``);
                 append = list.length > 0 ? list.join("\n") : "None";
             } else {
                 append = `\`${header} ${command.usage}\``;

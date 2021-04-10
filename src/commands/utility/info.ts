@@ -1,7 +1,7 @@
 import {MessageEmbed, version as djsversion, Guild, User, GuildMember} from "discord.js";
 import ms from "ms";
 import os from "os";
-import {Command, NamedCommand, getMemberByName, CHANNEL_TYPE, getGuildByName} from "../../core";
+import {Command, NamedCommand, getMemberByName, CHANNEL_TYPE, getGuildByName, RestCommand} from "../../core";
 import {formatBytes, trimArray} from "../../lib";
 import {verificationLevels, filterLevels, regions} from "../../defs/info";
 import moment, {utc} from "moment";
@@ -30,12 +30,11 @@ export default new NamedCommand({
                     );
                 }
             }),
-            any: new Command({
+            any: new RestCommand({
                 description: "Shows another user's avatar by searching their name",
                 channelType: CHANNEL_TYPE.GUILD,
-                async run({send, message, channel, guild, author, client, args}) {
-                    const name = args.join(" ");
-                    const member = await getMemberByName(guild!, name);
+                async run({send, message, channel, guild, author, client, args, combined}) {
+                    const member = await getMemberByName(guild!, combined);
 
                     if (member instanceof GuildMember) {
                         send(
@@ -106,10 +105,10 @@ export default new NamedCommand({
                     send(await getGuildInfo(targetGuild, guild));
                 }
             }),
-            any: new Command({
+            any: new RestCommand({
                 description: "Display info about a guild by finding its name.",
-                async run({send, message, channel, guild, author, member, client, args}) {
-                    const targetGuild = getGuildByName(args.join(" "));
+                async run({send, message, channel, guild, author, member, client, args, combined}) {
+                    const targetGuild = getGuildByName(combined);
 
                     if (targetGuild instanceof Guild) {
                         send(await getGuildInfo(targetGuild, guild));

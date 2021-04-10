@@ -1,4 +1,4 @@
-import {Command, NamedCommand, getMemberByName} from "../../core";
+import {Command, NamedCommand, getMemberByName, RestCommand} from "../../core";
 import {isAuthorized, getMoneyEmbed} from "./modules/eco-utils";
 import {DailyCommand, PayCommand, GuildCommand, LeaderboardCommand} from "./modules/eco-core";
 import {BuyCommand, ShopCommand} from "./modules/eco-shop";
@@ -33,11 +33,11 @@ export default new NamedCommand({
             if (isAuthorized(guild, channel)) send(getMoneyEmbed(args[0]));
         }
     }),
-    any: new Command({
+    any: new RestCommand({
         description: "See how much money someone else has by using their username.",
-        async run({send, guild, channel, args, message}) {
+        async run({send, guild, channel, args, message, combined}) {
             if (isAuthorized(guild, channel)) {
-                const member = await getMemberByName(guild!, args.join(" "));
+                const member = await getMemberByName(guild!, combined);
                 if (member instanceof GuildMember) send(getMoneyEmbed(member.user));
                 else send(member);
             }

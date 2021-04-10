@@ -1,4 +1,5 @@
-import {Command, NamedCommand, prompt} from "../../../core";
+import {GuildMember} from "discord.js";
+import {Command, getMemberByName, NamedCommand, prompt, RestCommand} from "../../../core";
 import {pluralise} from "../../../lib";
 import {Storage} from "../../../structures";
 import {isAuthorized, getMoneyEmbed, getSendEmbed, ECO_EMBED_COLOR} from "./eco-utils";
@@ -140,8 +141,8 @@ export const PayCommand = new NamedCommand({
     number: new Command({
         run: "You must use the format `eco pay <user> <amount>`!"
     }),
-    any: new Command({
-        async run({send, args, author, channel, guild}) {
+    any: new RestCommand({
+        async run({send, args, author, channel, guild, combined}) {
             if (isAuthorized(guild, channel)) {
                 const last = args.pop();
 
@@ -156,18 +157,8 @@ export const PayCommand = new NamedCommand({
                 else if (!guild)
                     return send("You have to use this in a server if you want to send Mons with a username!");
 
-                const username = args.join(" ");
-                const member = (
-                    await guild.members.fetch({
-                        query: username,
-                        limit: 1
-                    })
-                ).first();
-
-                if (!member)
-                    return send(
-                        `Couldn't find a user by the name of \`${username}\`! If you want to send Mons to someone in a different server, you have to use their user ID!`
-                    );
+                const member = await getMemberByName(guild, combined);
+                if (!(member instanceof GuildMember)) return send(member);
                 else if (member.user.id === author.id) return send("You can't send Mons to yourself!");
                 else if (member.user.bot && process.argv[2] !== "dev") return send("You can't send Mons to a bot!");
 

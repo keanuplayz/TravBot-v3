@@ -82,7 +82,6 @@ interface CommandOptionsBase {
 
 interface CommandOptionsEndpoint {
     readonly endpoint: true;
-    readonly rest?: RestCommand;
     readonly run?: (($: CommandMenu) => Promise<any>) | string;
 }
 
@@ -91,6 +90,7 @@ interface CommandOptionsEndpoint {
 // Role pings, maybe not, but it's not a big deal.
 interface CommandOptionsNonEndpoint {
     readonly endpoint?: false;
+    readonly run?: (($: CommandMenu) => Promise<any>) | string;
     readonly subcommands?: {[key: string]: NamedCommand};
     readonly channel?: Command;
     readonly role?: Command;
@@ -100,9 +100,7 @@ interface CommandOptionsNonEndpoint {
     readonly guild?: Command; // Only available if an ID is set to reroute to it.
     readonly id?: ID;
     readonly number?: Command;
-    readonly any?: Command;
-    readonly rest?: undefined; // Redeclare it here as undefined to prevent its use otherwise.
-    readonly run?: (($: CommandMenu) => Promise<any>) | string;
+    readonly any?: Command | RestCommand;
 }
 
 type CommandOptions = CommandOptionsBase & (CommandOptionsEndpoint | CommandOptionsNonEndpoint);
@@ -123,9 +121,8 @@ interface ExecuteCommandMetadata {
 export interface CommandInfo {
     readonly type: "info";
     readonly command: BaseCommand;
-    readonly subcommandInfo: Collection<string, Command>;
-    readonly keyedSubcommandInfo: Collection<string, NamedCommand>;
-    readonly hasRestCommand: boolean;
+    readonly subcommandInfo: Collection<string, BaseCommand>;
+    readonly keyedSubcommandInfo: Collection<string, BaseCommand>;
     readonly permission: number;
     readonly nsfw: boolean;
     readonly channelType: CHANNEL_TYPE;
@@ -181,8 +178,7 @@ export class Command extends BaseCommand {
     private id: Command | null;
     private idType: ID | null;
     private number: Command | null;
-    private any: Command | null;
-    private rest: RestCommand | null;
+    private any: Command | RestCommand | null;
 
     constructor(options?: CommandOptions) {
         super(options);
@@ -199,7 +195,6 @@ export class Command extends BaseCommand {
         this.idType = null;
         this.number = null;
         this.any = null;
-        this.rest = null;
 
         if (options && !options.endpoint) {
             if (options.channel) this.channel = options.channel;
@@ -263,8 +258,6 @@ export class Command extends BaseCommand {
                     }
                 }
             }
-        } else if (options && options.endpoint) {
-            if (options.rest) this.rest = options.rest;
         }
     }
 
@@ -327,14 +320,7 @@ export class Command extends BaseCommand {
         }
 
         // If the current command is an endpoint but there are still some arguments left, don't continue unless there's a RestCommand.
-        if (this.endpoint) {
-            if (this.rest) {
-                args.unshift(param);
-                return this.rest.execute(args.join(" "), menu, metadata);
-            } else {
-                return {content: "Too many arguments!"};
-            }
-        }
+        if (this.endpoint) return {content: "Too many arguments!"};
 
         // Resolve the value of the current command's argument (adding it to the resolved args),
         // then pass the thread of execution to whichever subcommand is valid (if any).
@@ -513,10 +499,14 @@ export class Command extends BaseCommand {
             metadata.symbolicArgs.push("<number>");
             menu.args.push(Number(param));
             return this.number.execute(args, menu, metadata);
-        } else if (this.any) {
+        } else if (this.any instanceof Command) {
             metadata.symbolicArgs.push("<any>");
             menu.args.push(param);
             return this.any.execute(args, menu, metadata);
+        } else if (this.any instanceof RestCommand) {
+            metadata.symbolicArgs.push("<...>");
+            args.unshift(param);
+            return this.any.execute(args.join(" "), menu, metadata);
         } else {
             // Continue adding on the rest of the arguments if there's no valid subcommand.
             menu.args.push(param);
@@ -553,8 +543,8 @@ export class Command extends BaseCommand {
 
         // If there are no arguments left, return the data or an error message.
         if (param === undefined) {
-            const keyedSubcommandInfo = new Collection<string, NamedCommand>();
-            const subcommandInfo = new Collection<string, Command>();
+            const keyedSubcommandInfo = new Collection<string, BaseCommand>();
+            const subcommandInfo = new Collection<string, BaseCommand>();
 
             // Get all the subcommands of the current command but without aliases.
             for (const [tag, command] of this.subcommands.entries()) {
@@ -572,14 +562,18 @@ export class Command extends BaseCommand {
             if (this.user) subcommandInfo.set("<user>", this.user);
             if (this.id) subcommandInfo.set(`<id = <${this.idType}>>`, this.id);
             if (this.number) subcommandInfo.set("<number>", this.number);
-            if (this.any) subcommandInfo.set("<any>", this.any);
+
+            // The special case for a possible rest command.
+            if (this.any) {
+                if (this.any instanceof Command) subcommandInfo.set("<any>", this.any);
+                else subcommandInfo.set("<...>", this.any);
+            }
 
             return {
                 type: "info",
                 command: this,
                 keyedSubcommandInfo,
                 subcommandInfo,
-                hasRestCommand: !!this.rest,
                 ...metadata
             };
         }
@@ -640,16 +634,16 @@ export class Command extends BaseCommand {
                 return invalidSubcommandGenerator();
             }
         } else if (param === "<any>") {
-            if (this.any) {
+            if (this.any instanceof Command) {
                 metadata.args.push("<any>");
                 return this.any.resolveInfoInternal(args, metadata);
             } else {
                 return invalidSubcommandGenerator();
             }
         } else if (param === "<...>") {
-            if (this.rest) {
+            if (this.any instanceof RestCommand) {
                 metadata.args.push("<...>");
-                return this.rest.resolveInfoFinale(metadata);
+                return this.any.resolveInfoFinale(metadata);
             } else {
                 return invalidSubcommandGenerator();
             }
@@ -755,9 +749,8 @@ export class RestCommand extends BaseCommand {
         return {
             type: "info",
             command: this,
-            keyedSubcommandInfo: new Collection<string, NamedCommand>(),
-            subcommandInfo: new Collection<string, Command>(),
-            hasRestCommand: false,
+            keyedSubcommandInfo: new Collection<string, BaseCommand>(),
+            subcommandInfo: new Collection<string, BaseCommand>(),
             ...metadata
         };
     }

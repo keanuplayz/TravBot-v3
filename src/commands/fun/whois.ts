@@ -1,5 +1,5 @@
 import {User, GuildMember} from "discord.js";
-import {Command, NamedCommand, getMemberByName, CHANNEL_TYPE} from "../../core";
+import {Command, NamedCommand, getMemberByName, CHANNEL_TYPE, RestCommand} from "../../core";
 
 // Quotes must be used here or the numbers will change
 const registry: {[id: string]: string} = {
@@ -65,11 +65,10 @@ export default new NamedCommand({
             }
         }
     }),
-    any: new Command({
+    any: new RestCommand({
         channelType: CHANNEL_TYPE.GUILD,
-        async run({send, message, channel, guild, author, client, args}) {
-            const query = args.join(" ") as string;
-            const member = await getMemberByName(guild!, query);
+        async run({send, message, channel, guild, author, client, args, combined}) {
+            const member = await getMemberByName(guild!, combined);
 
             if (member instanceof GuildMember) {
                 if (member.id in registry) {
