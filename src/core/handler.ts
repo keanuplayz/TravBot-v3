@@ -1,6 +1,5 @@
 import {Client, Permissions, Message, TextChannel, DMChannel, NewsChannel} from "discord.js";
 import {loadableCommands} from "./loader";
-import {defaultMetadata} from "./command";
 import {getPrefix} from "./interface";
 
 // For custom message events that want to cancel the command handler on certain conditions.
@@ -18,6 +17,13 @@ const lastCommandInfo: {
     header: "N/A",
     args: [],
     channel: null
+};
+
+const defaultMetadata = {
+    permission: 0,
+    nsfw: false,
+    channelType: 0, // CHANNEL_TYPE.ANY, apparently isn't initialized at this point yet
+    symbolicArgs: []
 };
 
 // Note: client.user is only undefined before the bot logs in, so by this point, client.user cannot be undefined.

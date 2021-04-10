@@ -16,7 +16,7 @@ export default new NamedCommand({
             "Filters emotes by via a regular expression. Flags can be added by adding a dash at the end. For example, to do a case-insensitive search, do %prefix%lsemotes somepattern -i",
         async run({message, channel, guild, author, member, client, args}) {
             // If a guild ID is provided, filter all emotes by that guild (but only if there aren't any arguments afterward)
-            if (args.length === 1 && /^\d{17,19}$/.test(args[0])) {
+            if (args.length === 1 && /^\d{17,}$/.test(args[0])) {
                 const guildID: string = args[0];
 
                 displayEmoteList(

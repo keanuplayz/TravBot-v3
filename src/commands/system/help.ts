@@ -1,61 +1,28 @@
-import {Command, NamedCommand, loadableCommands, categories, getPermissionName, CHANNEL_TYPE} from "../../core";
-import {toTitleCase, requireAllCasesHandledFor} from "../../lib";
+import {Command, NamedCommand, CHANNEL_TYPE, getPermissionName, getCommandList, getCommandInfo} from "../../core";
+import {requireAllCasesHandledFor} from "../../lib";
 
 export default new NamedCommand({
     description: "Lists all commands. If a command is specified, their arguments are listed as well.",
     usage: "([command, [subcommand/type], ...])",
     aliases: ["h"],
     async run({message, channel, guild, author, member, client, args}) {
-        const commands = await loadableCommands;
+        const commands = await getCommandList();
         let output = `Legend: \`<type>\`, \`[list/of/stuff]\`, \`(optional)\`, \`(<optional type>)\`, \`([optional/list/...])\``;
 
-        for (const [category, headers] of categories) {
-            let tmp = `\n\n===[ ${toTitleCase(category)} ]===`;
-            // Ignore empty categories, including ["test"].
-            let hasActualCommands = false;
-
-            for (const header of headers) {
-                if (header !== "test") {
-                    const command = commands.get(header)!;
-                    tmp += `\n- \`${header}\`: ${command.description}`;
-                    hasActualCommands = true;
-                }
-            }
-
-            if (hasActualCommands) output += tmp;
+        for (const [category, commandList] of commands) {
+            output += `\n\n===[ ${category} ]===`;
+            for (const command of commandList) output += `\n- \`${command.name}\`: ${command.description}`;
         }
 
         channel.send(output, {split: true});
     },
     any: new Command({
         async run({message, channel, guild, author, member, client, args}) {
-            // Setup the root command
-            const commands = await loadableCommands;
-            let header = args.shift() as string;
-            let command = commands.get(header);
-            if (!command || header === "test") return channel.send(`No command found by the name \`${header}\`.`);
-            if (!(command instanceof NamedCommand))
-                return channel.send(`Command is not a proper instance of NamedCommand.`);
-            if (command.name) header = command.name;
-
-            // Search categories
-            let category = "Unknown";
-            for (const [referenceCategory, headers] of categories) {
-                if (headers.includes(header)) {
-                    category = toTitleCase(referenceCategory);
-                    break;
-                }
-            }
-
-            // Gather info
-            const result = await command.resolveInfo(args);
-
-            if (result.type === "error") return channel.send(result.message);
-
+            const [result, category] = await getCommandInfo(args);
+            if (typeof result === "string") return channel.send(result);
             let append = "";
-            command = result.command;
-
-            if (result.args.length > 0) header += " " + result.args.join(" ");
+            const command = result.command;
+            const header = result.args.length > 0 ? `${result.header} ${result.args.join(" ")}` : result.header;
 
             if (command.usage === "") {
                 const list: string[] = [];

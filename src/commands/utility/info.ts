@@ -102,7 +102,7 @@ export default new NamedCommand({
                 description: "Display info about a guild by finding its name or ID.",
                 async run({message, channel, guild, author, member, client, args}) {
                     // If a guild ID is provided (avoid the "number" subcommand because of inaccuracies), search for that guild
-                    if (args.length === 1 && /^\d{17,19}$/.test(args[0])) {
+                    if (args.length === 1 && /^\d{17,}$/.test(args[0])) {
                         const id = args[0];
                         const targetGuild = client.guilds.cache.get(id);
 

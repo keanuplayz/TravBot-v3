@@ -1,3 +1,4 @@
+// Onion Lasers Command Handler //
 export {Command, NamedCommand, CHANNEL_TYPE} from "./command";
 export {addInterceptRule} from "./handler";
 export {launch} from "./interface";
@@ -12,5 +13,5 @@ export {
     getMemberByUsername,
     callMemberByUsername
 } from "./libd";
-export {loadableCommands, categories} from "./loader";
+export {getCommandList, getCommandInfo} from "./loader";
 export {hasPermission, getPermissionLevel, getPermissionName} from "./permissions";

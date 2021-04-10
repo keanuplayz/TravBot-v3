@@ -91,15 +91,13 @@ class StorageStructure extends GenericStructure {
         super("storage");
         this.users = {};
         this.guilds = {};
-
-        for (let id in data.users) if (/\d{17,19}/g.test(id)) this.users[id] = new User(data.users[id]);
-
-        for (let id in data.guilds) if (/\d{17,19}/g.test(id)) this.guilds[id] = new Guild(data.guilds[id]);
+        for (let id in data.users) if (/\d{17,}/g.test(id)) this.users[id] = new User(data.users[id]);
+        for (let id in data.guilds) if (/\d{17,}/g.test(id)) this.guilds[id] = new Guild(data.guilds[id]);
     }
 
     /** Gets a user's profile if they exist and generate one if not. */
     public getUser(id: string): User {
-        if (!/\d{17,19}/g.test(id))
+        if (!/\d{17,}/g.test(id))
             console.warn(`"${id}" is not a valid user ID! It will be erased when the data loads again.`);
 
         if (id in this.users) return this.users[id];
@@ -112,7 +110,7 @@ class StorageStructure extends GenericStructure {
 
     /** Gets a guild's settings if they exist and generate one if not. */
     public getGuild(id: string): Guild {
-        if (!/\d{17,19}/g.test(id))
+        if (!/\d{17,}/g.test(id))
             console.warn(`"${id}" is not a valid guild ID! It will be erased when the data loads again.`);
 
         if (id in this.guilds) return this.guilds[id];

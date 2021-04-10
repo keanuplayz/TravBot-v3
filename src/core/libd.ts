@@ -25,6 +25,11 @@ export function botHasPermission(guild: Guild | null, permission: number): boole
 // Pagination function that allows for customization via a callback.
 // Define your own pages outside the function because this only manages the actual turning of pages.
 
+const FIVE_BACKWARDS_EMOJI = "⏪";
+const BACKWARDS_EMOJI = "⬅️";
+const FORWARDS_EMOJI = "➡️";
+const FIVE_FORWARDS_EMOJI = "⏩";
+
 /**
  * Takes a message and some additional parameters and makes a reaction page with it. All the pagination logic is taken care of but nothing more, the page index is returned and you have to send a callback to do something with it.
  */
@@ -43,30 +48,42 @@ export async function paginate(
         const turn = (amount: number) => {
             page += amount;
 
-            if (page < 0) page += total;
-            else if (page >= total) page -= total;
+            if (page >= total) {
+                page %= total;
+            } else if (page < 0) {
+                // Assuming 3 total pages, it's a bit tricker, but if we just take the modulo of the absolute value (|page| % total), we get (1 2 0 ...), and we just need the pattern (2 1 0 ...). It needs to reverse order except for when it's 0. I want to find a better solution, but for the time being... total - (|page| % total) unless (|page| % total) = 0, then return 0.
+                const flattened = Math.abs(page) % total;
+                if (flattened !== 0) page = total - flattened;
+            }
 
             message.edit(callback(page, true));
         };
-        const BACKWARDS_EMOJI = "⬅️";
-        const FORWARDS_EMOJI = "➡️";
         const handle = (emote: string, reacterID: string) => {
             if (senderID === reacterID) {
                 switch (emote) {
+                    case FIVE_BACKWARDS_EMOJI:
+                        if (total > 5) turn(-5);
+                        break;
                     case BACKWARDS_EMOJI:
                         turn(-1);
                         break;
                     case FORWARDS_EMOJI:
                         turn(1);
                         break;
+                    case FIVE_FORWARDS_EMOJI:
+                        if (total > 5) turn(5);
+                        break;
                 }
             }
         };
 
         // Listen for reactions and call the handler.
+        let backwardsReactionFive = total > 5 ? await message.react(FIVE_BACKWARDS_EMOJI) : null;
         let backwardsReaction = await message.react(BACKWARDS_EMOJI);
         let forwardsReaction = await message.react(FORWARDS_EMOJI);
+        let forwardsReactionFive = total > 5 ? await message.react(FIVE_FORWARDS_EMOJI) : null;
         unreactEventListeners.set(message.id, handle);
+
         const collector = message.createReactionCollector(
             (reaction, user) => {
                 if (user.id === senderID) {
@@ -88,8 +105,10 @@ export async function paginate(
         // When time's up, remove the bot's own reactions.
         collector.on("end", () => {
             unreactEventListeners.delete(message.id);
+            backwardsReactionFive?.users.remove(message.author);
             backwardsReaction.users.remove(message.author);
             forwardsReaction.users.remove(message.author);
+            forwardsReactionFive?.users.remove(message.author);
         });
     }
 }

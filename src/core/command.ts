@@ -30,14 +30,16 @@ import {parseVars, requireAllCasesHandledFor} from "../lib";
  */
 
 // RegEx patterns used for identifying/extracting each type from a string argument.
+// The reason why \d{17,} is used is because the max safe number for JS numbers is 16 characters when stringified (decimal). Beyond that are IDs.
 const patterns = {
-    channel: /^<#(\d{17,19})>$/,
-    role: /^<@&(\d{17,19})>$/,
-    emote: /^<a?:.*?:(\d{17,19})>$/,
-    messageLink: /^https?:\/\/(?:ptb\.|canary\.)?discord(?:app)?\.com\/channels\/(?:\d{17,19}|@me)\/(\d{17,19})\/(\d{17,19})$/,
-    messagePair: /^(\d{17,19})-(\d{17,19})$/,
-    user: /^<@!?(\d{17,19})>$/,
-    id: /^(\d{17,19})$/
+    channel: /^<#(\d{17,})>$/,
+    role: /^<@&(\d{17,})>$/,
+    emote: /^<a?:.*?:(\d{17,})>$/,
+    // The message type won't include <username>#<tag>. At that point, you may as well just use a search usernames function. Even then, tags would only be taken into account to differentiate different users with identical usernames.
+    messageLink: /^https?:\/\/(?:ptb\.|canary\.)?discord(?:app)?\.com\/channels\/(?:\d{17,}|@me)\/(\d{17,})\/(\d{17,})$/,
+    messagePair: /^(\d{17,})-(\d{17,})$/,
+    user: /^<@!?(\d{17,})>$/,
+    id: /^(\d{17,})$/
 };
 
 // Maybe add a guild redirect... somehow?
@@ -106,9 +108,10 @@ interface ExecuteCommandMetadata {
     permission: number;
     nsfw: boolean;
     channelType: CHANNEL_TYPE;
+    symbolicArgs: string[]; // i.e. <channel> instead of <#...>
 }
 
-interface CommandInfo {
+export interface CommandInfo {
     readonly type: "info";
     readonly command: Command;
     readonly subcommandInfo: Collection<string, Command>;
@@ -117,6 +120,7 @@ interface CommandInfo {
     readonly nsfw: boolean;
     readonly channelType: CHANNEL_TYPE;
     readonly args: string[];
+    readonly header: string;
 }
 
 interface CommandInfoError {
@@ -131,13 +135,8 @@ interface CommandInfoMetadata {
     args: string[];
     usage: string;
     readonly originalArgs: string[];
+    readonly header: string;
 }
-
-export const defaultMetadata = {
-    permission: 0,
-    nsfw: false,
-    channelType: CHANNEL_TYPE.ANY
-};
 
 // Each Command instance represents a block that links other Command instances under it.
 export class Command {
@@ -298,12 +297,15 @@ export class Command {
             // Then capture any potential errors.
             try {
                 if (typeof this.run === "string") {
+                    // Although I *could* add an option in the launcher to attach arbitrary variables to this var string...
+                    // I'll just leave it like this, because instead of using var strings for user stuff, you could just make "run" a template string.
                     await menu.channel.send(
                         parseVars(
                             this.run,
                             {
                                 author: menu.author.toString(),
-                                prefix: getPrefix(menu.guild)
+                                prefix: getPrefix(menu.guild),
+                                command: `${metadata.header} ${metadata.symbolicArgs.join(", ")}`
                             },
                             "???"
                         )
@@ -332,6 +334,7 @@ export class Command {
         const isMessagePair = patterns.messagePair.test(param);
 
         if (this.subcommands.has(param)) {
+            metadata.symbolicArgs.push(param);
             return this.subcommands.get(param)!.execute(args, menu, metadata);
         } else if (this.channel && patterns.channel.test(param)) {
             const id = patterns.channel.exec(param)![1];
@@ -339,6 +342,7 @@ export class Command {
 
             // Users can only enter in this format for text channels, so this restricts it to that.
             if (channel instanceof TextChannel) {
+                metadata.symbolicArgs.push("<channel>");
                 menu.args.push(channel);
                 return this.channel.execute(args, menu, metadata);
             } else {
@@ -358,6 +362,7 @@ export class Command {
             const role = menu.guild.roles.cache.get(id);
 
             if (role) {
+                metadata.symbolicArgs.push("<role>");
                 menu.args.push(role);
                 return this.role.execute(args, menu, metadata);
             } else {
@@ -370,6 +375,7 @@ export class Command {
             const emote = menu.client.emojis.cache.get(id);
 
             if (emote) {
+                metadata.symbolicArgs.push("<emote>");
                 menu.args.push(emote);
                 return this.emote.execute(args, menu, metadata);
             } else {
@@ -395,6 +401,7 @@ export class Command {
 
             if (channel instanceof TextChannel || channel instanceof DMChannel) {
                 try {
+                    metadata.symbolicArgs.push("<message>");
                     menu.args.push(await channel.messages.fetch(messageID));
                     return this.message.execute(args, menu, metadata);
                 } catch {
@@ -411,6 +418,7 @@ export class Command {
             const id = patterns.user.exec(param)![1];
 
             try {
+                metadata.symbolicArgs.push("<user>");
                 menu.args.push(await menu.client.users.fetch(id));
                 return this.user.execute(args, menu, metadata);
             } catch {
@@ -419,6 +427,7 @@ export class Command {
                 };
             }
         } else if (this.id && this.idType && patterns.id.test(param)) {
+            metadata.symbolicArgs.push("<id>");
             const id = patterns.id.exec(param)![1];
 
             // Probably modularize the findXByY code in general in libd.
@@ -486,9 +495,11 @@ export class Command {
                     requireAllCasesHandledFor(this.idType);
             }
         } else if (this.number && !Number.isNaN(Number(param)) && param !== "Infinity" && param !== "-Infinity") {
+            metadata.symbolicArgs.push("<number>");
             menu.args.push(Number(param));
             return this.number.execute(args, menu, metadata);
         } else if (this.any) {
+            metadata.symbolicArgs.push("<any>");
             menu.args.push(param);
             return this.any.execute(args, menu, metadata);
         } else {
@@ -502,8 +513,16 @@ export class Command {
     }
 
     // What this does is resolve the resulting subcommand as well as the inherited properties and the available subcommands.
-    public async resolveInfo(args: string[]): Promise<CommandInfo | CommandInfoError> {
-        return this.resolveInfoInternal(args, {...defaultMetadata, args: [], usage: "", originalArgs: [...args]});
+    public async resolveInfo(args: string[], header: string): Promise<CommandInfo | CommandInfoError> {
+        return this.resolveInfoInternal(args, {
+            permission: 0,
+            nsfw: false,
+            channelType: CHANNEL_TYPE.ANY,
+            header,
+            args: [],
+            usage: "",
+            originalArgs: [...args]
+        });
     }
 
     private async resolveInfoInternal(

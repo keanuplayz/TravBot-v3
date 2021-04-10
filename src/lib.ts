@@ -144,14 +144,13 @@ export abstract class GenericStructure {
 
     constructor(tag?: string) {
         this.__meta__ = tag || this.__meta__;
+        Object.defineProperty(this, "__meta__", {
+            enumerable: false
+        });
     }
 
     public save(asynchronous = true) {
-        const tag = this.__meta__;
-        /// @ts-ignore
-        delete this.__meta__;
-        FileManager.write(tag, this, asynchronous);
-        this.__meta__ = tag;
+        FileManager.write(this.__meta__, this, asynchronous);
     }
 }
 

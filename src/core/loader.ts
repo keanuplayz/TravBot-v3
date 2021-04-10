@@ -1,13 +1,14 @@
 import {Collection} from "discord.js";
 import glob from "glob";
-import {Command, NamedCommand} from "./command";
+import {NamedCommand, CommandInfo} from "./command";
+import {toTitleCase} from "../lib";
 
 // Internally, it'll keep its original capitalization. It's up to you to convert it to title case when you make a help command.
-export const categories = new Collection<string, string[]>();
+const categories = new Collection<string, string[]>();
 
 /** Returns the cache of the commands if it exists and searches the directory if not. */
 export const loadableCommands = (async () => {
-    const commands = new Collection<string, Command>();
+    const commands = new Collection<string, NamedCommand>();
     // Include all .ts files recursively in "src/commands/".
     const files = await globP("src/commands/**/*.ts");
     // Extract the usable parts from "src/commands/" if:
@@ -78,4 +79,54 @@ function globP(path: string) {
             }
         });
     });
+}
+
+/**
+ * Returns a list of categories and their associated commands.
+ */
+export async function getCommandList(): Promise<Collection<string, NamedCommand[]>> {
+    const list = new Collection<string, NamedCommand[]>();
+    const commands = await loadableCommands;
+
+    for (const [category, headers] of categories) {
+        const commandList: NamedCommand[] = [];
+        for (const header of headers.filter((header) => header !== "test")) commandList.push(commands.get(header)!);
+        // Ignore empty categories like "miscellaneous" (if it's empty).
+        if (commandList.length > 0) list.set(toTitleCase(category), commandList);
+    }
+
+    return list;
+}
+
+/**
+ * Resolves a command based on the arguments given.
+ * - Returns a string if there was an error.
+ * - Returns a CommandInfo/category tuple if it was a success.
+ */
+export async function getCommandInfo(args: string[]): Promise<[CommandInfo, string] | string> {
+    // Use getCommandList() instead if you're just getting the list of all commands.
+    if (args.length === 0) return "No arguments were provided!";
+
+    // Setup the root command
+    const commands = await loadableCommands;
+    let header = args.shift()!;
+    const command = commands.get(header);
+    if (!command || header === "test") return `No command found by the name \`${header}\`.`;
+    if (!(command instanceof NamedCommand)) return "Command is not a proper instance of NamedCommand.";
+    // If it's an alias, set the header to the original command name.
+    if (command.name) header = command.name;
+
+    // Search categories
+    let category = "Unknown";
+    for (const [referenceCategory, headers] of categories) {
+        if (headers.includes(header)) {
+            category = toTitleCase(referenceCategory);
+            break;
+        }
+    }
+
+    // Gather info
+    const result = await command.resolveInfo(args, header);
+    if (result.type === "error") return result.message;
+    else return [result, category];
 }

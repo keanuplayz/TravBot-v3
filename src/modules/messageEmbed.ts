@@ -57,7 +57,7 @@ client.on("message", async (message) => {
 
 export function extractFirstMessageLink(message: string): [string, string, string] | null {
     const messageLinkMatch = message.match(
-        /([!<])?https?:\/\/(?:ptb\.|canary\.)?discord(?:app)?\.com\/channels\/(\d{17,19})\/(\d{17,19})\/(\d{17,19})(>)?/
+        /([!<])?https?:\/\/(?:ptb\.|canary\.)?discord(?:app)?\.com\/channels\/(\d{17,})\/(\d{17,})\/(\d{17,})(>)?/
     );
     if (messageLinkMatch === null) return null;
     const [, leftToken, guildID, channelID, messageID, rightToken] = messageLinkMatch;

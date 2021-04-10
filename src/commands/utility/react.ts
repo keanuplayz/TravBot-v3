@@ -17,8 +17,8 @@ export default new NamedCommand({
         // handles reacts by message id/distance
         else if (args.length >= 2) {
             const last = args[args.length - 1]; // Because this is optional, do not .pop() unless you're sure it's a message link indicator.
-            const URLPattern = /^(?:https:\/\/discord.com\/channels\/(\d{17,19})\/(\d{17,19})\/(\d{17,19}))$/;
-            const copyIDPattern = /^(?:(\d{17,19})-(\d{17,19}))$/;
+            const URLPattern = /^(?:https:\/\/discord.com\/channels\/(\d{17,})\/(\d{17,})\/(\d{17,}))$/;
+            const copyIDPattern = /^(?:(\d{17,})-(\d{17,}))$/;
 
             // https://discord.com/channels/<Guild ID>/<Channel ID>/<Message ID> ("Copy Message Link" Button)
             if (URLPattern.test(last)) {
@@ -70,7 +70,7 @@ export default new NamedCommand({
                 args.pop();
             }
             // <Message ID>
-            else if (/^\d{17,19}$/.test(last)) {
+            else if (/^\d{17,}$/.test(last)) {
                 try {
                     target = await channel.messages.fetch(last);
                 } catch {
