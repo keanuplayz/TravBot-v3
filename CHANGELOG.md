@@ -1,4 +1,4 @@
-# ???
+# 3.2.1
 - `vaporwave`: Transforms input into full-width text
 - `eco post`: A play on `eco get`
 - `admin set prefix <prefix> (<@bot>)`: Allows you to target a bot when setting a prefix if two bots have conflicting prefixes
@@ -7,8 +7,10 @@
 - `thonk`: A result can now be discarded if the person who called the command reacts with ❌
 - `scanemotes forcereset`: Removes the cooldown on `scanemotes`, only accessible by bot support and up
 - `urban`: Bug fixes
+- Changed `help` to display a paginated embed
+- Various changes to core
 
-# 3.2.0 - Internal refactor, more subcommand types, and more command type guards (2021-??-??)
+# 3.2.0 - Internal refactor, more subcommand types, and more command type guards (2021-04-09)
 - The custom logger changed: `$.log` no longer exists, it's just `console.log`. Now you don't have to do `import $ from "../core/lib"` at the top of every file that uses the custom logger.
 - Utility functions are no longer attached to the command menu. Stuff like `$.paginate()` and `$(5).pluralise()` instead need to be imported and used as regular functions.
 - The `paginate` function was reworked to reduce the amount of repetition you had to do.

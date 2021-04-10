@@ -65,6 +65,7 @@ Because versions are assigned to batches of changes rather than single changes (
 
 - `%author%` - A user mention of the person who called the command.
 - `%prefix%` - The prefix of the current guild.
+- `%command%` - The command's execution path up to the current subcommand.
 
 # Utility Functions
 
@@ -72,11 +73,12 @@ Because versions are assigned to batches of changes rather than single changes (
 
 `paginate()`
 ```ts
-const pages = ['one', 'two', 'three'];
-const msg = await channel.send(pages[0]);
+const pages = ["one", "two", "three"];
 
-paginate(msg, author.id, pages.length, (page) => {
-	msg.edit(pages[page]);
+paginate(channel, author.id, pages.length, (page) => {
+	return {
+		content: pages[page]
+	};
 });
 ```
 

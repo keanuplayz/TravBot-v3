@@ -1,5 +1,16 @@
-import {Command, NamedCommand, CHANNEL_TYPE, getPermissionName, getCommandList, getCommandInfo} from "../../core";
+import {
+    Command,
+    NamedCommand,
+    CHANNEL_TYPE,
+    getPermissionName,
+    getCommandList,
+    getCommandInfo,
+    paginate
+} from "../../core";
 import {requireAllCasesHandledFor} from "../../lib";
+import {MessageEmbed} from "discord.js";
+
+const EMBED_COLOR = "#158a28";
 
 export default new NamedCommand({
     description: "Lists all commands. If a command is specified, their arguments are listed as well.",
@@ -7,14 +18,18 @@ export default new NamedCommand({
     aliases: ["h"],
     async run({message, channel, guild, author, member, client, args}) {
         const commands = await getCommandList();
-        let output = `Legend: \`<type>\`, \`[list/of/stuff]\`, \`(optional)\`, \`(<optional type>)\`, \`([optional/list/...])\``;
+        const categoryArray = commands.keyArray();
 
-        for (const [category, commandList] of commands) {
-            output += `\n\n===[ ${category} ]===`;
-            for (const command of commandList) output += `\n- \`${command.name}\`: ${command.description}`;
-        }
-
-        channel.send(output, {split: true});
+        paginate(channel, author.id, categoryArray.length, (page, hasMultiplePages) => {
+            const category = categoryArray[page];
+            const commandList = commands.get(category)!;
+            let output = `Legend: \`<type>\`, \`[list/of/stuff]\`, \`(optional)\`, \`(<optional type>)\`, \`([optional/list/...])\`\n`;
+            for (const command of commandList) output += `\n❯ \`${command.name}\`: ${command.description}`;
+            return new MessageEmbed()
+                .setTitle(hasMultiplePages ? `${category} (Page ${page + 1} of ${categoryArray.length})` : category)
+                .setDescription(output)
+                .setColor(EMBED_COLOR);
+        });
     },
     any: new Command({
         async run({message, channel, guild, author, member, client, args}) {
@@ -29,17 +44,17 @@ export default new NamedCommand({
 
                 for (const [tag, subcommand] of result.keyedSubcommandInfo) {
                     const customUsage = subcommand.usage ? ` ${subcommand.usage}` : "";
-                    list.push(`- \`${header} ${tag}${customUsage}\` - ${subcommand.description}`);
+                    list.push(`❯ \`${header} ${tag}${customUsage}\` - ${subcommand.description}`);
                 }
 
                 for (const [type, subcommand] of result.subcommandInfo) {
                     const customUsage = subcommand.usage ? ` ${subcommand.usage}` : "";
-                    list.push(`- \`${header} ${type}${customUsage}\` - ${subcommand.description}`);
+                    list.push(`❯ \`${header} ${type}${customUsage}\` - ${subcommand.description}`);
                 }
 
-                append = "Usages:" + (list.length > 0 ? `\n${list.join("\n")}` : " None.");
+                append = list.length > 0 ? list.join("\n") : "None";
             } else {
-                append = `Usage: \`${header} ${command.usage}\``;
+                append = `\`${header} ${command.usage}\``;
             }
 
             let aliases = "N/A";
@@ -52,12 +67,41 @@ export default new NamedCommand({
             }
 
             return channel.send(
-                `Command: \`${header}\`\nAliases: ${aliases}\nCategory: \`${category}\`\nPermission Required: \`${getPermissionName(
-                    result.permission
-                )}\` (${result.permission})\nChannel Type: ${getChannelTypeName(result.channelType)}\nNSFW Only: ${
-                    result.nsfw ? "Yes" : "No"
-                }\nDescription: ${command.description}\n${append}`,
-                {split: true}
+                new MessageEmbed()
+                    .setTitle(header)
+                    .setDescription(command.description)
+                    .setColor(EMBED_COLOR)
+                    .addFields(
+                        {
+                            name: "Aliases",
+                            value: aliases,
+                            inline: true
+                        },
+                        {
+                            name: "Category",
+                            value: category,
+                            inline: true
+                        },
+                        {
+                            name: "Permission Required",
+                            value: `\`${getPermissionName(result.permission)}\` (Level ${result.permission})`,
+                            inline: true
+                        },
+                        {
+                            name: "Channel Type",
+                            value: getChannelTypeName(result.channelType),
+                            inline: true
+                        },
+                        {
+                            name: "NSFW Only?",
+                            value: result.nsfw ? "Yes" : "No",
+                            inline: true
+                        },
+                        {
+                            name: "Usages",
+                            value: append
+                        }
+                    )
             );
         }
     })
