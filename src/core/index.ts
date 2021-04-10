@@ -1,5 +1,5 @@
 // Onion Lasers Command Handler //
-export {Command, NamedCommand, CHANNEL_TYPE} from "./command";
+export {Command, NamedCommand, RestCommand, CHANNEL_TYPE} from "./command";
 export {addInterceptRule} from "./handler";
 export {launch} from "./interface";
 export * from "./libd";

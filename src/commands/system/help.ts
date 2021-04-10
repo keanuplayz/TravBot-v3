@@ -33,8 +33,9 @@ export default new NamedCommand({
     },
     any: new Command({
         async run({send, message, channel, guild, author, member, client, args}) {
-            const [result, category] = await getCommandInfo(args);
-            if (typeof result === "string") return send(result);
+            const resultingBlob = await getCommandInfo(args);
+            if (typeof resultingBlob === "string") return send(resultingBlob);
+            const [result, category] = resultingBlob;
             let append = "";
             const command = result.command;
             const header = result.args.length > 0 ? `${result.header} ${result.args.join(" ")}` : result.header;
@@ -52,6 +53,7 @@ export default new NamedCommand({
                     list.push(`❯ \`${header} ${type}${customUsage}\` - ${subcommand.description}`);
                 }
 
+                if (result.hasRestCommand) list.push(`❯ \`${header} <...>\``);
                 append = list.length > 0 ? list.join("\n") : "None";
             } else {
                 append = `\`${header} ${command.usage}\``;

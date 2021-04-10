@@ -9,8 +9,9 @@
 - `urban`: Bug fixes
 - Changed `help` to display a paginated embed
 - Various changes to core
-	- Added `guild` subcommand type (only accessible when `id` is set to `guild`)
+	- Added `guild` subcommand type (only accessible when `id: "guild"`)
 	- Further reduced `channel.send()` to `send()` because it's used in *every, single, command*
+	- Added `rest` subcommand type (only available when `endpoint: true`), declaratively states that the following command will do `args.join(" ")`, preventing any other subcommands from being added
 
 # 3.2.0 - Internal refactor, more subcommand types, and more command type guards (2021-04-09)
 - The custom logger changed: `$.log` no longer exists, it's just `console.log`. Now you don't have to do `import $ from "../core/lib"` at the top of every file that uses the custom logger.

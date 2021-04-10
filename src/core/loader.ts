@@ -43,14 +43,16 @@ export async function loadCommands(commandsDir: string): Promise<Collection<stri
             const command = (await import(files[i])).default as unknown;
 
             if (command instanceof NamedCommand) {
-                command.name = commandName;
+                const isNameOverridden = command.isNameSet();
+                if (!isNameOverridden) command.name = commandName;
+                const header = command.name;
 
-                if (commands.has(commandName)) {
+                if (commands.has(header)) {
                     console.warn(
-                        `Command "${commandName}" already exists! Make sure to make each command uniquely identifiable across categories!`
+                        `Command "${header}" already exists! Make sure to make each command uniquely identifiable across categories!`
                     );
                 } else {
-                    commands.set(commandName, command);
+                    commands.set(header, command);
                 }
 
                 for (const alias of command.aliases) {
@@ -64,9 +66,10 @@ export async function loadCommands(commandsDir: string): Promise<Collection<stri
                 }
 
                 if (!(category in lists)) lists[category] = [];
-                lists[category].push(commandName);
+                lists[category].push(header);
 
-                console.log(`Loaded Command: ${commandID}`);
+                if (isNameOverridden) console.log(`Loaded Command: "${commandID}" as "${header}"`);
+                else console.log(`Loaded Command: ${commandID}`);
             } else {
                 console.warn(`Command "${commandID}" has no default export which is a NamedCommand instance!`);
             }
@@ -139,7 +142,7 @@ export async function getCommandInfo(args: string[]): Promise<[CommandInfo, stri
     }
 
     // Gather info
-    const result = await command.resolveInfo(args, header);
+    const result = command.resolveInfo(args, header);
     if (result.type === "error") return result.message;
     else return [result, category];
 }

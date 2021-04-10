@@ -280,7 +280,7 @@ export default new NamedCommand({
                             }
                         } else {
                             // If it's a unique hour, just search through the tuple list and find the matching entry.
-                            for (const [hourPoint, dayOffset, timezoneOffset] of timezoneTupleList) {
+                            for (const [hourPoint, _dayOffset, timezoneOffset] of timezoneTupleList) {
                                 if (hour === hourPoint) {
                                     profile.timezone = timezoneOffset;
                                 }
