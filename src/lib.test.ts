@@ -1,5 +1,5 @@
 import {strict as assert} from "assert";
-import {pluralise, pluraliseSigned, replaceAll, toTitleCase, split} from "./lib";
+import {pluralise, pluraliseSigned, replaceAll, toTitleCase, split, parseVars} from "./lib";
 
 // I can't figure out a way to run the test suite while running the bot.
 describe("Wrappers", () => {
@@ -49,6 +49,12 @@ describe("Wrappers", () => {
         describe("#replaceAll()", () => {
             it('should convert "test" to "zesz"', () => {
                 assert.strictEqual(replaceAll("test", "t", "z"), "zesz");
+            });
+        });
+
+        describe("#parseVars()", () => {
+            it('should replace %test% with "yeet"', () => {
+                assert.strictEqual(parseVars("ya %test%", {test: "yeet"}), "ya yeet");
             });
         });
 

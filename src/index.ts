@@ -69,7 +69,7 @@ import "./modules/ready";
 import "./modules/presence";
 import "./modules/lavalink";
 import "./modules/emoteRegistry";
-import "./modules/channelListener";
+import "./modules/systemInfo";
 import "./modules/intercept";
 import "./modules/messageEmbed";
 import "./modules/guildMemberAdd";

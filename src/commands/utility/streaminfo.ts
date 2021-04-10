@@ -8,8 +8,15 @@ export default new NamedCommand({
 
         if (streamList.has(userID)) {
             const stream = streamList.get(userID)!;
-            stream.description = args.join(" ") || "No description set.";
+            const description = args.join(" ") || "No description set.";
+            stream.description = description;
             stream.update();
+            channel.send(`Successfully set the stream description to:`, {
+                embed: {
+                    description,
+                    color: member!.displayColor
+                }
+            });
         } else {
             // Alternatively, I could make descriptions last outside of just one stream.
             channel.send("You can only use this command when streaming.");
