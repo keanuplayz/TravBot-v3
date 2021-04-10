@@ -71,6 +71,10 @@ Boolean subcommand types won't be implemented:
 
 For common use cases, there wouldn't be a need to go accept numbers of different bases. The only time it would be applicable is if there was some sort of base converter command, and even then, it'd be better to just implement custom logic.
 
+## User Mention + Search by Username Type
+
+While it's a pretty common pattern, it's probably a bit too specific for the `Command` class itself. Instead, this pattern will be comprised of two subcommands: A `user` type and an `any` type.
+
 # The Command Handler
 
 ## The Scope of the Command Handler

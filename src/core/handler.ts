@@ -37,6 +37,7 @@ export function attachMessageHandlerToClient(client: Client) {
 
         const commands = await loadableCommands;
         const {author, channel, content, guild, member} = message;
+        const send = channel.send.bind(channel);
         const text = content;
         const menu = {
             author,
@@ -45,7 +46,8 @@ export function attachMessageHandlerToClient(client: Client) {
             guild,
             member,
             message,
-            args: []
+            args: [],
+            send
         };
 
         // Execute a dedicated block for messages in DM channels.
@@ -70,10 +72,10 @@ export function attachMessageHandlerToClient(client: Client) {
 
                 // If something went wrong, let the user know (like if they don't have permission to use a command).
                 if (result) {
-                    channel.send(result);
+                    send(result);
                 }
             } else {
-                channel.send(
+                send(
                     `I couldn't find the command or alias that starts with \`${header}\`. To see the list of commands, type \`help\``
                 );
             }
@@ -84,7 +86,7 @@ export function attachMessageHandlerToClient(client: Client) {
 
             // First, test if the message is just a ping to the bot.
             if (new RegExp(`^<@!?${client.user!.id}>$`).test(text)) {
-                channel.send(`${author}, my prefix on this server is \`${prefix}\`.`);
+                send(`${author}, my prefix on this server is \`${prefix}\`.`);
             }
             // Then check if it's a normal command.
             else if (text.startsWith(prefix)) {
@@ -107,7 +109,7 @@ export function attachMessageHandlerToClient(client: Client) {
 
                     // If something went wrong, let the user know (like if they don't have permission to use a command).
                     if (result) {
-                        channel.send(result);
+                        send(result);
                     }
                 }
             }

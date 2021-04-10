@@ -11,7 +11,7 @@ import {
     GuildChannel,
     Channel
 } from "discord.js";
-import {getChannelByID, getMessageByID, getUserByID, SingleMessageOptions} from "./libd";
+import {getChannelByID, getGuildByID, getMessageByID, getUserByID, SingleMessageOptions, SendFunction} from "./libd";
 import {hasPermission, getPermissionLevel, getPermissionName} from "./permissions";
 import {getPrefix} from "./interface";
 import {parseVars, requireAllCasesHandledFor} from "../lib";
@@ -44,7 +44,7 @@ const patterns = {
 };
 
 // Maybe add a guild redirect... somehow?
-type ID = "channel" | "role" | "emote" | "message" | "user";
+type ID = "channel" | "role" | "emote" | "message" | "user" | "guild";
 
 // Callbacks don't work with discriminated unions:
 // - https://github.com/microsoft/TypeScript/issues/41759
@@ -68,6 +68,7 @@ interface CommandMenu {
     // According to the documentation, a message can be part of a guild while also not having a
     // member object for the author. This will happen if the author of a message left the guild.
     readonly member: GuildMember | null;
+    readonly send: SendFunction;
 }
 
 interface CommandOptionsBase {
@@ -95,6 +96,7 @@ interface CommandOptionsNonEndpoint {
     readonly emote?: Command;
     readonly message?: Command;
     readonly user?: Command;
+    readonly guild?: Command; // Only available if an ID is set to reroute to it.
     readonly id?: ID;
     readonly number?: Command;
     readonly any?: Command;
@@ -156,6 +158,7 @@ export class Command {
     private emote: Command | null;
     private message: Command | null;
     private user: Command | null;
+    private guild: Command | null;
     private id: Command | null;
     private idType: ID | null;
     private number: Command | null;
@@ -175,6 +178,7 @@ export class Command {
         this.emote = null;
         this.message = null;
         this.user = null;
+        this.guild = null;
         this.id = null;
         this.idType = null;
         this.number = null;
@@ -186,6 +190,7 @@ export class Command {
             if (options?.emote) this.emote = options.emote;
             if (options?.message) this.message = options.message;
             if (options?.user) this.user = options.user;
+            if (options?.guild) this.guild = options.guild;
             if (options?.number) this.number = options.number;
             if (options?.any) this.any = options.any;
             if (options?.id) this.idType = options.id;
@@ -206,6 +211,9 @@ export class Command {
                         break;
                     case "user":
                         this.id = this.user;
+                        break;
+                    case "guild":
+                        this.id = this.guild;
                         break;
                     default:
                         requireAllCasesHandledFor(options.id);
@@ -246,6 +254,9 @@ export class Command {
     //
     // Calls the resulting subcommand's execute method in order to make more modular code, basically pushing the chain of execution to the subcommand.
     // For example, a numeric subcommand would accept args of [4] then execute on it.
+    //
+    // Because each Command instance is isolated from others, it becomes practically impossible to predict the total amount of subcommands when isolating the code to handle each individual layer of recursion.
+    // Therefore, if a Command is declared as a rest type, any typed args that come at the end must be handled manually.
     public async execute(
         args: string[],
         menu: CommandMenu,
@@ -300,7 +311,7 @@ export class Command {
                 if (typeof this.run === "string") {
                     // Although I *could* add an option in the launcher to attach arbitrary variables to this var string...
                     // I'll just leave it like this, because instead of using var strings for user stuff, you could just make "run" a template string.
-                    await menu.channel.send(
+                    await menu.send(
                         parseVars(
                             this.run,
                             {
@@ -489,6 +500,15 @@ export class Command {
                         return this.id.execute(args, menu, metadata);
                     } else {
                         return user;
+                    }
+                case "guild":
+                    const guild = getGuildByID(id);
+
+                    if (guild instanceof Guild) {
+                        menu.args.push(guild);
+                        return this.id.execute(args, menu, metadata);
+                    } else {
+                        return guild;
                     }
                 default:
                     requireAllCasesHandledFor(this.idType);

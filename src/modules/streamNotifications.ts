@@ -47,6 +47,7 @@ client.on("voiceStateUpdate", async (before, after) => {
             const voiceChannel = after.channel!;
             const textChannel = client.channels.cache.get(streamingChannel);
 
+            // Although checking the bot's permission to send might seem like a good idea, having the error be thrown will cause it to show up in the last channel rather than just show up in the console.
             if (textChannel instanceof TextChannel) {
                 if (isStartStreamEvent) {
                     streamList.set(member.id, {

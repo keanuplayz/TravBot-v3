@@ -20,7 +20,7 @@ export default new NamedCommand({
         const commands = await getCommandList();
         const categoryArray = commands.keyArray();
 
-        paginate(channel, author.id, categoryArray.length, (page, hasMultiplePages) => {
+        paginate(channel.send, author.id, categoryArray.length, (page, hasMultiplePages) => {
             const category = categoryArray[page];
             const commandList = commands.get(category)!;
             let output = `Legend: \`<type>\`, \`[list/of/stuff]\`, \`(optional)\`, \`(<optional type>)\`, \`([optional/list/...])\`\n`;

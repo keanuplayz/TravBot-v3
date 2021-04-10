@@ -10,12 +10,26 @@ import {
     MessageOptions,
     Channel,
     GuildChannel,
-    User
+    User,
+    APIMessageContentResolvable,
+    MessageAdditions,
+    SplitOptions,
+    APIMessage,
+    StringResolvable
 } from "discord.js";
 import {unreactEventListeners, replyEventListeners} from "./eventListeners";
 import {client} from "./interface";
 
 export type SingleMessageOptions = MessageOptions & {split?: false};
+
+export type SendFunction = ((
+    content: APIMessageContentResolvable | (MessageOptions & {split?: false}) | MessageAdditions
+) => Promise<Message>) &
+    ((options: MessageOptions & {split: true | SplitOptions}) => Promise<Message[]>) &
+    ((options: MessageOptions | APIMessage) => Promise<Message | Message[]>) &
+    ((content: StringResolvable, options: (MessageOptions & {split?: false}) | MessageAdditions) => Promise<Message>) &
+    ((content: StringResolvable, options: MessageOptions & {split: true | SplitOptions}) => Promise<Message[]>) &
+    ((content: StringResolvable, options: MessageOptions) => Promise<Message | Message[]>);
 
 /**
  * Tests if a bot has a certain permission in a specified guild.
@@ -41,14 +55,14 @@ const FIVE_FORWARDS_EMOJI = "⏩";
  * Takes a message and some additional parameters and makes a reaction page with it. All the pagination logic is taken care of but nothing more, the page index is returned and you have to send a callback to do something with it.
  */
 export async function paginate(
-    channel: TextChannel | DMChannel | NewsChannel,
+    send: SendFunction,
     senderID: string,
     total: number,
     callback: (page: number, hasMultiplePages: boolean) => SingleMessageOptions,
     duration = 60000
 ) {
     const hasMultiplePages = total > 1;
-    const message = await channel.send(callback(0, hasMultiplePages));
+    const message = await send(callback(0, hasMultiplePages));
 
     if (hasMultiplePages) {
         let page = 0;

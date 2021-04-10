@@ -1,7 +1,7 @@
 import {MessageEmbed, version as djsversion, Guild, User, GuildMember} from "discord.js";
 import ms from "ms";
 import os from "os";
-import {Command, NamedCommand, getMemberByName, CHANNEL_TYPE} from "../../core";
+import {Command, NamedCommand, getMemberByName, CHANNEL_TYPE, getGuildByName} from "../../core";
 import {formatBytes, trimArray} from "../../lib";
 import {verificationLevels, filterLevels, regions} from "../../defs/info";
 import moment, {utc} from "moment";
@@ -98,30 +98,23 @@ export default new NamedCommand({
             async run({message, channel, guild, author, member, client, args}) {
                 channel.send(await getGuildInfo(guild!, guild));
             },
-            any: new Command({
-                description: "Display info about a guild by finding its name or ID.",
+            id: "guild",
+            guild: new Command({
+                description: "Display info about a guild by its ID.",
                 async run({message, channel, guild, author, member, client, args}) {
-                    // If a guild ID is provided (avoid the "number" subcommand because of inaccuracies), search for that guild
-                    if (args.length === 1 && /^\d{17,}$/.test(args[0])) {
-                        const id = args[0];
-                        const targetGuild = client.guilds.cache.get(id);
+                    const targetGuild = args[0] as Guild;
+                    channel.send(await getGuildInfo(targetGuild, guild));
+                }
+            }),
+            any: new Command({
+                description: "Display info about a guild by finding its name.",
+                async run({message, channel, guild, author, member, client, args}) {
+                    const targetGuild = getGuildByName(args.join(" "));
 
-                        if (targetGuild) {
-                            channel.send(await getGuildInfo(targetGuild, guild));
-                        } else {
-                            channel.send(`None of the servers I'm in matches the guild ID \`${id}\`!`);
-                        }
+                    if (targetGuild instanceof Guild) {
+                        channel.send(await getGuildInfo(targetGuild, guild));
                     } else {
-                        const query: string = args.join(" ").toLowerCase();
-                        const targetGuild = client.guilds.cache.find((guild) =>
-                            guild.name.toLowerCase().includes(query)
-                        );
-
-                        if (targetGuild) {
-                            channel.send(await getGuildInfo(targetGuild, guild));
-                        } else {
-                            channel.send(`None of the servers I'm in matches the query \`${query}\`!`);
-                        }
+                        channel.send(targetGuild);
                     }
                 }
             })

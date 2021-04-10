@@ -71,7 +71,7 @@ export async function loadCommands(commandsDir: string): Promise<Collection<stri
                 console.warn(`Command "${commandID}" has no default export which is a NamedCommand instance!`);
             }
         } catch (error) {
-            console.log(error);
+            console.error(error);
         }
     }
 

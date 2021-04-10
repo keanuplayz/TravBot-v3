@@ -9,6 +9,7 @@
 - `urban`: Bug fixes
 - Changed `help` to display a paginated embed
 - Various changes to core
+	- Added `guild` subcommand type (only accessible when `id` is set to `guild`)
 
 # 3.2.0 - Internal refactor, more subcommand types, and more command type guards (2021-04-09)
 - The custom logger changed: `$.log` no longer exists, it's just `console.log`. Now you don't have to do `import $ from "../core/lib"` at the top of every file that uses the custom logger.

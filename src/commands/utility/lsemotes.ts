@@ -35,7 +35,6 @@ export default new NamedCommand({
                 let emoteCollection = client.emojis.cache.array();
                 // Creates a sandbox to stop a regular expression if it takes too much time to search.
                 // To avoid passing in a giant data structure, I'll just pass in the structure {[id: string]: [name: string]}.
-                //let emotes: {[id: string]: string} = {};
                 let emotes = new Map<string, string>();
 
                 for (const emote of emoteCollection) {
@@ -91,7 +90,7 @@ async function displayEmoteList(emotes: GuildEmoji[], channel: TextChannel | DMC
 
     // Gather the first page (if it even exists, which it might not if there no valid emotes appear)
     if (pages > 0) {
-        paginate(channel, author.id, pages, (page, hasMultiplePages) => {
+        paginate(channel.send, author.id, pages, (page, hasMultiplePages) => {
             embed.setTitle(hasMultiplePages ? `**Emotes** (Page ${page + 1} of ${pages})` : "**Emotes**");
 
             let desc = "";

@@ -5,6 +5,7 @@ import {watch} from "fs";
 import {Guild as DiscordGuild, Snowflake} from "discord.js";
 
 // Maybe use getters and setters to auto-save on set?
+// And maybe use Collections/Maps instead of objects?
 
 class ConfigStructure extends GenericStructure {
     public token: string;

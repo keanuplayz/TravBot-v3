@@ -3,7 +3,7 @@ import {pluralise} from "../../lib";
 import moment from "moment";
 import {Collection, TextChannel} from "discord.js";
 
-const lastUsedTimestamps: {[id: string]: number} = {};
+const lastUsedTimestamps = new Collection<string, number>();
 
 export default new NamedCommand({
     description:
@@ -13,7 +13,7 @@ export default new NamedCommand({
         // Test if the command is on cooldown. This isn't the strictest cooldown possible, because in the event that the bot crashes, the cooldown will be reset. But for all intends and purposes, it's a good enough cooldown. It's a per-server cooldown.
         const startTime = Date.now();
         const cooldown = 86400000; // 24 hours
-        const lastUsedTimestamp = lastUsedTimestamps[guild!.id] ?? 0;
+        const lastUsedTimestamp = lastUsedTimestamps.get(guild!.id) ?? 0;
         const difference = startTime - lastUsedTimestamp;
         const howLong = moment(startTime).to(lastUsedTimestamp + cooldown);
 
@@ -22,7 +22,7 @@ export default new NamedCommand({
             return channel.send(
                 `This command requires a day to cooldown. You'll be able to activate this command ${howLong}.`
             );
-        else lastUsedTimestamps[guild!.id] = startTime;
+        else lastUsedTimestamps.set(guild!.id, startTime);
 
         const stats: {
             [id: string]: {
@@ -188,7 +188,7 @@ export default new NamedCommand({
             description: "Forces the cooldown timer to reset.",
             permission: PERMISSIONS.BOT_SUPPORT,
             async run({message, channel, guild, author, member, client, args}) {
-                lastUsedTimestamps[guild!.id] = 0;
+                lastUsedTimestamps.set(guild!.id, 0);
                 channel.send("Reset the cooldown on `scanemotes`.");
             }
         })
