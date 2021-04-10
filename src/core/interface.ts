@@ -1,23 +1,52 @@
-import {Client, User, GuildMember, Guild} from "discord.js";
+import {Collection, Client, User, GuildMember, Guild} from "discord.js";
 import {attachMessageHandlerToClient} from "./handler";
 import {attachEventListenersToClient} from "./eventListeners";
-
-interface LaunchSettings {
-    permissionLevels: PermissionLevel[];
-    getPrefix: (guild: Guild | null) => string;
-}
-
-export async function launch(client: Client, settings: LaunchSettings) {
-    attachMessageHandlerToClient(client);
-    attachEventListenersToClient(client);
-    permissionLevels = settings.permissionLevels;
-    getPrefix = settings.getPrefix;
-}
+import {NamedCommand} from "./command";
+import {loadCommands} from "./loader";
 
 interface PermissionLevel {
     name: string;
     check: (user: User, member: GuildMember | null) => boolean;
 }
 
-export let permissionLevels: PermissionLevel[] = [];
-export let getPrefix: (guild: Guild | null) => string = () => ".";
+type PrefixResolver = (guild: Guild | null) => string;
+type CategoryTransformer = (text: string) => string;
+
+// One potential option is to let the user customize system messages such as "This command must be executed in a guild."
+// I decided not to do that because I don't think it'll be worth the trouble.
+interface LaunchSettings {
+    permissionLevels?: PermissionLevel[];
+    getPrefix?: PrefixResolver;
+    categoryTransformer?: CategoryTransformer;
+}
+
+// One alternative to putting everything in launch(client, ...) is to create an object then set each individual aspect, such as OnionCore.setPermissions(...).
+// That way, you can split different pieces of logic into different files, then do OnionCore.launch(client).
+// Additionally, each method would return the object so multiple methods could be chained, such as OnionCore.setPermissions(...).setPrefixResolver(...).launch(client).
+// I decided to not do this because creating a class then having a bunch of boilerplate around it just wouldn't really be worth it.
+// commandsDirectory requires an absolute path to work, so use __dirname.
+export async function launch(client: Client, commandsDirectory: string, settings?: LaunchSettings) {
+    // Core Launch Parameters //
+    loadableCommands = loadCommands(commandsDirectory);
+    attachMessageHandlerToClient(client);
+    attachEventListenersToClient(client);
+
+    // Additional Configuration //
+    if (settings?.permissionLevels) {
+        if (settings.permissionLevels.length > 0) permissionLevels = settings.permissionLevels;
+        else console.warn("permissionLevels must have at least one element to work!");
+    }
+    if (settings?.getPrefix) getPrefix = settings.getPrefix;
+    if (settings?.categoryTransformer) categoryTransformer = settings.categoryTransformer;
+}
+
+// Placeholder until properly loaded by the user.
+export let loadableCommands = (async () => new Collection<string, NamedCommand>())();
+export let permissionLevels: PermissionLevel[] = [
+    {
+        name: "User",
+        check: () => true
+    }
+];
+export let getPrefix: PrefixResolver = () => ".";
+export let categoryTransformer: CategoryTransformer = (text) => text;

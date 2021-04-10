@@ -1,6 +1,5 @@
 import {Client, Permissions, Message, TextChannel, DMChannel, NewsChannel} from "discord.js";
-import {loadableCommands} from "./loader";
-import {getPrefix} from "./interface";
+import {getPrefix, loadableCommands} from "./interface";
 
 // For custom message events that want to cancel the command handler on certain conditions.
 const interceptRules: ((message: Message) => boolean)[] = [(message) => message.author.bot];

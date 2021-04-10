@@ -1,13 +1,15 @@
-// Bootstrapping Section //
 import "./modules/globals";
 import {Client, Permissions} from "discord.js";
-import {launch} from "./core";
-import setup from "./modules/setup";
-import {Config, getPrefix} from "./structures";
+import path from "path";
 
 // This is here in order to make it much less of a headache to access the client from other files.
 // This of course won't actually do anything until the setup process is complete and it logs in.
 export const client = new Client();
+
+import {launch} from "./core";
+import setup from "./modules/setup";
+import {Config, getPrefix} from "./structures";
+import {toTitleCase} from "./lib";
 
 // Send the login request to Discord's API and then load modules while waiting for it.
 setup.init().then(() => {
@@ -15,7 +17,9 @@ setup.init().then(() => {
 });
 
 // Setup the command handler.
-launch(client, {
+launch(client, path.join(__dirname, "commands"), {
+    getPrefix,
+    categoryTransformer: toTitleCase,
     permissionLevels: [
         {
             // NONE //
@@ -57,8 +61,7 @@ launch(client, {
             name: "Bot Owner",
             check: (user) => Config.owner === user.id
         }
-    ],
-    getPrefix: getPrefix
+    ]
 });
 
 // Initialize Modules //
