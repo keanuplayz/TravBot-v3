@@ -1,4 +1,4 @@
-import {Command, NamedCommand, RestCommand} from "../../core";
+import {NamedCommand, RestCommand} from "../../core";
 import * as math from "mathjs";
 import {MessageEmbed} from "discord.js";
 
@@ -6,7 +6,7 @@ export default new NamedCommand({
     description: "Calculates a specified math expression.",
     run: "Please provide a calculation.",
     any: new RestCommand({
-        async run({send, message, channel, guild, author, member, client, args, combined}) {
+        async run({send, combined}) {
             let resp;
             try {
                 resp = math.evaluate(combined);

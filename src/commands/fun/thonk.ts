@@ -1,4 +1,4 @@
-import {Command, NamedCommand, RestCommand} from "../../core";
+import {NamedCommand, RestCommand} from "../../core";
 
 const letters: {[letter: string]: string[]} = {
     a: "aáàảãạâấầẩẫậăắằẳẵặ".split(""),
@@ -34,7 +34,7 @@ let phrase = "I have no currently set phrase!";
 export default new NamedCommand({
     description: "Transforms your text into ｖｉｅｔｎａｍｅｓｅ.",
     usage: "thonk ([text])",
-    async run({send, message, channel, guild, author, member, client, args}) {
+    async run({send, author}) {
         const msg = await send(transform(phrase));
         msg.createReactionCollector(
             (reaction, user) => {
@@ -45,7 +45,7 @@ export default new NamedCommand({
         );
     },
     any: new RestCommand({
-        async run({send, message, channel, guild, author, member, client, args, combined}) {
+        async run({send, author, combined}) {
             const msg = await send(transform(combined));
             msg.createReactionCollector(
                 (reaction, user) => {

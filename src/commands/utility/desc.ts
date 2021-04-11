@@ -1,11 +1,11 @@
-import {Command, NamedCommand, RestCommand} from "../../core";
+import {NamedCommand, RestCommand} from "../../core";
 
 export default new NamedCommand({
     description: "Renames current voice channel.",
     usage: "<name>",
     run: "Please provide a new voice channel name.",
     any: new RestCommand({
-        async run({send, message, channel, guild, author, member, client, args, combined}) {
+        async run({send, message, combined}) {
             const voiceChannel = message.member?.voice.channel;
 
             if (!voiceChannel) return send("You are not in a voice channel.");

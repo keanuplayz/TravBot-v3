@@ -1,4 +1,4 @@
-import {Command, NamedCommand, RestCommand} from "../../core";
+import {NamedCommand, RestCommand} from "../../core";
 import {MessageEmbed} from "discord.js";
 import {find} from "weather-js";
 
@@ -6,7 +6,7 @@ export default new NamedCommand({
     description: "Shows weather info of specified location.",
     run: "You need to provide a city.",
     any: new RestCommand({
-        async run({send, message, channel, guild, author, member, client, args, combined}) {
+        async run({send, combined}) {
             find(
                 {
                     search: combined,

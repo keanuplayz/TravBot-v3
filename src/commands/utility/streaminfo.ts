@@ -1,9 +1,9 @@
-import {Command, NamedCommand, RestCommand} from "../../core";
+import {NamedCommand, RestCommand} from "../../core";
 import {streamList} from "../../modules/streamNotifications";
 
 export default new NamedCommand({
     description: "Sets the description of your stream. You can embed links by writing `[some name](some link)`",
-    async run({send, message, channel, guild, author, member, client, args}) {
+    async run({send, author, member}) {
         const userID = author.id;
 
         if (streamList.has(userID)) {
@@ -22,7 +22,7 @@ export default new NamedCommand({
         }
     },
     any: new RestCommand({
-        async run({send, message, channel, guild, author, member, client, args, combined}) {
+        async run({send, author, member, combined}) {
             const userID = author.id;
 
             if (streamList.has(userID)) {

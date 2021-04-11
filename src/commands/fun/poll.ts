@@ -1,5 +1,5 @@
 import {MessageEmbed} from "discord.js";
-import {Command, NamedCommand, RestCommand} from "../../core";
+import {NamedCommand, RestCommand} from "../../core";
 
 export default new NamedCommand({
     description: "Create a poll.",
@@ -7,7 +7,7 @@ export default new NamedCommand({
     run: "Please provide a question.",
     any: new RestCommand({
         description: "Question for the poll.",
-        async run({send, message, channel, guild, author, member, client, args, combined}) {
+        async run({send, message, combined}) {
             const embed = new MessageEmbed()
                 .setAuthor(
                     `Poll created by ${message.author.username}`,

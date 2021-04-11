@@ -1,11 +1,11 @@
-import {Command, NamedCommand, RestCommand} from "../../core";
+import {NamedCommand, RestCommand} from "../../core";
 import moment from "moment";
 import {Storage} from "../../structures";
 import {MessageEmbed} from "discord.js";
 
 export default new NamedCommand({
     description: "Keep and edit your personal todo list.",
-    async run({send, message, channel, guild, author, member, client, args}) {
+    async run({send, author}) {
         const user = Storage.getUser(author.id);
         const embed = new MessageEmbed().setTitle(`Todo list for ${author.tag}`).setColor("BLUE");
 
@@ -23,7 +23,7 @@ export default new NamedCommand({
         add: new NamedCommand({
             run: "You need to specify a note to add.",
             any: new RestCommand({
-                async run({send, message, channel, guild, author, member, client, args, combined}) {
+                async run({send, author, combined}) {
                     const user = Storage.getUser(author.id);
                     user.todoList[Date.now().toString()] = combined;
                     Storage.save();
@@ -34,7 +34,7 @@ export default new NamedCommand({
         remove: new NamedCommand({
             run: "You need to specify a note to remove.",
             any: new RestCommand({
-                async run({send, message, channel, guild, author, member, client, args, combined}) {
+                async run({send, author, combined}) {
                     const user = Storage.getUser(author.id);
                     let isFound = false;
 
@@ -54,7 +54,7 @@ export default new NamedCommand({
             })
         }),
         clear: new NamedCommand({
-            async run({send, message, channel, guild, author, member, client, args}) {
+            async run({send, author}) {
                 const user = Storage.getUser(author.id);
                 user.todoList = {};
                 Storage.save();

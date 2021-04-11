@@ -1,8 +1,8 @@
-import {Command, NamedCommand} from "../../core";
+import {NamedCommand} from "../../core";
 
 export default new NamedCommand({
     description: "Initiates a celebratory stream from the bot.",
-    async run({send, message, channel, guild, author, member, client, args}) {
+    async run({send, client}) {
         send("This calls for a celebration!");
         client.user!.setActivity({
             type: "STREAMING",

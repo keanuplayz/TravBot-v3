@@ -4,7 +4,7 @@ import {Random} from "../../lib";
 export default new NamedCommand({
     description: "Ravioli ravioli...",
     usage: "[number from 1 to 9]",
-    async run({send, message, channel, guild, author, member, client, args}) {
+    async run({send}) {
         send({
             embed: {
                 title: "Ravioli ravioli...",
@@ -18,7 +18,7 @@ export default new NamedCommand({
         });
     },
     number: new Command({
-        async run({send, message, channel, guild, author, member, client, args}) {
+        async run({send, args}) {
             const arg: number = args[0];
 
             if (arg >= 1 && arg <= 9) {

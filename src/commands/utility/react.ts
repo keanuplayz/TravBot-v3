@@ -1,4 +1,4 @@
-import {Command, NamedCommand, RestCommand} from "../../core";
+import {NamedCommand, RestCommand} from "../../core";
 import {Message, Channel, TextChannel} from "discord.js";
 import {processEmoteQueryArray} from "./modules/emote-utils";
 
@@ -8,7 +8,7 @@ export default new NamedCommand({
     usage: 'react <emotes...> (<distance / message ID / "Copy ID" / "Copy Message Link">)',
     run: "You need to enter some emotes first.",
     any: new RestCommand({
-        async run({send, message, channel, guild, author, member, client, args}) {
+        async run({send, message, channel, guild, client, args}) {
             let target: Message | undefined;
             let distance = 1;
 
