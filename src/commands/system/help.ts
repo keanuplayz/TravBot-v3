@@ -20,21 +20,16 @@ export default new NamedCommand({
         const commands = await getCommandList();
         const categoryArray = commands.keyArray();
 
-        paginate(
-            send,
-            (page, hasMultiplePages) => {
-                const category = categoryArray[page];
-                const commandList = commands.get(category)!;
-                let output = `Legend: \`<type>\`, \`[list/of/stuff]\`, \`(optional)\`, \`(<optional type>)\`, \`([optional/list/...])\`\n`;
-                for (const command of commandList) output += `\n❯ \`${command.name}\`: ${command.description}`;
-                return new MessageEmbed()
-                    .setTitle(hasMultiplePages ? `${category} (Page ${page + 1} of ${categoryArray.length})` : category)
-                    .setDescription(output)
-                    .setColor(EMBED_COLOR);
-            },
-            categoryArray.length,
-            author.id
-        );
+        paginate(send, author.id, categoryArray.length, (page, hasMultiplePages) => {
+            const category = categoryArray[page];
+            const commandList = commands.get(category)!;
+            let output = `Legend: \`<type>\`, \`[list/of/stuff]\`, \`(optional)\`, \`(<optional type>)\`, \`([optional/list/...])\`\n`;
+            for (const command of commandList) output += `\n❯ \`${command.name}\`: ${command.description}`;
+            return new MessageEmbed()
+                .setTitle(hasMultiplePages ? `${category} (Page ${page + 1} of ${categoryArray.length})` : category)
+                .setDescription(output)
+                .setColor(EMBED_COLOR);
+        });
     },
     any: new Command({
         async run({send, message, channel, guild, author, member, client, args}) {

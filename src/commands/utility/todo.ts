@@ -26,7 +26,6 @@ export default new NamedCommand({
                 async run({send, message, channel, guild, author, member, client, args, combined}) {
                     const user = Storage.getUser(author.id);
                     user.todoList[Date.now().toString()] = combined;
-                    console.debug(user.todoList);
                     Storage.save();
                     send(`Successfully added \`${combined}\` to your todo list.`);
                 }

@@ -3,7 +3,6 @@ import {
     Message,
     Guild,
     GuildMember,
-    Permissions,
     TextChannel,
     DMChannel,
     NewsChannel,
@@ -17,9 +16,10 @@ import {
     APIMessage,
     StringResolvable,
     EmojiIdentifierResolvable,
-    MessageReaction
+    MessageReaction,
+    PartialUser
 } from "discord.js";
-import {unreactEventListeners, replyEventListeners} from "./eventListeners";
+import {reactEventListeners, emptyReactEventListeners, replyEventListeners} from "./eventListeners";
 import {client} from "./interface";
 
 export type SingleMessageOptions = MessageOptions & {split?: false};
@@ -33,150 +33,119 @@ export type SendFunction = ((
     ((content: StringResolvable, options: MessageOptions & {split: true | SplitOptions}) => Promise<Message[]>) &
     ((content: StringResolvable, options: MessageOptions) => Promise<Message | Message[]>);
 
-const FIVE_BACKWARDS_EMOJI = "⏪";
-const BACKWARDS_EMOJI = "⬅️";
-const FORWARDS_EMOJI = "➡️";
-const FIVE_FORWARDS_EMOJI = "⏩";
+interface PaginateOptions {
+    multiPageSize?: number;
+    idleTimeout?: number;
+}
 
 // Pagination function that allows for customization via a callback.
 // Define your own pages outside the function because this only manages the actual turning of pages.
 /**
  * Takes a message and some additional parameters and makes a reaction page with it. All the pagination logic is taken care of but nothing more, the page index is returned and you have to send a callback to do something with it.
+ *
+ * Returns the page number the user left off on in case you want to implement a return to page function.
  */
-export async function paginate(
+export function paginate(
     send: SendFunction,
-    onTurnPage: (page: number, hasMultiplePages: boolean) => SingleMessageOptions,
+    listenTo: string | null,
     totalPages: number,
-    listenTo: string | null = null,
-    duration = 60000
-): Promise<void> {
-    const hasMultiplePages = totalPages > 1;
-    const message = await send(onTurnPage(0, hasMultiplePages));
+    onTurnPage: (page: number, hasMultiplePages: boolean) => SingleMessageOptions,
+    options?: PaginateOptions
+): Promise<number> {
+    if (totalPages < 1) throw new Error(`totalPages on paginate() must be 1 or more, ${totalPages} given.`);
 
-    if (hasMultiplePages) {
-        let page = 0;
-        const turn = (amount: number) => {
-            page += amount;
-
-            if (page >= totalPages) {
-                page %= totalPages;
-            } else if (page < 0) {
-                // Assuming 3 total pages, it's a bit tricker, but if we just take the modulo of the absolute value (|page| % total), we get (1 2 0 ...), and we just need the pattern (2 1 0 ...). It needs to reverse order except for when it's 0. I want to find a better solution, but for the time being... total - (|page| % total) unless (|page| % total) = 0, then return 0.
-                const flattened = Math.abs(page) % totalPages;
-                if (flattened !== 0) page = totalPages - flattened;
-            }
-
-            message.edit(onTurnPage(page, true));
-        };
-        const handle = (emote: string, reacterID: string) => {
-            if (reacterID === listenTo || listenTo === null) {
-                collector.resetTimer(); // The timer refresh MUST be present in both react and unreact.
-                switch (emote) {
-                    case FIVE_BACKWARDS_EMOJI:
-                        if (totalPages > 5) turn(-5);
-                        break;
-                    case BACKWARDS_EMOJI:
-                        turn(-1);
-                        break;
-                    case FORWARDS_EMOJI:
-                        turn(1);
-                        break;
-                    case FIVE_FORWARDS_EMOJI:
-                        if (totalPages > 5) turn(5);
-                        break;
-                }
-            }
-        };
-
-        // Listen for reactions and call the handler.
-        let backwardsReactionFive = totalPages > 5 ? await message.react(FIVE_BACKWARDS_EMOJI) : null;
-        let backwardsReaction = await message.react(BACKWARDS_EMOJI);
-        let forwardsReaction = await message.react(FORWARDS_EMOJI);
-        let forwardsReactionFive = totalPages > 5 ? await message.react(FIVE_FORWARDS_EMOJI) : null;
-        unreactEventListeners.set(message.id, handle);
-
-        const collector = message.createReactionCollector(
-            (reaction, user) => {
-                // This check is actually redundant because of handle().
-                if (user.id === listenTo || listenTo === null) {
-                    // The reason this is inside the call is because it's possible to switch a user's permissions halfway and suddenly throw an error.
-                    // This will dynamically adjust for that, switching modes depending on whether it currently has the "Manage Messages" permission.
-                    const canDeleteEmotes = botHasPermission(message.guild, Permissions.FLAGS.MANAGE_MESSAGES);
-                    handle(reaction.emoji.name, user.id);
-                    if (canDeleteEmotes) reaction.users.remove(user);
-                }
-
-                return false;
-            },
-            // Apparently, regardless of whether you put "time" or "idle", it won't matter to the collector.
-            // In order to actually reset the timer, you have to do it manually via collector.resetTimer().
-            {time: duration}
-        );
-
-        // When time's up, remove the bot's own reactions.
-        collector.on("end", () => {
-            unreactEventListeners.delete(message.id);
-            backwardsReactionFive?.users.remove(message.author);
-            backwardsReaction.users.remove(message.author);
-            forwardsReaction.users.remove(message.author);
-            forwardsReactionFive?.users.remove(message.author);
-        });
-    }
-}
-
-//export function generateMulti
-// paginate after generateonetimeprompt
-
-// Returns null if timed out, otherwise, returns the value.
-export function generateOneTimePrompt<T>(
-    message: Message,
-    stack: {[emote: string]: T},
-    listenTo: string | null = null,
-    duration = 60000
-): Promise<T | null> {
     return new Promise(async (resolve) => {
-        // First, start reacting to the message in order.
-        reactInOrder(message, Object.keys(stack));
+        const hasMultiplePages = totalPages > 1;
+        const message = await send(onTurnPage(0, hasMultiplePages));
 
-        // Then setup the reaction listener in parallel.
-        await message.awaitReactions(
-            (reaction: MessageReaction, user: User) => {
-                if (user.id === listenTo || listenTo === null) {
-                    const emote = reaction.emoji.name;
+        if (hasMultiplePages) {
+            const multiPageSize = options?.multiPageSize ?? 5;
+            const idleTimeout = options?.idleTimeout ?? 60000;
+            let page = 0;
 
-                    if (emote in stack) {
-                        resolve(stack[emote]);
-                        message.delete();
-                    }
+            const turn = (amount: number) => {
+                page += amount;
+
+                if (page >= totalPages) {
+                    page %= totalPages;
+                } else if (page < 0) {
+                    // Assuming 3 total pages, it's a bit tricker, but if we just take the modulo of the absolute value (|page| % total), we get (1 2 0 ...), and we just need the pattern (2 1 0 ...). It needs to reverse order except for when it's 0. I want to find a better solution, but for the time being... total - (|page| % total) unless (|page| % total) = 0, then return 0.
+                    const flattened = Math.abs(page) % totalPages;
+                    if (flattened !== 0) page = totalPages - flattened;
                 }
 
-                // CollectorFilter requires a boolean to be returned.
-                // My guess is that the return value of awaitReactions can be altered by making a boolean filter.
-                // However, because that's not my concern with this command, I don't have to worry about it.
-                // May as well just set it to false because I'm not concerned with collecting any reactions.
-                return false;
-            },
-            {time: duration}
-        );
+                message.edit(onTurnPage(page, true));
+            };
 
-        if (!message.deleted) {
-            message.delete();
-            resolve(null);
+            let stack: {[emote: string]: number} = {
+                "⬅️": -1,
+                "➡️": 1
+            };
+
+            if (totalPages > multiPageSize) {
+                stack = {
+                    "⏪": -multiPageSize,
+                    ...stack,
+                    "⏩": multiPageSize
+                };
+            }
+
+            const handle = (reaction: MessageReaction, user: User | PartialUser) => {
+                if (user.id === listenTo || (listenTo === null && user.id !== client.user!.id)) {
+                    // Turn the page
+                    const emote = reaction.emoji.name;
+                    if (emote in stack) turn(stack[emote]);
+
+                    // Reset the timer
+                    client.clearTimeout(timeout);
+                    timeout = client.setTimeout(destroy, idleTimeout);
+                }
+            };
+
+            // When time's up, remove the bot's own reactions.
+            const destroy = () => {
+                reactEventListeners.delete(message.id);
+                for (const emote of message.reactions.cache.values()) emote.users.remove(message.author);
+                resolve(page);
+            };
+
+            // Start the reactions and call the handler.
+            reactInOrder(message, Object.keys(stack));
+            reactEventListeners.set(message.id, handle);
+            emptyReactEventListeners.set(message.id, destroy);
+            let timeout = client.setTimeout(destroy, idleTimeout);
         }
     });
 }
 
-// Start a parallel chain of ordered reactions, allowing a collector to end early.
-// Check if the collector ended early by seeing if the message is already deleted.
-// Though apparently, message.deleted doesn't seem to update fast enough, so just put a try catch block on message.react().
-async function reactInOrder(message: Message, emotes: EmojiIdentifierResolvable[]): Promise<void> {
+export async function poll(message: Message, emotes: string[], duration = 60000): Promise<{[emote: string]: number}> {
+    if (emotes.length === 0) throw new Error("poll() was called without any emotes.");
+
+    reactInOrder(message, emotes);
+    const reactions = await message.awaitReactions(
+        (reaction: MessageReaction) => emotes.includes(reaction.emoji.name),
+        {time: duration}
+    );
+    const reactionsByCount: {[emote: string]: number} = {};
+
     for (const emote of emotes) {
-        try {
-            await message.react(emote);
-        } catch {
-            return;
+        const reaction = reactions.get(emote);
+
+        if (reaction) {
+            const hasBot = reaction.users.cache.has(client.user!.id); // Apparently, reaction.me doesn't work properly.
+
+            if (reaction.count !== null) {
+                const difference = hasBot ? 1 : 0;
+                reactionsByCount[emote] = reaction.count - difference;
+            } else {
+                reactionsByCount[emote] = 0;
+            }
+        } else {
+            reactionsByCount[emote] = 0;
         }
     }
+
+    return reactionsByCount;
 }
 
 export function confirm(message: Message, senderID: string, timeout = 30000): Promise<boolean | null> {
@@ -233,6 +202,58 @@ export function askForReply(message: Message, listenTo: string, timeout?: number
             }, timeout);
         }
     });
+}
+
+// Returns null if timed out, otherwise, returns the value.
+export function generateOneTimePrompt<T>(
+    message: Message,
+    stack: {[emote: string]: T},
+    listenTo: string | null = null,
+    duration = 60000
+): Promise<T | null> {
+    return new Promise(async (resolve) => {
+        // First, start reacting to the message in order.
+        reactInOrder(message, Object.keys(stack));
+
+        // Then setup the reaction listener in parallel.
+        await message.awaitReactions(
+            (reaction: MessageReaction, user: User) => {
+                if (user.id === listenTo || listenTo === null) {
+                    const emote = reaction.emoji.name;
+
+                    if (emote in stack) {
+                        resolve(stack[emote]);
+                        message.delete();
+                    }
+                }
+
+                // CollectorFilter requires a boolean to be returned.
+                // My guess is that the return value of awaitReactions can be altered by making a boolean filter.
+                // However, because that's not my concern with this command, I don't have to worry about it.
+                // May as well just set it to false because I'm not concerned with collecting any reactions.
+                return false;
+            },
+            {time: duration}
+        );
+
+        if (!message.deleted) {
+            message.delete();
+            resolve(null);
+        }
+    });
+}
+
+// Start a parallel chain of ordered reactions, allowing a collector to end early.
+// Check if the collector ended early by seeing if the message is already deleted.
+// Though apparently, message.deleted doesn't seem to update fast enough, so just put a try catch block on message.react().
+async function reactInOrder(message: Message, emotes: EmojiIdentifierResolvable[]): Promise<void> {
+    for (const emote of emotes) {
+        try {
+            await message.react(emote);
+        } catch {
+            return;
+        }
+    }
 }
 
 /**

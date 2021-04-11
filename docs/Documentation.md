@@ -75,9 +75,16 @@ Because versions are assigned to batches of changes rather than single changes (
 ```ts
 const pages = ["one", "two", "three"];
 
-paginate(send, page => {
+paginate(send, author.id, pages.length, page => {
 	return {content: pages[page]};
-}, pages.length, author.id);
+});
+```
+
+`poll()`
+```ts
+const results = await poll(await send("Do you agree with this decision?"), ["✅", "❌"]);
+results["✅"]; // number
+results["❌"]; // number
 ```
 
 `confirm()`

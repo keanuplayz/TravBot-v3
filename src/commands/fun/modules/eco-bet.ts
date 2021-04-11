@@ -1,4 +1,4 @@
-import {Command, NamedCommand, confirm} from "../../../core";
+import {Command, NamedCommand, confirm, poll} from "../../../core";
 import {pluralise} from "../../../lib";
 import {Storage} from "../../../structures";
 import {isAuthorized, getMoneyEmbed} from "./eco-utils";
@@ -113,54 +113,41 @@ export const BetCommand = new NamedCommand({
                             const receiver = Storage.getUser(target.id);
                             // [TODO: when D.JSv13 comes out, inline reply to clean up.]
                             // When bet is over, give a vote to ask people their thoughts.
-                            const voteMsg = await send(
-                                `VOTE: do you think that <@${
-                                    target.id
-                                }> has won the bet?\nhttps://discord.com/channels/${guild!.id}/${channel.id}/${
-                                    message.id
-                                }`
-                            );
-                            await voteMsg.react("✅");
-                            await voteMsg.react("❌");
-
                             // Filter reactions to only collect the pertinent ones.
-                            voteMsg
-                                .awaitReactions(
-                                    (reaction, user) => {
-                                        return ["✅", "❌"].includes(reaction.emoji.name);
-                                    },
-                                    // [Pertinence to make configurable on the fly.]
-                                    {time: parseDuration("2m")}
-                                )
-                                .then((reactions) => {
-                                    // Count votes
-                                    const okReaction = reactions.get("✅");
-                                    const noReaction = reactions.get("❌");
-                                    const ok = okReaction ? (okReaction.count ?? 1) - 1 : 0;
-                                    const no = noReaction ? (noReaction.count ?? 1) - 1 : 0;
+                            const results = await poll(
+                                await send(
+                                    `VOTE: do you think that <@${
+                                        target.id
+                                    }> has won the bet?\nhttps://discord.com/channels/${guild!.id}/${channel.id}/${
+                                        message.id
+                                    }`
+                                ),
+                                ["✅", "❌"],
+                                // [Pertinence to make configurable on the fly.]
+                                parseDuration("2m")
+                            );
 
-                                    if (ok > no) {
-                                        receiver.money += amount * 2;
-                                        send(
-                                            `By the people's votes, <@${target.id}> has won the bet that <@${author.id}> had sent them.`
-                                        );
-                                    } else if (ok < no) {
-                                        sender.money += amount * 2;
-                                        send(
-                                            `By the people's votes, <@${target.id}> has lost the bet that <@${author.id}> had sent them.`
-                                        );
-                                    } else {
-                                        sender.money += amount;
-                                        receiver.money += amount;
-                                        send(
-                                            `By the people's votes, <@${target.id}> couldn't be determined to have won or lost the bet that <@${author.id}> had sent them.`
-                                        );
-                                    }
+                            // Count votes
+                            const ok = results["✅"];
+                            const no = results["❌"];
 
-                                    sender.ecoBetInsurance -= amount;
-                                    receiver.ecoBetInsurance -= amount;
-                                    Storage.save();
-                                });
+                            if (ok > no) {
+                                receiver.money += amount * 2;
+                                send(`By the people's votes, ${target} has won the bet that ${author} had sent them.`);
+                            } else if (ok < no) {
+                                sender.money += amount * 2;
+                                send(`By the people's votes, ${target} has lost the bet that ${author} had sent them.`);
+                            } else {
+                                sender.money += amount;
+                                receiver.money += amount;
+                                send(
+                                    `By the people's votes, ${target} couldn't be determined to have won or lost the bet that ${author} had sent them.`
+                                );
+                            }
+
+                            sender.ecoBetInsurance -= amount;
+                            receiver.ecoBetInsurance -= amount;
+                            Storage.save();
                         }, duration);
                     } else return;
                 }
