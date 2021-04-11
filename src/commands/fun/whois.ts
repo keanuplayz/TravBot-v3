@@ -43,7 +43,7 @@ const registry: {[id: string]: string} = {
 export default new NamedCommand({
     description: "Tells you who you or the specified user is.",
     aliases: ["whoami"],
-    async run({send, message, channel, guild, author, member, client, args}) {
+    async run({send, author}) {
         const id = author.id;
 
         if (id in registry) {
@@ -54,7 +54,7 @@ export default new NamedCommand({
     },
     id: "user",
     user: new Command({
-        async run({send, message, channel, guild, author, member, client, args}) {
+        async run({send, args}) {
             const user: User = args[0];
             const id = user.id;
 
@@ -67,7 +67,7 @@ export default new NamedCommand({
     }),
     any: new RestCommand({
         channelType: CHANNEL_TYPE.GUILD,
-        async run({send, message, channel, guild, author, client, args, combined}) {
+        async run({send, guild, combined}) {
             const member = await getMemberByName(guild!, combined);
 
             if (typeof member !== "string") {

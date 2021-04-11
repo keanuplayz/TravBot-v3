@@ -8,7 +8,7 @@ export default new NamedCommand({
     any: new Command({
         run: "You need to enter some text to translate.",
         any: new RestCommand({
-            async run({send, message, channel, guild, author, member, client, args}) {
+            async run({send, args}) {
                 const lang = args[0];
                 const input = args.slice(1).join(" ");
                 translate(input, {

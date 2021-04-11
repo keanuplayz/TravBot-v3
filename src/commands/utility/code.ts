@@ -1,4 +1,4 @@
-import {Command, NamedCommand} from "../../core";
+import {NamedCommand} from "../../core";
 
 export default new NamedCommand({
     description: "Gives you the Github link.",

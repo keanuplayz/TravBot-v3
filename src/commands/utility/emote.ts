@@ -1,4 +1,4 @@
-import {Command, NamedCommand, RestCommand} from "../../core";
+import {NamedCommand, RestCommand} from "../../core";
 import {processEmoteQueryFormatted} from "./modules/emote-utils";
 
 export default new NamedCommand({
@@ -8,7 +8,7 @@ export default new NamedCommand({
     any: new RestCommand({
         description: "The emote(s) to send.",
         usage: "<emotes...>",
-        async run({send, guild, channel, message, args}) {
+        async run({send, args}) {
             const output = processEmoteQueryFormatted(args);
             if (output.length > 0) send(output);
         }

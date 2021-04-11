@@ -8,20 +8,20 @@ import moment, {utc} from "moment";
 
 export default new NamedCommand({
     description: "Command to provide all sorts of info about the current server, a user, etc.",
-    async run({send, message, channel, guild, author, member, client, args}) {
+    async run({send, author, member}) {
         send(await getUserInfo(author, member));
     },
     subcommands: {
         avatar: new NamedCommand({
             description: "Shows your own, or another user's avatar.",
             usage: "(<user>)",
-            async run({send, message, channel, guild, author, member, client, args}) {
+            async run({send, author}) {
                 send(author.displayAvatarURL({dynamic: true, size: 2048}));
             },
             id: "user",
             user: new Command({
                 description: "Shows your own, or another user's avatar.",
-                async run({send, message, channel, guild, author, member, client, args}) {
+                async run({send, args}) {
                     send(
                         args[0].displayAvatarURL({
                             dynamic: true,
@@ -33,7 +33,7 @@ export default new NamedCommand({
             any: new RestCommand({
                 description: "Shows another user's avatar by searching their name",
                 channelType: CHANNEL_TYPE.GUILD,
-                async run({send, message, channel, guild, author, client, args, combined}) {
+                async run({send, guild, combined}) {
                     const member = await getMemberByName(guild!, combined);
 
                     if (typeof member !== "string") {
@@ -51,7 +51,7 @@ export default new NamedCommand({
         }),
         bot: new NamedCommand({
             description: "Displays info about the bot.",
-            async run({send, message, channel, guild, author, member, client, args}) {
+            async run({send, guild, client}) {
                 const core = os.cpus()[0];
                 const embed = new MessageEmbed()
                     .setColor(guild?.me?.displayHexColor || "BLUE")
@@ -94,20 +94,20 @@ export default new NamedCommand({
             description: "Displays info about the current guild or another guild.",
             usage: "(<guild name>/<guild ID>)",
             channelType: CHANNEL_TYPE.GUILD,
-            async run({send, message, channel, guild, author, member, client, args}) {
+            async run({send, guild}) {
                 send(await getGuildInfo(guild!, guild));
             },
             id: "guild",
             guild: new Command({
                 description: "Display info about a guild by its ID.",
-                async run({send, message, channel, guild, author, member, client, args}) {
+                async run({send, guild, args}) {
                     const targetGuild = args[0] as Guild;
                     send(await getGuildInfo(targetGuild, guild));
                 }
             }),
             any: new RestCommand({
                 description: "Display info about a guild by finding its name.",
-                async run({send, message, channel, guild, author, member, client, args, combined}) {
+                async run({send, guild, combined}) {
                     const targetGuild = getGuildByName(combined);
 
                     if (typeof targetGuild !== "string") {
@@ -122,7 +122,7 @@ export default new NamedCommand({
     id: "user",
     user: new Command({
         description: "Displays info about mentioned user.",
-        async run({send, message, channel, guild, author, client, args}) {
+        async run({send, guild, args}) {
             const user = args[0] as User;
             // Transforms the User object into a GuildMember object of the current guild.
             const member = guild?.members.resolve(args[0]);

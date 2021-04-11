@@ -34,7 +34,7 @@ export default new NamedCommand({
     }),
     any: new RestCommand({
         description: "See how much money someone else has by using their username.",
-        async run({send, guild, channel, args, message, combined}) {
+        async run({send, guild, channel, combined}) {
             if (isAuthorized(guild, channel)) {
                 const member = await getMemberByName(guild!, combined);
                 if (typeof member !== "string") send(getMoneyEmbed(member.user));

@@ -1,5 +1,5 @@
 import {GuildEmoji, MessageEmbed, User} from "discord.js";
-import {Command, NamedCommand, RestCommand, paginate, SendFunction} from "../../core";
+import {NamedCommand, RestCommand, paginate, SendFunction} from "../../core";
 import {split} from "../../lib";
 import vm from "vm";
 
@@ -8,13 +8,13 @@ const REGEX_TIMEOUT_MS = 1000;
 export default new NamedCommand({
     description: "Lists all emotes the bot has in it's registry,",
     usage: "<regex pattern> (-flags)",
-    async run({send, message, channel, guild, author, member, client, args}) {
+    async run({send, author, client}) {
         displayEmoteList(client.emojis.cache.array(), send, author);
     },
     any: new RestCommand({
         description:
             "Filters emotes by via a regular expression. Flags can be added by adding a dash at the end. For example, to do a case-insensitive search, do %prefix%lsemotes somepattern -i",
-        async run({send, message, channel, guild, author, member, client, args}) {
+        async run({send, author, client, args}) {
             // If a guild ID is provided, filter all emotes by that guild (but only if there aren't any arguments afterward)
             if (args.length === 1 && /^\d{17,}$/.test(args[0])) {
                 const guildID: string = args[0];

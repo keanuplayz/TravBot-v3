@@ -1,4 +1,4 @@
-import {Command, NamedCommand, RestCommand} from "../../core";
+import {NamedCommand, RestCommand} from "../../core";
 
 const vaporwave = (() => {
     const map = new Map<string, string>();
@@ -25,7 +25,7 @@ export default new NamedCommand({
     description: "Transforms your text into ｖａｐｏｒｗａｖｅ.",
     run: "You need to enter some text!",
     any: new RestCommand({
-        async run({send, message, channel, guild, author, member, client, args, combined}) {
+        async run({send, combined}) {
             const text = getVaporwaveText(combined);
             if (text !== "") send(text);
             else send("Make sure to enter at least one valid character.");

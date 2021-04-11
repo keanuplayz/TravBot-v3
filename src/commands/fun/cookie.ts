@@ -31,7 +31,7 @@ export default new NamedCommand({
     run: ":cookie: Here's a cookie!",
     subcommands: {
         all: new NamedCommand({
-            async run({send, message, channel, guild, author, member, client, args}) {
+            async run({send, author}) {
                 send(`${author} gave everybody a cookie!`);
             }
         })
@@ -39,7 +39,7 @@ export default new NamedCommand({
     id: "user",
     user: new Command({
         description: "User to give cookie to.",
-        async run({send, message, channel, guild, author, member, client, args}) {
+        async run({send, author, args}) {
             const sender = author;
             const mention: User = args[0];
 

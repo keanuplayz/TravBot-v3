@@ -1,8 +1,8 @@
-import {Command, NamedCommand} from "../../core";
+import {NamedCommand} from "../../core";
 
 export default new NamedCommand({
     description: "Insult TravBot! >:D",
-    async run({send, message, channel, guild, author, member, client, args}) {
+    async run({send, channel, author}) {
         channel.startTyping();
         setTimeout(() => {
             send(

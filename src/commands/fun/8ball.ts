@@ -30,7 +30,7 @@ export default new NamedCommand({
     run: "Please provide a question.",
     any: new Command({
         description: "Question to ask the 8-ball.",
-        async run({send, message, channel, guild, author, member, client, args}) {
+        async run({send, message}) {
             const sender = message.author;
             send(`${random(responses)} <@${sender.id}>`);
         }

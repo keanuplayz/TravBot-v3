@@ -1,4 +1,4 @@
-import {Command, NamedCommand, RestCommand} from "../../core";
+import {NamedCommand, RestCommand} from "../../core";
 import {MessageEmbed} from "discord.js";
 import urban from "relevant-urban";
 
@@ -6,7 +6,7 @@ export default new NamedCommand({
     description: "Gives you a definition of the inputted word.",
     run: "Please input a word.",
     any: new RestCommand({
-        async run({send, message, channel, guild, author, member, client, args, combined}) {
+        async run({send, combined}) {
             // [Bug Fix]: Use encodeURIComponent() when emojis are used: "TypeError [ERR_UNESCAPED_CHARACTERS]: Request path contains unescaped characters"
             urban(encodeURIComponent(combined))
                 .then((res) => {

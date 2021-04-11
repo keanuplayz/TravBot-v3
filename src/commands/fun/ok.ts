@@ -1,4 +1,4 @@
-import {Command, NamedCommand} from "../../core";
+import {NamedCommand} from "../../core";
 import {random} from "../../lib";
 
 const responses = [
@@ -61,7 +61,7 @@ const responses = [
 
 export default new NamedCommand({
     description: "Sends random ok message.",
-    async run({send, message, channel, guild, author, member, client, args}) {
+    async run({send}) {
         send(`ok ${random(responses)}`);
     }
 });
