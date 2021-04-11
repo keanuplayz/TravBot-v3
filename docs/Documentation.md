@@ -75,27 +75,24 @@ Because versions are assigned to batches of changes rather than single changes (
 ```ts
 const pages = ["one", "two", "three"];
 
-paginate(channel, author.id, pages.length, (page) => {
-	return {
-		content: pages[page]
-	};
-});
+paginate(send, page => {
+	return {content: pages[page]};
+}, pages.length, author.id);
 ```
 
-`prompt()`
+`confirm()`
 ```ts
-const msg = await channel.send('Are you sure you want to delete this?');
-
-prompt(msg, author.id, () => {
-	//...
-});
+const result = await confirm(await send("Are you sure you want to delete this?"), author.id); // boolean | null
 ```
 
-`callMemberByUsername()`
+`askMultipleChoice()`
 ```ts
-callMemberByUsername(message, args.join(" "), (member) => {
-	channel.send(`Your nickname is ${member.nickname}.`);
-});
+const result = await askMultipleChoice(await send("Which of the following numbers is your favorite?"), author.id, 4, 10000); // number (0 to 3) | null
+```
+
+`askForReply()`
+```ts
+const reply = await askForReply(await send("What is your favorite thing to do?"), author.id, 10000); // Message | null
 ```
 
 ## [src/lib](../src/lib.ts) - General utility functions

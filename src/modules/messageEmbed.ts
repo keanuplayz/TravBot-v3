@@ -1,5 +1,5 @@
 import {client} from "../index";
-import {Message, MessageEmbed} from "discord.js";
+import {MessageEmbed} from "discord.js";
 import {getPrefix} from "../structures";
 import {getMessageByID} from "../core";
 
@@ -13,7 +13,7 @@ client.on("message", async (message) => {
     const linkMessage = await getMessageByID(channelID, messageID);
 
     // If it's an invalid link (or the bot doesn't have access to it).
-    if (!(linkMessage instanceof Message)) {
+    if (typeof linkMessage === "string") {
         return message.channel.send("I don't have access to that channel!");
     }
 

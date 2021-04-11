@@ -4,7 +4,6 @@ import {DailyCommand, PayCommand, GuildCommand, LeaderboardCommand} from "./modu
 import {BuyCommand, ShopCommand} from "./modules/eco-shop";
 import {MondayCommand, AwardCommand} from "./modules/eco-extras";
 import {BetCommand} from "./modules/eco-bet";
-import {GuildMember} from "discord.js";
 
 export default new NamedCommand({
     description: "Economy command for Monika.",
@@ -38,7 +37,7 @@ export default new NamedCommand({
         async run({send, guild, channel, args, message, combined}) {
             if (isAuthorized(guild, channel)) {
                 const member = await getMemberByName(guild!, combined);
-                if (member instanceof GuildMember) send(getMoneyEmbed(member.user));
+                if (typeof member !== "string") send(getMoneyEmbed(member.user));
                 else send(member);
             }
         }

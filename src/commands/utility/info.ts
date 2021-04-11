@@ -36,7 +36,7 @@ export default new NamedCommand({
                 async run({send, message, channel, guild, author, client, args, combined}) {
                     const member = await getMemberByName(guild!, combined);
 
-                    if (member instanceof GuildMember) {
+                    if (typeof member !== "string") {
                         send(
                             member.user.displayAvatarURL({
                                 dynamic: true,
@@ -110,7 +110,7 @@ export default new NamedCommand({
                 async run({send, message, channel, guild, author, member, client, args, combined}) {
                     const targetGuild = getGuildByName(combined);
 
-                    if (targetGuild instanceof Guild) {
+                    if (typeof targetGuild !== "string") {
                         send(await getGuildInfo(targetGuild, guild));
                     } else {
                         send(targetGuild);

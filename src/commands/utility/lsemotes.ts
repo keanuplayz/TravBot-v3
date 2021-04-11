@@ -90,17 +90,22 @@ async function displayEmoteList(emotes: GuildEmoji[], send: SendFunction, author
 
     // Gather the first page (if it even exists, which it might not if there no valid emotes appear)
     if (pages > 0) {
-        paginate(send, author.id, pages, (page, hasMultiplePages) => {
-            embed.setTitle(hasMultiplePages ? `**Emotes** (Page ${page + 1} of ${pages})` : "**Emotes**");
+        paginate(
+            send,
+            (page, hasMultiplePages) => {
+                embed.setTitle(hasMultiplePages ? `**Emotes** (Page ${page + 1} of ${pages})` : "**Emotes**");
 
-            let desc = "";
-            for (const emote of sections[page]) {
-                desc += `${emote} ${emote.name} (**${emote.guild.name}**)\n`;
-            }
-            embed.setDescription(desc);
+                let desc = "";
+                for (const emote of sections[page]) {
+                    desc += `${emote} ${emote.name} (**${emote.guild.name}**)\n`;
+                }
+                embed.setDescription(desc);
 
-            return embed;
-        });
+                return embed;
+            },
+            pages,
+            author.id
+        );
     } else {
         send("No valid emotes found by that query.");
     }

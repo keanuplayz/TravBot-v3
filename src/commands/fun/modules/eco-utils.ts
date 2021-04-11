@@ -42,11 +42,11 @@ export function getSendEmbed(sender: User, receiver: User, amount: number): obje
             description: `${sender.toString()} has sent ${pluralise(amount, "Mon", "s")} to ${receiver.toString()}!`,
             fields: [
                 {
-                    name: `Sender: ${sender.username}#${sender.discriminator}`,
+                    name: `Sender: ${sender.tag}`,
                     value: pluralise(Storage.getUser(sender.id).money, "Mon", "s")
                 },
                 {
-                    name: `Receiver: ${receiver.username}#${receiver.discriminator}`,
+                    name: `Receiver: ${receiver.tag}`,
                     value: pluralise(Storage.getUser(receiver.id).money, "Mon", "s")
                 }
             ],

@@ -1,5 +1,4 @@
-import {GuildMember} from "discord.js";
-import {Command, getMemberByName, NamedCommand, prompt, RestCommand} from "../../../core";
+import {Command, getMemberByName, NamedCommand, confirm, RestCommand} from "../../../core";
 import {pluralise} from "../../../lib";
 import {Storage} from "../../../structures";
 import {isAuthorized, getMoneyEmbed, getSendEmbed, ECO_EMBED_COLOR} from "./eco-utils";
@@ -90,7 +89,7 @@ export const LeaderboardCommand = new NamedCommand({
                 const user = await client.users.fetch(id);
 
                 fields.push({
-                    name: `#${i + 1}. ${user.username}#${user.discriminator}`,
+                    name: `#${i + 1}. ${user.tag}`,
                     value: pluralise(users[id].money, "Mon", "s")
                 });
             }
@@ -158,42 +157,38 @@ export const PayCommand = new NamedCommand({
                     return send("You have to use this in a server if you want to send Mons with a username!");
 
                 const member = await getMemberByName(guild, combined);
-                if (!(member instanceof GuildMember)) return send(member);
+                if (typeof member === "string") return send(member);
                 else if (member.user.id === author.id) return send("You can't send Mons to yourself!");
                 else if (member.user.bot && process.argv[2] !== "dev") return send("You can't send Mons to a bot!");
 
                 const target = member.user;
 
-                return prompt(
-                    await send(
-                        `Are you sure you want to send ${pluralise(
-                            amount,
-                            "Mon",
-                            "s"
-                        )} to this person?\n*(This message will automatically be deleted after 10 seconds.)*`,
-                        {
-                            embed: {
-                                color: ECO_EMBED_COLOR,
-                                author: {
-                                    name: `${target.username}#${target.discriminator}`,
-                                    icon_url: target.displayAvatarURL({
-                                        format: "png",
-                                        dynamic: true
-                                    })
-                                }
+                const result = await confirm(
+                    await send(`Are you sure you want to send ${pluralise(amount, "Mon", "s")} to this person?`, {
+                        embed: {
+                            color: ECO_EMBED_COLOR,
+                            author: {
+                                name: target.tag,
+                                icon_url: target.displayAvatarURL({
+                                    format: "png",
+                                    dynamic: true
+                                })
                             }
                         }
-                    ),
-                    author.id,
-                    () => {
-                        const receiver = Storage.getUser(target.id);
-                        sender.money -= amount;
-                        receiver.money += amount;
-                        Storage.save();
-                        send(getSendEmbed(author, target, amount));
-                    }
+                    }),
+                    author.id
                 );
+
+                if (result) {
+                    const receiver = Storage.getUser(target.id);
+                    sender.money -= amount;
+                    receiver.money += amount;
+                    Storage.save();
+                    send(getSendEmbed(author, target, amount));
+                }
             }
+
+            return;
         }
     })
 });

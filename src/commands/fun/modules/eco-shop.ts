@@ -34,12 +34,17 @@ export const ShopCommand = new NamedCommand({
             const shopPages = split(ShopItems, 5);
             const pageAmount = shopPages.length;
 
-            paginate(send, author.id, pageAmount, (page, hasMultiplePages) => {
-                return getShopEmbed(
-                    shopPages[page],
-                    hasMultiplePages ? `Shop (Page ${page + 1} of ${pageAmount})` : "Shop"
-                );
-            });
+            paginate(
+                send,
+                (page, hasMultiplePages) => {
+                    return getShopEmbed(
+                        shopPages[page],
+                        hasMultiplePages ? `Shop (Page ${page + 1} of ${pageAmount})` : "Shop"
+                    );
+                },
+                pageAmount,
+                author.id
+            );
         }
     }
 });

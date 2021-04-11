@@ -1,4 +1,4 @@
-import {User, GuildMember} from "discord.js";
+import {User} from "discord.js";
 import {Command, NamedCommand, getMemberByName, CHANNEL_TYPE, RestCommand} from "../../core";
 
 // Quotes must be used here or the numbers will change
@@ -70,7 +70,7 @@ export default new NamedCommand({
         async run({send, message, channel, guild, author, client, args, combined}) {
             const member = await getMemberByName(guild!, combined);
 
-            if (member instanceof GuildMember) {
+            if (typeof member !== "string") {
                 if (member.id in registry) {
                     send(`\`${member.nickname ?? member.user.username}\` - ${registry[member.id]}`);
                 } else {
