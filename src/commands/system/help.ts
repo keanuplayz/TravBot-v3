@@ -1,5 +1,5 @@
 import {
-    Command,
+    RestCommand,
     NamedCommand,
     CHANNEL_TYPE,
     getPermissionName,
@@ -51,7 +51,7 @@ export default new NamedCommand({
                 .setColor(EMBED_COLOR);
         });
     },
-    any: new Command({
+    any: new RestCommand({
         async run({send, args}) {
             const resultingBlob = await getCommandInfo(args);
             if (typeof resultingBlob === "string") return send(resultingBlob);
