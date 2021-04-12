@@ -27,7 +27,7 @@ export default new NamedCommand({
             let output = LEGEND;
 
             for (const command of commandList) {
-                const field = `\n❯ \`${command.name}\`: ${command.description}`.repeat(2);
+                const field = `\n❯ \`${command.name}\`: ${command.description}`;
                 const newOutput = output + field;
 
                 // Push then reset the output if it overflows, otherwise, continue as normal.
