@@ -23,7 +23,7 @@ export default new NamedCommand({
             );
 
             collector.on("end", () => {
-                react.users.remove(msg.author);
+                if (!msg.deleted) react.users.remove(msg.author);
             });
         }
     })
