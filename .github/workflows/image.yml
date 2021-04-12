@@ -3,7 +3,6 @@ on:
     push:
         branches:
             - typescript
-            - docker
 
 jobs:
     analyze:
@@ -16,10 +15,13 @@ jobs:
                   fetch-depth: 2
 
             - name: Setup Node.JS
-              uses: actions/setup-node@v2-beta
+              uses: actions/setup-node@v2
               with:
-                  node-version: "12"
-            - run: npm ci
+                  node-version: "14"
+            # https://github.com/npm/cli/issues/558#issuecomment-580018468
+            # Error: "npm ERR! fsevents not accessible from jest-haste-map"
+            # (supposed to just be a warning b/c optional dependency, but CI environment causes it to fail)
+            - run: npm i
 
             - name: Build codebase
               run: npm run build
