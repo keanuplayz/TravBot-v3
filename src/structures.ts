@@ -57,18 +57,30 @@ class User {
     }
 }
 
+class Member {
+    public streamCategory: string | null;
+
+    constructor(data?: GenericJSON) {
+        this.streamCategory = select(data?.streamCategory, null, String);
+    }
+}
+
 class Guild {
     public prefix: string | null;
     public welcomeType: "none" | "text" | "graphical";
     public welcomeChannel: string | null;
     public welcomeMessage: string | null;
     public streamingChannel: string | null;
+    public streamingRoles: {[role: string]: string}; // Role ID: Category Name
+    public members: {[id: string]: Member};
 
     constructor(data?: GenericJSON) {
         this.prefix = select(data?.prefix, null, String);
         this.welcomeChannel = select(data?.welcomeChannel, null, String);
         this.welcomeMessage = select(data?.welcomeMessage, null, String);
         this.streamingChannel = select(data?.streamingChannel, null, String);
+        this.streamingRoles = {};
+        this.members = {};
 
         switch (data?.welcomeType) {
             case "text":
@@ -80,6 +92,37 @@ class Guild {
             default:
                 this.welcomeType = "none";
                 break;
+        }
+
+        if (data?.streamingRoles) {
+            for (const id in data.streamingRoles) {
+                const category = data.streamingRoles[id];
+
+                if (/\d{17,}/g.test(id) && typeof category === "string") {
+                    this.streamingRoles[id] = category;
+                }
+            }
+        }
+
+        if (data?.members) {
+            for (let id in data.members) {
+                if (/\d{17,}/g.test(id)) {
+                    this.members[id] = new Member(data.members[id]);
+                }
+            }
+        }
+    }
+
+    /** Gets a member's profile if they exist and generate one if not. */
+    public getMember(id: string): Member {
+        if (!/\d{17,}/g.test(id))
+            console.warn(`"${id}" is not a valid user ID! It will be erased when the data loads again.`);
+
+        if (id in this.members) return this.members[id];
+        else {
+            const member = new Member();
+            this.members[id] = member;
+            return member;
         }
     }
 }

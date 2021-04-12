@@ -9,7 +9,7 @@ import {
 } from "../../core";
 import {clean} from "../../lib";
 import {Config, Storage} from "../../structures";
-import {Permissions, TextChannel, User} from "discord.js";
+import {Permissions, TextChannel, User, Role} from "discord.js";
 import {logs} from "../../modules/globals";
 
 function getLogBuffer(type: string) {
@@ -162,6 +162,46 @@ export default new NamedCommand({
                             send(`Successfully set this server's stream notifications channel to ${result}.`);
                         }
                     })
+                }),
+                streamrole: new NamedCommand({
+                    description: "Sets/removes a stream notification role (and the corresponding category name)",
+                    usage: "set/remove <...>",
+                    run: "You need to enter in a role.",
+                    subcommands: {
+                        set: new NamedCommand({
+                            usage: "<role> <category>",
+                            id: "role",
+                            role: new Command({
+                                run: "You need to enter a category name.",
+                                any: new RestCommand({
+                                    async run({send, guild, args, combined}) {
+                                        const role = args[0] as Role;
+                                        Storage.getGuild(guild!.id).streamingRoles[role.id] = combined;
+                                        Storage.save();
+                                        send(
+                                            `Successfully set the category \`${combined}\` to notify \`${role.name}\`.`
+                                        );
+                                    }
+                                })
+                            })
+                        }),
+                        remove: new NamedCommand({
+                            usage: "<role>",
+                            id: "role",
+                            role: new Command({
+                                async run({send, guild, args}) {
+                                    const role = args[0] as Role;
+                                    const guildStorage = Storage.getGuild(guild!.id);
+                                    const category = guildStorage.streamingRoles[role.id];
+                                    delete guildStorage.streamingRoles[role.id];
+                                    Storage.save();
+                                    send(
+                                        `Successfully removed the category \`${category}\` to notify \`${role.name}\`.`
+                                    );
+                                }
+                            })
+                        })
+                    }
                 })
             }
         }),
@@ -251,7 +291,7 @@ export default new NamedCommand({
             run: "You have to enter some code to execute first.",
             any: new RestCommand({
                 // You have to bring everything into scope to use them. AFAIK, there isn't a more maintainable way to do this, but at least TS will let you know if anything gets removed.
-                async run({send, combined}) {
+                async run({send, message, channel, guild, author, member, client, args, combined}) {
                     try {
                         let evaled = eval(combined);
                         if (typeof evaled !== "string") evaled = require("util").inspect(evaled);
