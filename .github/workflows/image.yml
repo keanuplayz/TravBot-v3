@@ -21,7 +21,7 @@ jobs:
             # https://github.com/npm/cli/issues/558#issuecomment-580018468
             # Error: "npm ERR! fsevents not accessible from jest-haste-map"
             # (supposed to just be a warning b/c optional dependency, but CI environment causes it to fail)
-            - run: npm ci
+            - run: npm i
 
             - name: Build codebase
               run: npm run build
