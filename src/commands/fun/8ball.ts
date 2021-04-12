@@ -1,4 +1,4 @@
-import {Command, NamedCommand} from "../../core";
+import {NamedCommand, RestCommand} from "../../core";
 import {random} from "../../lib";
 
 const responses = [
@@ -28,11 +28,10 @@ export default new NamedCommand({
     description: "Answers your question in an 8-ball manner.",
     usage: "<question>",
     run: "Please provide a question.",
-    any: new Command({
+    any: new RestCommand({
         description: "Question to ask the 8-ball.",
-        async run({send, message}) {
-            const sender = message.author;
-            send(`${random(responses)} <@${sender.id}>`);
+        async run({send, author}) {
+            send(`${random(responses)} ${author}`);
         }
     })
 });

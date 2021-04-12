@@ -40,13 +40,12 @@ export default new NamedCommand({
     user: new Command({
         description: "User to give cookie to.",
         async run({send, author, args}) {
-            const sender = author;
             const mention: User = args[0];
 
-            if (mention.id == sender.id) return send("You can't give yourself cookies!");
+            if (mention.id == author.id) return send("You can't give yourself cookies!");
 
             return send(
-                `:cookie: <@${sender.id}> ${parseVars(random(cookies), {
+                `:cookie: ${author} ${parseVars(random(cookies), {
                     target: mention.toString()
                 })}`
             );
