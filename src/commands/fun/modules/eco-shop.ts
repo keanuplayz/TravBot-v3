@@ -49,7 +49,7 @@ export const BuyCommand = new NamedCommand({
     usage: "<item>",
     run: "You need to specify an item to buy.",
     any: new RestCommand({
-        async run({send, guild, channel, args, message, author, combined}) {
+        async run({send, guild, channel, message, author, combined}) {
             if (isAuthorized(guild, channel)) {
                 let found = false;
                 let amount = 1; // The amount the user is buying.

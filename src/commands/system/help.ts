@@ -11,28 +11,48 @@ import {requireAllCasesHandledFor} from "../../lib";
 import {MessageEmbed} from "discord.js";
 
 const EMBED_COLOR = "#158a28";
+const LEGEND = "Legend: `<type>`, `[list/of/stuff]`, `(optional)`, `(<optional type>)`, `([optional/list/...])`\n";
 
 export default new NamedCommand({
     description: "Lists all commands. If a command is specified, their arguments are listed as well.",
     usage: "([command, [subcommand/type], ...])",
     aliases: ["h"],
-    async run({send, message, channel, guild, author, member, client, args}) {
+    async run({send, author}) {
         const commands = await getCommandList();
-        const categoryArray = commands.keyArray();
+        const helpMenuPages: [string, string][] = []; // An array of (category, description) tuples.
 
-        paginate(send, author.id, categoryArray.length, (page, hasMultiplePages) => {
-            const category = categoryArray[page];
+        // Prevent the description of one category from overflowing by splitting it into multiple pages if needed.
+        for (const category of commands.keyArray()) {
             const commandList = commands.get(category)!;
-            let output = `Legend: \`<type>\`, \`[list/of/stuff]\`, \`(optional)\`, \`(<optional type>)\`, \`([optional/list/...])\`\n`;
-            for (const command of commandList) output += `\n❯ \`${command.name}\`: ${command.description}`;
+            let output = LEGEND;
+
+            for (const command of commandList) {
+                const field = `\n❯ \`${command.name}\`: ${command.description}`.repeat(2);
+                const newOutput = output + field;
+
+                // Push then reset the output if it overflows, otherwise, continue as normal.
+                if (newOutput.length > 2048) {
+                    helpMenuPages.push([category, output]);
+                    output = LEGEND + field;
+                } else {
+                    output = newOutput;
+                }
+            }
+
+            // Then push whatever's remaining.
+            helpMenuPages.push([category, output]);
+        }
+
+        paginate(send, author.id, helpMenuPages.length, (page, hasMultiplePages) => {
+            const [category, output] = helpMenuPages[page];
             return new MessageEmbed()
-                .setTitle(hasMultiplePages ? `${category} (Page ${page + 1} of ${categoryArray.length})` : category)
+                .setTitle(hasMultiplePages ? `${category} (Page ${page + 1} of ${helpMenuPages.length})` : category)
                 .setDescription(output)
                 .setColor(EMBED_COLOR);
         });
     },
     any: new Command({
-        async run({send, message, channel, guild, author, member, client, args}) {
+        async run({send, args}) {
             const resultingBlob = await getCommandInfo(args);
             if (typeof resultingBlob === "string") return send(resultingBlob);
             const [result, category] = resultingBlob;

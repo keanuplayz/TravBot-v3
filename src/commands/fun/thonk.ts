@@ -33,7 +33,7 @@ let phrase = "I have no currently set phrase!";
 
 export default new NamedCommand({
     description: "Transforms your text into ｖｉｅｔｎａｍｅｓｅ.",
-    usage: "thonk ([text])",
+    usage: "([text])",
     async run({send, author}) {
         const msg = await send(transform(phrase));
         msg.createReactionCollector(
@@ -46,7 +46,8 @@ export default new NamedCommand({
     },
     any: new RestCommand({
         async run({send, author, combined}) {
-            const msg = await send(transform(combined));
+            phrase = combined;
+            const msg = await send(transform(phrase));
             msg.createReactionCollector(
                 (reaction, user) => {
                     if (user.id === author.id && reaction.emoji.name === "❌") msg.delete();

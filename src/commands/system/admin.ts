@@ -29,7 +29,7 @@ const statuses = ["online", "idle", "dnd", "invisible"];
 export default new NamedCommand({
     description:
         "An all-in-one command to do admin stuff. You need to be either an admin of the server or one of the bot's mechanics to use this command.",
-    async run({send, message, channel, guild, author, member, client, args}) {
+    async run({send, author, member}) {
         const permLevel = getPermissionLevel(author, member);
         return send(`${author}, your permission level is \`${getPermissionName(permLevel)}\` (${permLevel}).`);
     },
@@ -43,7 +43,7 @@ export default new NamedCommand({
                 prefix: new NamedCommand({
                     description: "Set a custom prefix for your guild. Removes your custom prefix if none is provided.",
                     usage: "(<prefix>) (<@bot>)",
-                    async run({send, message, channel, guild, author, member, client, args}) {
+                    async run({send, guild}) {
                         Storage.getGuild(guild!.id).prefix = null;
                         Storage.save();
                         send(
@@ -51,14 +51,14 @@ export default new NamedCommand({
                         );
                     },
                     any: new Command({
-                        async run({send, message, channel, guild, author, member, client, args}) {
+                        async run({send, guild, args}) {
                             Storage.getGuild(guild!.id).prefix = args[0];
                             Storage.save();
                             send(`The custom prefix for this guild is now \`${args[0]}\`.`);
                         },
                         user: new Command({
                             description: "Specifies the bot in case of conflicting prefixes.",
-                            async run({send, message, channel, guild, author, member, client, args}) {
+                            async run({send, guild, client, args}) {
                                 if ((args[1] as User).id === client.user!.id) {
                                     Storage.getGuild(guild!.id).prefix = args[0];
                                     Storage.save();
@@ -77,7 +77,7 @@ export default new NamedCommand({
                             description:
                                 "Sets how welcome messages are displayed for your server. Removes welcome messages if unspecified.",
                             usage: "`none`/`text`/`graphical`",
-                            async run({send, message, channel, guild, author, member, client, args}) {
+                            async run({send, guild}) {
                                 Storage.getGuild(guild!.id).welcomeType = "none";
                                 Storage.save();
                                 send("Set this server's welcome type to `none`.");
@@ -85,14 +85,14 @@ export default new NamedCommand({
                             // I should probably make this a bit more dynamic... Oh well.
                             subcommands: {
                                 text: new NamedCommand({
-                                    async run({send, message, channel, guild, author, member, client, args}) {
+                                    async run({send, guild}) {
                                         Storage.getGuild(guild!.id).welcomeType = "text";
                                         Storage.save();
                                         send("Set this server's welcome type to `text`.");
                                     }
                                 }),
                                 graphical: new NamedCommand({
-                                    async run({send, message, channel, guild, author, member, client, args}) {
+                                    async run({send, guild}) {
                                         Storage.getGuild(guild!.id).welcomeType = "graphical";
                                         Storage.save();
                                         send("Set this server's welcome type to `graphical`.");
@@ -103,14 +103,14 @@ export default new NamedCommand({
                         channel: new NamedCommand({
                             description: "Sets the welcome channel for your server. Type `#` to reference the channel.",
                             usage: "(<channel mention>)",
-                            async run({send, message, channel, guild, author, member, client, args}) {
+                            async run({send, channel, guild}) {
                                 Storage.getGuild(guild!.id).welcomeChannel = channel.id;
                                 Storage.save();
                                 send(`Successfully set ${channel} as the welcome channel for this server.`);
                             },
                             id: "channel",
                             channel: new Command({
-                                async run({send, message, channel, guild, author, member, client, args}) {
+                                async run({send, guild, args}) {
                                     const result = args[0] as TextChannel;
                                     Storage.getGuild(guild!.id).welcomeChannel = result.id;
                                     Storage.save();
@@ -122,13 +122,13 @@ export default new NamedCommand({
                             description:
                                 "Sets a custom welcome message for your server. Use `%user%` as the placeholder for the user.",
                             usage: "(<message>)",
-                            async run({send, message, channel, guild, author, member, client, args}) {
+                            async run({send, guild}) {
                                 Storage.getGuild(guild!.id).welcomeMessage = null;
                                 Storage.save();
                                 send("Reset your server's welcome message to the default.");
                             },
                             any: new RestCommand({
-                                async run({send, message, channel, guild, author, member, client, args, combined}) {
+                                async run({send, guild, combined}) {
                                     Storage.getGuild(guild!.id).welcomeMessage = combined;
                                     Storage.save();
                                     send(`Set your server's welcome message to \`${combined}\`.`);
@@ -140,7 +140,7 @@ export default new NamedCommand({
                 stream: new NamedCommand({
                     description: "Set a channel to send stream notifications. Type `#` to reference the channel.",
                     usage: "(<channel mention>)",
-                    async run({send, message, channel, guild, author, member, client, args}) {
+                    async run({send, channel, guild}) {
                         const targetGuild = Storage.getGuild(guild!.id);
 
                         if (targetGuild.streamingChannel) {
@@ -155,7 +155,7 @@ export default new NamedCommand({
                     },
                     id: "channel",
                     channel: new Command({
-                        async run({send, message, channel, guild, author, member, client, args}) {
+                        async run({send, guild, args}) {
                             const result = args[0] as TextChannel;
                             Storage.getGuild(guild!.id).streamingChannel = result.id;
                             Storage.save();
@@ -168,12 +168,12 @@ export default new NamedCommand({
         diag: new NamedCommand({
             description: 'Requests a debug log with the "info" verbosity level.',
             permission: PERMISSIONS.BOT_SUPPORT,
-            async run({send, message, channel, guild, author, member, client, args}) {
+            async run({send}) {
                 send(getLogBuffer("info"));
             },
             any: new Command({
                 description: `Select a verbosity to listen to. Available levels: \`[${Object.keys(logs).join(", ")}]\``,
-                async run({send, message, channel, guild, author, member, client, args}) {
+                async run({send, args}) {
                     const type = args[0];
 
                     if (type in logs) send(getLogBuffer(type));
@@ -189,12 +189,12 @@ export default new NamedCommand({
         status: new NamedCommand({
             description: "Changes the bot's status.",
             permission: PERMISSIONS.BOT_SUPPORT,
-            async run({send, message, channel, guild, author, member, client, args}) {
+            async run({send}) {
                 send("Setting status to `online`...");
             },
             any: new Command({
                 description: `Select a status to set to. Available statuses: \`[${statuses.join(", ")}]\`.`,
-                async run({send, message, channel, guild, author, member, client, args}) {
+                async run({send, client, args}) {
                     if (!statuses.includes(args[0])) {
                         return send("That status doesn't exist!");
                     } else {
@@ -208,7 +208,7 @@ export default new NamedCommand({
             description: "Purges the bot's own messages.",
             permission: PERMISSIONS.BOT_SUPPORT,
             channelType: CHANNEL_TYPE.GUILD,
-            async run({send, message, channel, guild, author, member, client, args}) {
+            async run({send, message, channel, guild, client}) {
                 // It's probably better to go through the bot's own messages instead of calling bulkDelete which requires MANAGE_MESSAGES.
                 if (botHasPermission(guild, Permissions.FLAGS.MANAGE_MESSAGES)) {
                     message.delete();
@@ -235,7 +235,7 @@ export default new NamedCommand({
             run: "A number was not provided.",
             number: new Command({
                 description: "Amount of messages to delete.",
-                async run({send, message, channel, guild, author, member, client, args}) {
+                async run({message, channel, args}) {
                     message.delete();
                     const fetched = await channel.messages.fetch({
                         limit: args[0]
@@ -251,7 +251,7 @@ export default new NamedCommand({
             run: "You have to enter some code to execute first.",
             any: new RestCommand({
                 // You have to bring everything into scope to use them. AFAIK, there isn't a more maintainable way to do this, but at least TS will let you know if anything gets removed.
-                async run({send, message, channel, guild, author, member, client, args, combined}) {
+                async run({send, combined}) {
                     try {
                         let evaled = eval(combined);
                         if (typeof evaled !== "string") evaled = require("util").inspect(evaled);
@@ -268,7 +268,7 @@ export default new NamedCommand({
             channelType: CHANNEL_TYPE.GUILD,
             run: "You have to specify a nickname to set for the bot",
             any: new RestCommand({
-                async run({send, message, channel, guild, author, member, client, args, combined}) {
+                async run({send, message, guild, combined}) {
                     await guild!.me?.setNickname(combined);
                     if (botHasPermission(guild, Permissions.FLAGS.MANAGE_MESSAGES)) message.delete({timeout: 5000});
                     send(`Nickname set to \`${combined}\``).then((m) => m.delete({timeout: 5000}));
@@ -278,7 +278,7 @@ export default new NamedCommand({
         guilds: new NamedCommand({
             description: "Shows a list of all guilds the bot is a member of.",
             permission: PERMISSIONS.BOT_SUPPORT,
-            async run({send, message, channel, guild, author, member, client, args}) {
+            async run({send, client}) {
                 const guildList = client.guilds.cache.array().map((e) => e.name);
                 send(guildList, {split: true});
             }
@@ -287,7 +287,7 @@ export default new NamedCommand({
             description: "Set the activity of the bot.",
             permission: PERMISSIONS.BOT_SUPPORT,
             usage: "<type> <string>",
-            async run({send, message, channel, guild, author, member, client, args}) {
+            async run({send, client}) {
                 client.user?.setActivity(".help", {
                     type: "LISTENING"
                 });
@@ -295,7 +295,7 @@ export default new NamedCommand({
             },
             any: new RestCommand({
                 description: `Select an activity type to set. Available levels: \`[${activities.join(", ")}]\``,
-                async run({send, message, channel, guild, author, member, client, args}) {
+                async run({send, client, args}) {
                     const type = args[0];
 
                     if (activities.includes(type)) {
@@ -316,13 +316,13 @@ export default new NamedCommand({
             description: "Sets up the current channel to receive system logs.",
             permission: PERMISSIONS.BOT_ADMIN,
             channelType: CHANNEL_TYPE.GUILD,
-            async run({send, message, channel, guild, author, member, client, args}) {
+            async run({send, channel}) {
                 Config.systemLogsChannel = channel.id;
                 Config.save();
                 send(`Successfully set ${channel} as the system logs channel.`);
             },
             channel: new Command({
-                async run({send, message, channel, guild, author, member, client, args}) {
+                async run({send, args}) {
                     const targetChannel = args[0] as TextChannel;
                     Config.systemLogsChannel = targetChannel.id;
                     Config.save();

@@ -41,7 +41,7 @@ export const AwardCommand = new NamedCommand({
     aliases: ["give"],
     run: "You need to specify a user!",
     user: new Command({
-        async run({send, message, channel, guild, author, member, client, args}) {
+        async run({send, author, args}) {
             if (author.id === "394808963356688394" || IS_DEV_MODE) {
                 const target = args[0] as User;
                 const user = Storage.getUser(target.id);
@@ -53,7 +53,7 @@ export const AwardCommand = new NamedCommand({
             }
         },
         number: new Command({
-            async run({send, message, channel, guild, author, member, client, args}) {
+            async run({send, author, args}) {
                 if (author.id === "394808963356688394" || IS_DEV_MODE) {
                     const target = args[0] as User;
                     const amount = Math.floor(args[1]);
