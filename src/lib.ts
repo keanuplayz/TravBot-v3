@@ -139,12 +139,16 @@ export interface GenericJSON {
     [key: string]: any;
 }
 
+// In order to define a file to write to while also not:
+// - Using the delete operator (which doesn't work on properties which cannot be undefined)
+// - Assigning it first then using Object.defineProperty (which raises a flag on CodeQL)
+// A non-null assertion is used on the class property to say that it'll definitely be assigned.
 export abstract class GenericStructure {
-    private __meta__ = "generic";
+    private __meta__!: string;
 
     constructor(tag?: string) {
-        this.__meta__ = tag || this.__meta__;
         Object.defineProperty(this, "__meta__", {
+            value: tag || "generic",
             enumerable: false
         });
     }

@@ -43,6 +43,9 @@
         "tsc-watch": "^4.2.9",
         "typescript": "^3.9.7"
     },
+    "optionalDependencies": {
+        "fsevents": "^2.1.2"
+    },
     "author": "Keanu Timmermans",
     "license": "MIT",
     "keywords": [
