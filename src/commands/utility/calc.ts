@@ -1,22 +1,24 @@
-import {Command, NamedCommand} from "../../core";
+import {NamedCommand, RestCommand} from "../../core";
 import * as math from "mathjs";
 import {MessageEmbed} from "discord.js";
 
 export default new NamedCommand({
     description: "Calculates a specified math expression.",
-    async run({message, channel, guild, author, member, client, args}) {
-        if (!args[0]) return channel.send("Please provide a calculation.");
-        let resp;
-        try {
-            resp = math.evaluate(args.join(" "));
-        } catch (e) {
-            return channel.send("Please provide a *valid* calculation.");
+    run: "Please provide a calculation.",
+    any: new RestCommand({
+        async run({send, combined}) {
+            let resp;
+            try {
+                resp = math.evaluate(combined);
+            } catch (e) {
+                return send("Please provide a *valid* calculation.");
+            }
+            const embed = new MessageEmbed()
+                .setColor(0xffffff)
+                .setTitle("Math Calculation")
+                .addField("Input", `\`\`\`js\n${combined}\`\`\``)
+                .addField("Output", `\`\`\`js\n${resp}\`\`\``);
+            return send(embed);
         }
-        const embed = new MessageEmbed()
-            .setColor(0xffffff)
-            .setTitle("Math Calculation")
-            .addField("Input", `\`\`\`js\n${args.join("")}\`\`\``)
-            .addField("Output", `\`\`\`js\n${resp}\`\`\``);
-        return channel.send(embed);
-    }
+    })
 });

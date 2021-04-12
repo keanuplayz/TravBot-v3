@@ -1,28 +1,28 @@
 import {MessageEmbed, version as djsversion, Guild, User, GuildMember} from "discord.js";
 import ms from "ms";
 import os from "os";
-import {Command, NamedCommand, getMemberByUsername, CHANNEL_TYPE} from "../../core";
+import {Command, NamedCommand, getMemberByName, CHANNEL_TYPE, getGuildByName, RestCommand} from "../../core";
 import {formatBytes, trimArray} from "../../lib";
 import {verificationLevels, filterLevels, regions} from "../../defs/info";
 import moment, {utc} from "moment";
 
 export default new NamedCommand({
     description: "Command to provide all sorts of info about the current server, a user, etc.",
-    async run({message, channel, guild, author, member, client, args}) {
-        channel.send(await getUserInfo(author, member));
+    async run({send, author, member}) {
+        send(await getUserInfo(author, member));
     },
     subcommands: {
         avatar: new NamedCommand({
             description: "Shows your own, or another user's avatar.",
             usage: "(<user>)",
-            async run({message, channel, guild, author, member, client, args}) {
-                channel.send(author.displayAvatarURL({dynamic: true, size: 2048}));
+            async run({send, author}) {
+                send(author.displayAvatarURL({dynamic: true, size: 2048}));
             },
             id: "user",
             user: new Command({
                 description: "Shows your own, or another user's avatar.",
-                async run({message, channel, guild, author, member, client, args}) {
-                    channel.send(
+                async run({send, args}) {
+                    send(
                         args[0].displayAvatarURL({
                             dynamic: true,
                             size: 2048
@@ -30,29 +30,28 @@ export default new NamedCommand({
                     );
                 }
             }),
-            any: new Command({
+            any: new RestCommand({
                 description: "Shows another user's avatar by searching their name",
                 channelType: CHANNEL_TYPE.GUILD,
-                async run({message, channel, guild, author, client, args}) {
-                    const name = args.join(" ");
-                    const member = await getMemberByUsername(guild!, name);
+                async run({send, guild, combined}) {
+                    const member = await getMemberByName(guild!, combined);
 
-                    if (member) {
-                        channel.send(
+                    if (typeof member !== "string") {
+                        send(
                             member.user.displayAvatarURL({
                                 dynamic: true,
                                 size: 2048
                             })
                         );
                     } else {
-                        channel.send(`No user found by the name \`${name}\`!`);
+                        send(member);
                     }
                 }
             })
         }),
         bot: new NamedCommand({
             description: "Displays info about the bot.",
-            async run({message, channel, guild, author, member, client, args}) {
+            async run({send, guild, client}) {
                 const core = os.cpus()[0];
                 const embed = new MessageEmbed()
                     .setColor(guild?.me?.displayHexColor || "BLUE")
@@ -88,40 +87,33 @@ export default new NamedCommand({
                     size: 2048
                 });
                 if (avatarURL) embed.setThumbnail(avatarURL);
-                channel.send(embed);
+                send(embed);
             }
         }),
         guild: new NamedCommand({
             description: "Displays info about the current guild or another guild.",
             usage: "(<guild name>/<guild ID>)",
             channelType: CHANNEL_TYPE.GUILD,
-            async run({message, channel, guild, author, member, client, args}) {
-                channel.send(await getGuildInfo(guild!, guild));
+            async run({send, guild}) {
+                send(await getGuildInfo(guild!, guild));
             },
-            any: new Command({
-                description: "Display info about a guild by finding its name or ID.",
-                async run({message, channel, guild, author, member, client, args}) {
-                    // If a guild ID is provided (avoid the "number" subcommand because of inaccuracies), search for that guild
-                    if (args.length === 1 && /^\d{17,19}$/.test(args[0])) {
-                        const id = args[0];
-                        const targetGuild = client.guilds.cache.get(id);
+            id: "guild",
+            guild: new Command({
+                description: "Display info about a guild by its ID.",
+                async run({send, guild, args}) {
+                    const targetGuild = args[0] as Guild;
+                    send(await getGuildInfo(targetGuild, guild));
+                }
+            }),
+            any: new RestCommand({
+                description: "Display info about a guild by finding its name.",
+                async run({send, guild, combined}) {
+                    const targetGuild = getGuildByName(combined);
 
-                        if (targetGuild) {
-                            channel.send(await getGuildInfo(targetGuild, guild));
-                        } else {
-                            channel.send(`None of the servers I'm in matches the guild ID \`${id}\`!`);
-                        }
+                    if (typeof targetGuild !== "string") {
+                        send(await getGuildInfo(targetGuild, guild));
                     } else {
-                        const query: string = args.join(" ").toLowerCase();
-                        const targetGuild = client.guilds.cache.find((guild) =>
-                            guild.name.toLowerCase().includes(query)
-                        );
-
-                        if (targetGuild) {
-                            channel.send(await getGuildInfo(targetGuild, guild));
-                        } else {
-                            channel.send(`None of the servers I'm in matches the query \`${query}\`!`);
-                        }
+                        send(targetGuild);
                     }
                 }
             })
@@ -130,11 +122,11 @@ export default new NamedCommand({
     id: "user",
     user: new Command({
         description: "Displays info about mentioned user.",
-        async run({message, channel, guild, author, client, args}) {
+        async run({send, guild, args}) {
             const user = args[0] as User;
             // Transforms the User object into a GuildMember object of the current guild.
             const member = guild?.members.resolve(args[0]);
-            channel.send(await getUserInfo(user, member));
+            send(await getUserInfo(user, member));
         }
     })
 });

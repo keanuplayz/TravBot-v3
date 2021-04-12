@@ -1,11 +1,11 @@
-import {Command, NamedCommand} from "../../core";
+import {NamedCommand, RestCommand} from "../../core";
 import moment from "moment";
 import {Storage} from "../../structures";
 import {MessageEmbed} from "discord.js";
 
 export default new NamedCommand({
     description: "Keep and edit your personal todo list.",
-    async run({message, channel, guild, author, member, client, args}) {
+    async run({send, author}) {
         const user = Storage.getUser(author.id);
         const embed = new MessageEmbed().setTitle(`Todo list for ${author.tag}`).setColor("BLUE");
 
@@ -17,45 +17,48 @@ export default new NamedCommand({
             );
         }
 
-        channel.send(embed);
+        send(embed);
     },
     subcommands: {
         add: new NamedCommand({
-            async run({message, channel, guild, author, member, client, args}) {
-                const user = Storage.getUser(author.id);
-                const note = args.join(" ");
-                user.todoList[Date.now().toString()] = note;
-                console.debug(user.todoList);
-                Storage.save();
-                channel.send(`Successfully added \`${note}\` to your todo list.`);
-            }
+            run: "You need to specify a note to add.",
+            any: new RestCommand({
+                async run({send, author, combined}) {
+                    const user = Storage.getUser(author.id);
+                    user.todoList[Date.now().toString()] = combined;
+                    Storage.save();
+                    send(`Successfully added \`${combined}\` to your todo list.`);
+                }
+            })
         }),
         remove: new NamedCommand({
-            async run({message, channel, guild, author, member, client, args}) {
-                const user = Storage.getUser(author.id);
-                const note = args.join(" ");
-                let isFound = false;
+            run: "You need to specify a note to remove.",
+            any: new RestCommand({
+                async run({send, author, combined}) {
+                    const user = Storage.getUser(author.id);
+                    let isFound = false;
 
-                for (const timestamp in user.todoList) {
-                    const selectedNote = user.todoList[timestamp];
+                    for (const timestamp in user.todoList) {
+                        const selectedNote = user.todoList[timestamp];
 
-                    if (selectedNote === note) {
-                        delete user.todoList[timestamp];
-                        Storage.save();
-                        isFound = true;
-                        channel.send(`Removed \`${note}\` from your todo list.`);
+                        if (selectedNote === combined) {
+                            delete user.todoList[timestamp];
+                            Storage.save();
+                            isFound = true;
+                            send(`Removed \`${combined}\` from your todo list.`);
+                        }
                     }
-                }
 
-                if (!isFound) channel.send("That item couldn't be found.");
-            }
+                    if (!isFound) send("That item couldn't be found.");
+                }
+            })
         }),
         clear: new NamedCommand({
-            async run({message, channel, guild, author, member, client, args}) {
+            async run({send, author}) {
                 const user = Storage.getUser(author.id);
                 user.todoList = {};
                 Storage.save();
-                channel.send("Cleared todo list.");
+                send("Cleared todo list.");
             }
         })
     }

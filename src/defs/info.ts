@@ -1,6 +1,6 @@
 // Flags a user can have.
 // They're basically your profile badges.
-export const flags: {[index: string]: any} = {
+export const flags: {[index: string]: string} = {
     DISCORD_EMPLOYEE: "Discord Employee",
     DISCORD_PARTNER: "Discord Partner",
     BUGHUNTER_LEVEL_1: "Bug Hunter (Level 1)",
@@ -16,13 +16,13 @@ export const flags: {[index: string]: any} = {
     VERIFIED_DEVELOPER: "Verified Bot Developer"
 };
 
-export const filterLevels: {[index: string]: any} = {
+export const filterLevels: {[index: string]: string} = {
     DISABLED: "Off",
     MEMBERS_WITHOUT_ROLES: "No Role",
     ALL_MEMBERS: "Everyone"
 };
 
-export const verificationLevels: {[index: string]: any} = {
+export const verificationLevels: {[index: string]: string} = {
     NONE: "None",
     LOW: "Low",
     MEDIUM: "Medium",
@@ -30,7 +30,7 @@ export const verificationLevels: {[index: string]: any} = {
     VERY_HIGH: "┻━┻ ﾐヽ(ಠ益ಠ)ノ彡┻━┻"
 };
 
-export const regions: {[index: string]: any} = {
+export const regions: {[index: string]: string} = {
     brazil: "Brazil",
     europe: "Europe",
     hongkong: "Hong Kong",

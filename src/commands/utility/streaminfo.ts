@@ -1,25 +1,44 @@
-import {Command, NamedCommand} from "../../core";
+import {NamedCommand, RestCommand} from "../../core";
 import {streamList} from "../../modules/streamNotifications";
 
 export default new NamedCommand({
     description: "Sets the description of your stream. You can embed links by writing `[some name](some link)`",
-    async run({message, channel, guild, author, member, client, args}) {
+    async run({send, author, member}) {
         const userID = author.id;
 
         if (streamList.has(userID)) {
             const stream = streamList.get(userID)!;
-            const description = args.join(" ") || "No description set.";
-            stream.description = description;
+            stream.description = "No description set.";
             stream.update();
-            channel.send(`Successfully set the stream description to:`, {
+            send(`Successfully set the stream description to:`, {
                 embed: {
-                    description,
+                    description: "No description set.",
                     color: member!.displayColor
                 }
             });
         } else {
             // Alternatively, I could make descriptions last outside of just one stream.
-            channel.send("You can only use this command when streaming.");
+            send("You can only use this command when streaming.");
         }
-    }
+    },
+    any: new RestCommand({
+        async run({send, author, member, combined}) {
+            const userID = author.id;
+
+            if (streamList.has(userID)) {
+                const stream = streamList.get(userID)!;
+                stream.description = combined;
+                stream.update();
+                send(`Successfully set the stream description to:`, {
+                    embed: {
+                        description: stream.description,
+                        color: member!.displayColor
+                    }
+                });
+            } else {
+                // Alternatively, I could make descriptions last outside of just one stream.
+                send("You can only use this command when streaming.");
+            }
+        }
+    })
 });

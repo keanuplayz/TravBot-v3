@@ -1,13 +1,13 @@
 import {MessageEmbed} from "discord.js";
-import {Command, NamedCommand} from "../../core";
+import {NamedCommand, RestCommand} from "../../core";
 
 export default new NamedCommand({
     description: "Create a poll.",
     usage: "<question>",
     run: "Please provide a question.",
-    any: new Command({
+    any: new RestCommand({
         description: "Question for the poll.",
-        async run({message, channel, guild, author, member, client, args}) {
+        async run({send, message, combined}) {
             const embed = new MessageEmbed()
                 .setAuthor(
                     `Poll created by ${message.author.username}`,
@@ -15,8 +15,8 @@ export default new NamedCommand({
                 )
                 .setColor(0xffffff)
                 .setFooter("React to vote.")
-                .setDescription(args.join(" "));
-            const msg = await channel.send(embed);
+                .setDescription(combined);
+            const msg = await send(embed);
             await msg.react("✅");
             await msg.react("⛔");
             message.delete({

@@ -1,10 +1,10 @@
-import {Command, NamedCommand, CHANNEL_TYPE} from "../../core";
+import {NamedCommand, CHANNEL_TYPE} from "../../core";
 
 export default new NamedCommand({
     description: "Chooses someone to love.",
     channelType: CHANNEL_TYPE.GUILD,
-    async run({message, channel, guild, author, client, args}) {
+    async run({send, guild}) {
         const member = guild!.members.cache.random();
-        channel.send(`I love ${member.nickname ?? member.user.username}!`);
+        send(`I love ${member.nickname ?? member.user.username}!`);
     }
 });

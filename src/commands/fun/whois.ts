@@ -1,5 +1,5 @@
 import {User} from "discord.js";
-import {Command, NamedCommand, getMemberByUsername, CHANNEL_TYPE} from "../../core";
+import {Command, NamedCommand, getMemberByName, CHANNEL_TYPE, RestCommand} from "../../core";
 
 // Quotes must be used here or the numbers will change
 const registry: {[id: string]: string} = {
@@ -43,46 +43,41 @@ const registry: {[id: string]: string} = {
 export default new NamedCommand({
     description: "Tells you who you or the specified user is.",
     aliases: ["whoami"],
-    async run({message, channel, guild, author, member, client, args}) {
+    async run({send, author}) {
         const id = author.id;
 
         if (id in registry) {
-            channel.send(registry[id]);
+            send(registry[id]);
         } else {
-            channel.send("You haven't been added to the registry yet!");
+            send("You haven't been added to the registry yet!");
         }
     },
     id: "user",
     user: new Command({
-        async run({message, channel, guild, author, member, client, args}) {
+        async run({send, args}) {
             const user: User = args[0];
             const id = user.id;
 
             if (id in registry) {
-                channel.send(`\`${user.username}\` - ${registry[id]}`);
+                send(`\`${user.username}\` - ${registry[id]}`);
             } else {
-                channel.send(`\`${user.tag}\` hasn't been added to the registry yet!`);
+                send(`\`${user.tag}\` hasn't been added to the registry yet!`);
             }
         }
     }),
-    any: new Command({
+    any: new RestCommand({
         channelType: CHANNEL_TYPE.GUILD,
-        async run({message, channel, guild, author, client, args}) {
-            const query = args.join(" ") as string;
-            const member = await getMemberByUsername(guild!, query);
+        async run({send, guild, combined}) {
+            const member = await getMemberByName(guild!, combined);
 
-            if (member && member.id in registry) {
-                const id = member.id;
-
-                if (id in registry) {
-                    channel.send(`\`${member.nickname ?? member.user.username}\` - ${registry[member.id]}`);
+            if (typeof member !== "string") {
+                if (member.id in registry) {
+                    send(`\`${member.nickname ?? member.user.username}\` - ${registry[member.id]}`);
                 } else {
-                    channel.send(
-                        `\`${member.nickname ?? member.user.username}\` hasn't been added to the registry yet!`
-                    );
+                    send(`\`${member.nickname ?? member.user.username}\` hasn't been added to the registry yet!`);
                 }
             } else {
-                channel.send(`Couldn't find a user by the name of \`${query}\`!`);
+                send(member);
             }
         }
     })

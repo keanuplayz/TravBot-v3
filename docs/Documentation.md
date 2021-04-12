@@ -65,6 +65,7 @@ Because versions are assigned to batches of changes rather than single changes (
 
 - `%author%` - A user mention of the person who called the command.
 - `%prefix%` - The prefix of the current guild.
+- `%command%` - The command's execution path up to the current subcommand.
 
 # Utility Functions
 
@@ -72,28 +73,33 @@ Because versions are assigned to batches of changes rather than single changes (
 
 `paginate()`
 ```ts
-const pages = ['one', 'two', 'three'];
-const msg = await channel.send(pages[0]);
+const pages = ["one", "two", "three"];
 
-paginate(msg, author.id, pages.length, (page) => {
-	msg.edit(pages[page]);
+paginate(send, author.id, pages.length, page => {
+	return {content: pages[page]};
 });
 ```
 
-`prompt()`
+`poll()`
 ```ts
-const msg = await channel.send('Are you sure you want to delete this?');
-
-prompt(msg, author.id, () => {
-	//...
-});
+const results = await poll(await send("Do you agree with this decision?"), ["✅", "❌"]);
+results["✅"]; // number
+results["❌"]; // number
 ```
 
-`callMemberByUsername()`
+`confirm()`
 ```ts
-callMemberByUsername(message, args.join(" "), (member) => {
-	channel.send(`Your nickname is ${member.nickname}.`);
-});
+const result = await confirm(await send("Are you sure you want to delete this?"), author.id); // boolean | null
+```
+
+`askMultipleChoice()`
+```ts
+const result = await askMultipleChoice(await send("Which of the following numbers is your favorite?"), author.id, 4, 10000); // number (0 to 3) | null
+```
+
+`askForReply()`
+```ts
+const reply = await askForReply(await send("What is your favorite thing to do?"), author.id, 10000); // Message | null
 ```
 
 ## [src/lib](../src/lib.ts) - General utility functions

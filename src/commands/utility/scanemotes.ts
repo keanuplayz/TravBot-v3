@@ -1,28 +1,26 @@
-import {Command, NamedCommand, CHANNEL_TYPE} from "../../core";
+import {NamedCommand, CHANNEL_TYPE} from "../../core";
 import {pluralise} from "../../lib";
 import moment from "moment";
 import {Collection, TextChannel} from "discord.js";
 
-const lastUsedTimestamps: {[id: string]: number} = {};
+const lastUsedTimestamps = new Collection<string, number>();
 
 export default new NamedCommand({
     description:
         "Scans all text channels in the current guild and returns the number of times each emoji specific to the guild has been used. Has a cooldown of 24 hours per guild.",
     channelType: CHANNEL_TYPE.GUILD,
-    async run({message, channel, guild, author, member, client, args}) {
+    async run({send, message, channel, guild}) {
         // Test if the command is on cooldown. This isn't the strictest cooldown possible, because in the event that the bot crashes, the cooldown will be reset. But for all intends and purposes, it's a good enough cooldown. It's a per-server cooldown.
         const startTime = Date.now();
         const cooldown = 86400000; // 24 hours
-        const lastUsedTimestamp = lastUsedTimestamps[guild!.id] ?? 0;
+        const lastUsedTimestamp = lastUsedTimestamps.get(guild!.id) ?? 0;
         const difference = startTime - lastUsedTimestamp;
         const howLong = moment(startTime).to(lastUsedTimestamp + cooldown);
 
         // If it's been less than an hour since the command was last used, prevent it from executing.
         if (difference < cooldown)
-            return channel.send(
-                `This command requires a day to cooldown. You'll be able to activate this command ${howLong}.`
-            );
-        else lastUsedTimestamps[guild!.id] = startTime;
+            return send(`This command requires a day to cooldown. You'll be able to activate this command ${howLong}.`);
+        else lastUsedTimestamps.set(guild!.id, startTime);
 
         const stats: {
             [id: string]: {
@@ -41,7 +39,7 @@ export default new NamedCommand({
         let channelsSearched = 0;
         let currentChannelName = "";
         const totalChannels = allTextChannelsInCurrentGuild.size;
-        const statusMessage = await channel.send("Gathering emotes...");
+        const statusMessage = await send("Gathering emotes...");
         let warnings = 0;
         channel.startTyping();
 
@@ -181,6 +179,16 @@ export default new NamedCommand({
             );
         }
 
-        return await channel.send(lines, {split: true});
+        return await send(lines, {split: true});
+    },
+    subcommands: {
+        forcereset: new NamedCommand({
+            description: "Forces the cooldown timer to reset.",
+            permission: PERMISSIONS.BOT_SUPPORT,
+            async run({send, guild}) {
+                lastUsedTimestamps.set(guild!.id, 0);
+                send("Reset the cooldown on `scanemotes`.");
+            }
+        })
     }
 });

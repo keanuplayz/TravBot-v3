@@ -1,4 +1,4 @@
-import {Command, NamedCommand} from "../../core";
+import {NamedCommand, RestCommand} from "../../core";
 
 const letters: {[letter: string]: string[]} = {
     a: "aáàảãạâấầẩẫậăắằẳẵặ".split(""),
@@ -34,8 +34,26 @@ let phrase = "I have no currently set phrase!";
 export default new NamedCommand({
     description: "Transforms your text into ｖｉｅｔｎａｍｅｓｅ.",
     usage: "thonk ([text])",
-    async run({message, channel, guild, author, member, client, args}) {
-        if (args.length > 0) phrase = args.join(" ");
-        channel.send(transform(phrase));
-    }
+    async run({send, author}) {
+        const msg = await send(transform(phrase));
+        msg.createReactionCollector(
+            (reaction, user) => {
+                if (user.id === author.id && reaction.emoji.name === "❌") msg.delete();
+                return false;
+            },
+            {time: 60000}
+        );
+    },
+    any: new RestCommand({
+        async run({send, author, combined}) {
+            const msg = await send(transform(combined));
+            msg.createReactionCollector(
+                (reaction, user) => {
+                    if (user.id === author.id && reaction.emoji.name === "❌") msg.delete();
+                    return false;
+                },
+                {time: 60000}
+            );
+        }
+    })
 });

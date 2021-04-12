@@ -26,14 +26,13 @@ const responses = [
 
 export default new NamedCommand({
     description: "Answers your question in an 8-ball manner.",
-    endpoint: false,
     usage: "<question>",
     run: "Please provide a question.",
     any: new Command({
         description: "Question to ask the 8-ball.",
-        async run({message, channel, guild, author, member, client, args}) {
+        async run({send, message}) {
             const sender = message.author;
-            channel.send(`${random(responses)} <@${sender.id}>`);
+            send(`${random(responses)} <@${sender.id}>`);
         }
     })
 });
