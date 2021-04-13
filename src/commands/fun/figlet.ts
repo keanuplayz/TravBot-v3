@@ -1,4 +1,4 @@
-import {NamedCommand, RestCommand} from "../../core";
+import {NamedCommand, RestCommand} from "onion-lasers";
 import figlet from "figlet";
 
 export default new NamedCommand({

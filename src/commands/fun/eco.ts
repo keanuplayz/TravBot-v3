@@ -1,4 +1,4 @@
-import {Command, NamedCommand, getMemberByName, RestCommand} from "../../core";
+import {Command, NamedCommand, getMemberByName, RestCommand} from "onion-lasers";
 import {isAuthorized, getMoneyEmbed} from "./modules/eco-utils";
 import {DailyCommand, PayCommand, GuildCommand, LeaderboardCommand} from "./modules/eco-core";
 import {BuyCommand, ShopCommand} from "./modules/eco-shop";

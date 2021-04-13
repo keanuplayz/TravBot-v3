@@ -1,7 +1,7 @@
 import {MessageEmbed, version as djsversion, Guild, User, GuildMember} from "discord.js";
 import ms from "ms";
 import os from "os";
-import {Command, NamedCommand, getMemberByName, CHANNEL_TYPE, getGuildByName, RestCommand} from "../../core";
+import {Command, NamedCommand, getMemberByName, CHANNEL_TYPE, getGuildByName, RestCommand} from "onion-lasers";
 import {formatBytes, trimArray} from "../../lib";
 import {verificationLevels, filterLevels, regions} from "../../defs/info";
 import moment, {utc} from "moment";

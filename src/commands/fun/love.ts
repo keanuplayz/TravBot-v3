@@ -1,4 +1,4 @@
-import {NamedCommand, CHANNEL_TYPE} from "../../core";
+import {NamedCommand, CHANNEL_TYPE} from "onion-lasers";
 
 export default new NamedCommand({
     description: "Chooses someone to love.",

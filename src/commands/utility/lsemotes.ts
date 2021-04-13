@@ -1,5 +1,5 @@
 import {GuildEmoji, MessageEmbed, User} from "discord.js";
-import {NamedCommand, RestCommand, paginate, SendFunction} from "../../core";
+import {NamedCommand, RestCommand, paginate, SendFunction} from "onion-lasers";
 import {split} from "../../lib";
 import vm from "vm";
 

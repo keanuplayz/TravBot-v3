@@ -1,4 +1,4 @@
-import {Command, NamedCommand, paginate, RestCommand} from "../../../core";
+import {Command, NamedCommand, paginate, RestCommand} from "onion-lasers";
 import {pluralise, split} from "../../../lib";
 import {Storage, getPrefix} from "../../../structures";
 import {isAuthorized, ECO_EMBED_COLOR} from "./eco-utils";

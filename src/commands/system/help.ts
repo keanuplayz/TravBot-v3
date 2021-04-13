@@ -6,7 +6,7 @@ import {
     getCommandList,
     getCommandInfo,
     paginate
-} from "../../core";
+} from "onion-lasers";
 import {requireAllCasesHandledFor} from "../../lib";
 import {MessageEmbed} from "discord.js";
 

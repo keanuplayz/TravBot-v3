@@ -1,4 +1,12 @@
-import {Command, NamedCommand, askForReply, confirm, askMultipleChoice, getMemberByName, RestCommand} from "../../core";
+import {
+    Command,
+    NamedCommand,
+    askForReply,
+    confirm,
+    askMultipleChoice,
+    getMemberByName,
+    RestCommand
+} from "onion-lasers";
 import {Storage} from "../../structures";
 import {User} from "discord.js";
 import moment from "moment";

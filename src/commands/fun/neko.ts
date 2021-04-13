@@ -1,5 +1,5 @@
 import {URL} from "url";
-import {Command, NamedCommand} from "../../core";
+import {Command, NamedCommand} from "onion-lasers";
 import {getContent} from "../../lib";
 
 const endpoints: {sfw: {[key: string]: string}} = {

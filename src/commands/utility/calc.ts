@@ -1,4 +1,4 @@
-import {NamedCommand, RestCommand} from "../../core";
+import {NamedCommand, RestCommand} from "onion-lasers";
 import * as math from "mathjs";
 import {MessageEmbed} from "discord.js";
 

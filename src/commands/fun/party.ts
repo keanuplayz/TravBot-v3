@@ -1,4 +1,4 @@
-import {NamedCommand} from "../../core";
+import {NamedCommand} from "onion-lasers";
 
 export default new NamedCommand({
     description: "Initiates a celebratory stream from the bot.",

@@ -1,7 +1,7 @@
 import {client} from "../index";
 import {MessageEmbed} from "discord.js";
 import {getPrefix} from "../structures";
-import {getMessageByID} from "../core";
+import {getMessageByID} from "onion-lasers";
 
 client.on("message", async (message) => {
     // Only execute if the message is from a user and isn't a command.

@@ -1,4 +1,4 @@
-import {NamedCommand, RestCommand} from "../../core";
+import {NamedCommand, RestCommand} from "onion-lasers";
 
 export default new NamedCommand({
     description: "Renames current voice channel.",

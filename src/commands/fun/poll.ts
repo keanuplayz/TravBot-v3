@@ -1,5 +1,5 @@
 import {MessageEmbed, Message, User} from "discord.js";
-import {NamedCommand, RestCommand, poll, CHANNEL_TYPE, SendFunction, Command} from "../../core";
+import {NamedCommand, RestCommand, poll, CHANNEL_TYPE, SendFunction, Command} from "onion-lasers";
 import {pluralise} from "../../lib";
 
 export default new NamedCommand({

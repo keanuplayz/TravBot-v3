@@ -1,4 +1,4 @@
-import {Command, NamedCommand} from "../../core";
+import {Command, NamedCommand} from "onion-lasers";
 import * as https from "https";
 
 export default new NamedCommand({

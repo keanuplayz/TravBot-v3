@@ -1,5 +1,5 @@
 import {User} from "discord.js";
-import {Command, NamedCommand, getMemberByName, CHANNEL_TYPE, RestCommand} from "../../core";
+import {Command, NamedCommand, getMemberByName, CHANNEL_TYPE, RestCommand} from "onion-lasers";
 
 // Quotes must be used here or the numbers will change
 const registry: {[id: string]: string} = {

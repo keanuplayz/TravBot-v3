@@ -1,4 +1,4 @@
-import {NamedCommand} from "../../core";
+import {NamedCommand} from "onion-lasers";
 import {random} from "../../lib";
 
 const responses = [

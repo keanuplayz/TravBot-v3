@@ -1,4 +1,4 @@
-import {NamedCommand, RestCommand} from "../../core";
+import {NamedCommand, RestCommand} from "onion-lasers";
 import moment from "moment";
 import {Storage} from "../../structures";
 import {MessageEmbed} from "discord.js";

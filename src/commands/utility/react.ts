@@ -1,4 +1,4 @@
-import {NamedCommand, RestCommand} from "../../core";
+import {NamedCommand, RestCommand} from "onion-lasers";
 import {Message, Channel, TextChannel} from "discord.js";
 import {processEmoteQueryArray} from "./modules/emote-utils";
 

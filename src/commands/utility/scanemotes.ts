@@ -1,4 +1,4 @@
-import {NamedCommand, CHANNEL_TYPE} from "../../core";
+import {NamedCommand, CHANNEL_TYPE} from "onion-lasers";
 import {pluralise} from "../../lib";
 import moment from "moment";
 import {Collection, TextChannel} from "discord.js";

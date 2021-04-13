@@ -7,7 +7,7 @@
 
 # Introduction
 
-This is a brief overview that'll describe where and how to add new features to TravBot. For more details on specific functions, head over to the [documentation](Documentation.md). Assume the prefix for all of these examples is `$`.
+This is a brief overview that'll describe where and how to add new features to TravBot. For more details on specific functions, head over to the [documentation](Documentation.md). TravBot uses the [Onion Lasers Command Handler](https://github.com/WatDuhHekBro/OnionLasers) to load and setup commands. Also, if you ever want to see the definition of a function or its surrounding types and you're using VSCode, put your cursor at the word you want to go to and press `[F12]`.
 
 # Setting up the development environment
 
@@ -20,174 +20,17 @@ This is a brief overview that'll describe where and how to add new features to T
 
 # Adding a new command
 
-To add a new command, go to `src/commands` and either copy the [template](../src/commands/template.ts) or rename the auto-generated test file (`../src/commands/test.ts`). For reference, this is the barebones requirement for a command file.
-
-## The very basics of a command
+To add a new command, go to `src/commands` and create a new `.ts` file named as the command name. Then, use and expand upon the following template.
 
 ```ts
-import {NamedCommand} from "../core";
-
-export default new NamedCommand();
-```
-
-To make something actually happen when the command is run however, you implement the `run` property.
-
-```ts
-import {Command, NamedCommand} from "../core";
+import {Command, NamedCommand, RestCommand} from "onion-lasers";
 
 export default new NamedCommand({
-	async run({message, channel, guild, author, member, client, args}) {
-		channel.send("test");
-	}
+    async run({send, message, channel, guild, author, member, client, args}) {
+        // code
+    }
 });
 ```
-
-### Quick note on the run property
-
-You can also enter a string for the `run` property which will send a message with that string specified ([you can also specify some variables in that string](Documentation.md#command-var-string)). The above is functionally equivalent to the below.
-
-```ts
-import {Command, NamedCommand} from "../core";
-
-export default new NamedCommand({
-	run: "test"
-});
-```
-
-## Introducing subcommands
-
-Where this command handler really shines though is from its subcommands feature. You can filter and parse argument lists in a declarative manner.
-
-```ts
-import {Command, NamedCommand} from "../core";
-
-export default new NamedCommand({
-	user: new Command({
-		async run({message, channel, guild, author, member, client, args}) {
-			const user = args[0];
-		}
-	})
-});
-```
-
-Here, . For example, if this file was named `test.ts`, `$test <@237359961842253835>` would get the user by the ID `237359961842253835` into `args[0]` as a [User](https://discord.js.org/#/docs/main/stable/class/User) object. `$test experiment` would run as if you just called `$test` *(given that [endpoint](Documentation.md#command-metadata) isn't set to `true`)*.
-
-If you want, you can typecast the argument to be more strongly typed, because the type of `args` is `any[]`. *([See why if you're curious.](DesignDecisions.md#any[]-parameters-for-subcommand-run))*
-
-```ts
-import {Command, NamedCommand} from "../core";
-import {User} from "discord.js";
-
-export default new NamedCommand({
-	user: new Command({
-		async run({message, channel, guild, author, member, client, args}) {
-			const user = args[0] as User;
-		}
-	})
-});
-```
-
-## Keyed subcommands
-
-For keyed subcommands, you would instead use a `NamedCommand`.
-
-```ts
-import {Command, NamedCommand} from "../core";
-
-export default new NamedCommand({
-	run: "one",
-	subcommands: {
-		bread: new NamedCommand({
-			run: "two"
-		})
-	}
-});
-```
-
-If the file was named `cat.ts`:
-- `$cat` would output `one`
-- `$cat bread` would output `two`
-
-Only `bread` in this case would lead to `two` being the output, which is different from the generic subcommand types in previous examples.
-
-You get an additional property with `NamedCommand`s: `aliases`. That means you can define aliases not only for top-level commands, but also every layer of subcommands.
-
-```ts
-import {Command, NamedCommand} from "../core";
-
-export default new NamedCommand({
-	aliases: ["potato"],
-	subcommands: {
-		slice: new NamedCommand({
-			aliases: ["pear"]
-		})
-	}
-});
-```
-
-For example, if this file was named `plant.ts`, the following would work:
-- `$plant`
-- `$potato`
-- `$plant slice`
-- `$plant pear`
-- `$potato slice`
-- `$potato pear`
-
-## Metadata / Command Properties
-
-You can also specify metadata for commands by adding additional properties. Some of these properties are per-command while others are inherited.
-
-```ts
-import {Command, NamedCommand} from "../core";
-
-export default new NamedCommand({
-	description: "desc one",
-	subcommands: {
-		pineapple: new NamedCommand({
-			//...
-		})
-	}
-});
-```
-
-`description` is an example of a per-command property (which is used in a help command). If the file was named `siege.ts`:
-- The description of `$siege` would be `desc one`.
-- There wouldn't be a description for `$siege pineapple`.
-
-This is in contrast to inherited properties.
-
-```ts
-import {Command, NamedCommand, CHANNEL_TYPE} from "../core";
-
-export default new NamedCommand({
-	channelType: CHANNEL_TYPE.GUILD,
-	subcommands: {
-		pineapple: new NamedCommand({
-			//...
-		})
-	}
-});
-```
-
-Here, the property `channelType` would spread to all subcommands unless a subcommand defines it. Using the above example, the `channelType` for both `$siege` and `$siege pineapple` would be `CHANNEL_TYPE.GUILD`.
-
-*To get a full list of metadata properties, see the [documentation](Documentation.md#command-menu).*
-
-## Utility Functions
-
-You'll have to import these manually, however it's in the same import list as `Command` and `NamedCommand`.
-
-```ts
-import {Command, NamedCommand, paginate} from "../core";
-
-export default new NamedCommand({
-	async run({message, channel, guild, author, member, client, args}) {
-		paginate(/* enter your code here */);
-	}
-});
-```
-
-*To get a full list of utility functions, see the [documentation](Documentation.md#utility-functions).*
 
 # Adding a new non-command feature
 
@@ -201,7 +44,7 @@ This will just run whatever code is in there.
 
 ## Listening for events
 
-Rather than have an `events` folder which contains dynamically loaded events, you add an event listener directly via `client.on("...", () => {})`. *([See why if you're curious.](DesignDecisions.md#static-event-loading))* The client can be imported from the index file.
+Rather than have an `events` folder which contains dynamically loaded events, you add an event listener directly via `client.on("...", () => {})`. *([See why if you're curious.](https://github.com/WatDuhHekBro/OnionLasers/blob/master/README.md#static-event-loading))* The client can be imported from the index file.
 
 ```ts
 import {client} from "..";

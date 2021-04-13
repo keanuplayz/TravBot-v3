@@ -1,4 +1,4 @@
-import {Command, NamedCommand} from "../../core";
+import {Command, NamedCommand} from "onion-lasers";
 import {Random} from "../../lib";
 
 export default new NamedCommand({

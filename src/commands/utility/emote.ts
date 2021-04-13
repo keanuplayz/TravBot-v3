@@ -1,4 +1,4 @@
-import {NamedCommand, RestCommand} from "../../core";
+import {NamedCommand, RestCommand} from "onion-lasers";
 import {processEmoteQueryFormatted} from "./modules/emote-utils";
 
 export default new NamedCommand({

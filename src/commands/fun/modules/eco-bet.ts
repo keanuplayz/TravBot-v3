@@ -1,4 +1,4 @@
-import {Command, NamedCommand, confirm, poll} from "../../../core";
+import {Command, NamedCommand, confirm, poll} from "onion-lasers";
 import {pluralise} from "../../../lib";
 import {Storage} from "../../../structures";
 import {isAuthorized, getMoneyEmbed} from "./eco-utils";

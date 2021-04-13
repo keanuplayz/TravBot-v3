@@ -1,4 +1,4 @@
-import {NamedCommand} from "../../core";
+import {NamedCommand} from "onion-lasers";
 
 export default new NamedCommand({
     description: "Insult TravBot! >:D",

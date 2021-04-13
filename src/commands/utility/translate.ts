@@ -1,4 +1,4 @@
-import {Command, NamedCommand, RestCommand} from "../../core";
+import {Command, NamedCommand, RestCommand} from "onion-lasers";
 import translate from "translate-google";
 
 export default new NamedCommand({

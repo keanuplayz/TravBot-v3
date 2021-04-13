@@ -1,15 +1,7 @@
-import {
-    Command,
-    NamedCommand,
-    botHasPermission,
-    getPermissionLevel,
-    getPermissionName,
-    CHANNEL_TYPE,
-    RestCommand
-} from "../../core";
+import {Command, NamedCommand, getPermissionLevel, getPermissionName, CHANNEL_TYPE, RestCommand} from "onion-lasers";
 import {clean} from "../../lib";
 import {Config, Storage} from "../../structures";
-import {Permissions, TextChannel, User, Role} from "discord.js";
+import {Permissions, TextChannel, User, Role, Channel} from "discord.js";
 import {logs} from "../../modules/globals";
 
 function getLogBuffer(type: string) {
@@ -111,10 +103,15 @@ export default new NamedCommand({
                             id: "channel",
                             channel: new Command({
                                 async run({send, guild, args}) {
-                                    const result = args[0] as TextChannel;
-                                    Storage.getGuild(guild!.id).welcomeChannel = result.id;
-                                    Storage.save();
-                                    send(`Successfully set this server's welcome channel to ${result}.`);
+                                    const result = args[0] as Channel;
+
+                                    if (result instanceof TextChannel) {
+                                        Storage.getGuild(guild!.id).welcomeChannel = result.id;
+                                        Storage.save();
+                                        send(`Successfully set this server's welcome channel to ${result}.`);
+                                    } else {
+                                        send(`\`${result.id}\` is not a valid text channel!`);
+                                    }
                                 }
                             })
                         }),
@@ -156,10 +153,15 @@ export default new NamedCommand({
                     id: "channel",
                     channel: new Command({
                         async run({send, guild, args}) {
-                            const result = args[0] as TextChannel;
-                            Storage.getGuild(guild!.id).streamingChannel = result.id;
-                            Storage.save();
-                            send(`Successfully set this server's stream notifications channel to ${result}.`);
+                            const result = args[0] as Channel;
+
+                            if (result instanceof TextChannel) {
+                                Storage.getGuild(guild!.id).streamingChannel = result.id;
+                                Storage.save();
+                                send(`Successfully set this server's stream notifications channel to ${result}.`);
+                            } else {
+                                send(`\`${result.id}\` is not a valid text channel!`);
+                            }
                         }
                     })
                 }),
@@ -250,7 +252,7 @@ export default new NamedCommand({
             channelType: CHANNEL_TYPE.GUILD,
             async run({send, message, channel, guild, client}) {
                 // It's probably better to go through the bot's own messages instead of calling bulkDelete which requires MANAGE_MESSAGES.
-                if (botHasPermission(guild, Permissions.FLAGS.MANAGE_MESSAGES)) {
+                if (guild!.me?.hasPermission(Permissions.FLAGS.MANAGE_MESSAGES)) {
                     message.delete();
                     const msgs = await channel.messages.fetch({
                         limit: 100
@@ -310,7 +312,7 @@ export default new NamedCommand({
             any: new RestCommand({
                 async run({send, message, guild, combined}) {
                     await guild!.me?.setNickname(combined);
-                    if (botHasPermission(guild, Permissions.FLAGS.MANAGE_MESSAGES)) message.delete({timeout: 5000});
+                    if (guild!.me?.hasPermission(Permissions.FLAGS.MANAGE_MESSAGES)) message.delete({timeout: 5000});
                     send(`Nickname set to \`${combined}\``).then((m) => m.delete({timeout: 5000}));
                 }
             })
@@ -363,10 +365,15 @@ export default new NamedCommand({
             },
             channel: new Command({
                 async run({send, args}) {
-                    const targetChannel = args[0] as TextChannel;
-                    Config.systemLogsChannel = targetChannel.id;
-                    Config.save();
-                    send(`Successfully set ${targetChannel} as the system logs channel.`);
+                    const targetChannel = args[0] as Channel;
+
+                    if (targetChannel instanceof TextChannel) {
+                        Config.systemLogsChannel = targetChannel.id;
+                        Config.save();
+                        send(`Successfully set ${targetChannel} as the system logs channel.`);
+                    } else {
+                        send(`\`${targetChannel.id}\` is not a valid text channel!`);
+                    }
                 }
             })
         })

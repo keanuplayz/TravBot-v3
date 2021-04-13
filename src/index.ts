@@ -6,7 +6,7 @@ import path from "path";
 // This of course won't actually do anything until the setup process is complete and it logs in.
 export const client = new Client();
 
-import {launch} from "./core";
+import {launch} from "onion-lasers";
 import setup from "./modules/setup";
 import {Config, getPrefix} from "./structures";
 import {toTitleCase} from "./lib";

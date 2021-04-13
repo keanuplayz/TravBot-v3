@@ -1,4 +1,4 @@
-import {Command, NamedCommand} from "../../core";
+import {Command, NamedCommand} from "onion-lasers";
 
 export default new NamedCommand({
     description: "Gives you the invite link.",

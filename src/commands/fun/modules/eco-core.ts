@@ -1,4 +1,4 @@
-import {Command, getMemberByName, NamedCommand, confirm, RestCommand} from "../../../core";
+import {Command, getMemberByName, NamedCommand, confirm, RestCommand} from "onion-lasers";
 import {pluralise} from "../../../lib";
 import {Storage} from "../../../structures";
 import {isAuthorized, getMoneyEmbed, getSendEmbed, ECO_EMBED_COLOR} from "./eco-utils";

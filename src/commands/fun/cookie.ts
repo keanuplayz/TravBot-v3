@@ -1,5 +1,5 @@
 import {User} from "discord.js";
-import {Command, NamedCommand} from "../../core";
+import {Command, NamedCommand} from "onion-lasers";
 import {random, parseVars} from "../../lib";
 
 const cookies = [

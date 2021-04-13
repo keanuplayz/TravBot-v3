@@ -2,11 +2,8 @@
 
 - [Structure](#structure)
 - [Version Numbers](#version-numbers)
-- [Message Subcommand Type](#message-subcommand-type)
-- [Command Menu](#command-menu)
-- [Command Metadata](#command-metadata)
-- [Command Var String](#command-var-string)
 - [Utility Functions](#utility-functions)
+- [Testing](#testing)
 
 # Structure
 
@@ -37,70 +34,7 @@ Because versions are assigned to batches of changes rather than single changes (
 
 *Note: This system doesn't retroactively apply to TravBot-v2, which is why this version naming system won't make sense for v2's changelog.*
 
-# Message Subcommand Type
-
-- `https://discord.com/channels/<id>/<id>/<id>` comes from the `Copy Message Link` button.
-- `<id>-<id>` comes from holding `Shift` on the desktop application and clicking on the `Copy ID` button.
-
-# Command Menu
-
-- `args`: A list of arguments in the command. It's relative to the subcommand, so if you do `$test this 5`, `5` becomes `$.args[0]` if `this` is a subcommand. Args are already converted, so a `number` subcommand would return a number rather than a string.
-- `client`: `message.client`
-- `message`: `message`
-- `channel`: `message.channel`
-- `guild`: `message.guild`
-- `author`: `message.author`
-- `member`: `message.member`
-
-# Command Metadata
-
-- `description`: The command description that'll appear in the help menu.
-- `endpoint`: Whether or not any arguments are allowed after the command.
-- `usage`: Defines a custom usage when showing the command in the help menu.
-- `permission`: *(Inherits)* -1 (default) indicates to inherit, 0 is the lowest rank, 1 is second lowest rank, and so on.
-- `nsfw`: *(Inherits)* Whether or not the command is restricted to NSFW channels and DM channels.
-- `channelType`: *(Inherits)* Whether the command is restricted to guild channels, DM channels, or has no restriction. Uses the `CHANNEL_TYPE` enum provided by the command handler.
-
-# Command Var String
-
-- `%author%` - A user mention of the person who called the command.
-- `%prefix%` - The prefix of the current guild.
-- `%command%` - The command's execution path up to the current subcommand.
-
 # Utility Functions
-
-## [src/core (libd)](../src/core/libd.ts) - Utility functions specific for working with Discord
-
-`paginate()`
-```ts
-const pages = ["one", "two", "three"];
-
-paginate(send, author.id, pages.length, page => {
-	return {content: pages[page]};
-});
-```
-
-`poll()`
-```ts
-const results = await poll(await send("Do you agree with this decision?"), ["✅", "❌"]);
-results["✅"]; // number
-results["❌"]; // number
-```
-
-`confirm()`
-```ts
-const result = await confirm(await send("Are you sure you want to delete this?"), author.id); // boolean | null
-```
-
-`askMultipleChoice()`
-```ts
-const result = await askMultipleChoice(await send("Which of the following numbers is your favorite?"), author.id, 4, 10000); // number (0 to 3) | null
-```
-
-`askForReply()`
-```ts
-const reply = await askForReply(await send("What is your favorite thing to do?"), author.id, 10000); // Message | null
-```
 
 ## [src/lib](../src/lib.ts) - General utility functions
 
@@ -115,3 +49,12 @@ const reply = await askForReply(await send("What is your favorite thing to do?")
 - `toTitleCase()`: Capitalizes the first letter of each word. `toTitleCase("this is some text")` = `"This Is Some Text"`.
 - `random()`: Returns a random element from an array. `random([1,2,3])` could be any one of those elements.
 - `split()`: Splits an array into different arrays by a specified length. `split([1,2,3,4,5,6,7,8,9,10], 3)` = `[[1,2,3],[4,5,6],[7,8,9],[10]]`.
+
+# Testing
+
+For TravBot, there'll be two types of tests: standard unit tests and manual integration tests.
+- Standard unit tests are executed only on isolated functions and are part of the pre-commit hook.
+- Somehow, including the bot in an import chain will cause the system to crash (same error message as [this](https://stackoverflow.com/questions/66102858/discord-clientuser-is-not-a-constructor)). That's why the integration tests are manually done. There would be a list of inputs and outputs to check of each command for tests while simultaneously serving as a help menu with examples of all possible inputs/outputs for others to see.
+- An idea which will not be implemented is prompting the user for inputs during the tests. This is no better than manual tests, worse actually, because if this had to run before each commit, it'd quickly become a nightmare.
+- Maybe take some ideas from something like [this](https://github.com/stuyy/jest-unit-tests-demo) in the future to get tests to properly work.
+- Another possibility is to use `client.emit(...)` then mock the `message.channel.send(...)` function which would listen if the input is correct.

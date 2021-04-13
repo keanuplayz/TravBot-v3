@@ -1,4 +1,4 @@
-import {NamedCommand, RestCommand} from "../../core";
+import {NamedCommand, RestCommand} from "onion-lasers";
 
 const letters: {[letter: string]: string[]} = {
     a: "aáàảãạâấầẩẫậăắằẳẵặ".split(""),

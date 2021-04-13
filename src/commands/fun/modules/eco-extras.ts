@@ -1,4 +1,4 @@
-import {Command, NamedCommand} from "../../../core";
+import {Command, NamedCommand} from "onion-lasers";
 import {Storage} from "../../../structures";
 import {isAuthorized, getMoneyEmbed} from "./eco-utils";
 import {User} from "discord.js";
