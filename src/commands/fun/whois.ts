@@ -37,7 +37,10 @@ const registry: {[id: string]: string} = {
     "367439475153829892": "A weeb.",
     "760375501775700038": "˙qǝǝʍ ∀",
     "389178357302034442": "In his dreams, he is the star. its him. <:itsMe:808174425253871657>",
-    "606395763404046349": "Me."
+    "606395763404046349": "Me.",
+    "237359961842253835": "Good question.",
+    "689538764950994990":
+        "The slayer of memes, a vigilante of the voidborn, and the self-proclaimed prophet of Xereptheí.\n> And thus, I shall remain dormant once more. For when judgement day arrives, those whose names are sung shall pierce the heavens."
 };
 
 export default new NamedCommand({
@@ -59,7 +62,7 @@ export default new NamedCommand({
             const id = user.id;
 
             if (id in registry) {
-                send(`\`${user.username}\` - ${registry[id]}`);
+                send(registry[id]);
             } else {
                 send(`\`${user.tag}\` hasn't been added to the registry yet!`);
             }
@@ -72,7 +75,7 @@ export default new NamedCommand({
 
             if (typeof member !== "string") {
                 if (member.id in registry) {
-                    send(`\`${member.nickname ?? member.user.username}\` - ${registry[member.id]}`);
+                    send(registry[member.id]);
                 } else {
                     send(`\`${member.nickname ?? member.user.username}\` hasn't been added to the registry yet!`);
                 }
