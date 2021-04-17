@@ -1,7 +1,7 @@
 import {MessageEmbed, version as djsversion, Guild, User, GuildMember} from "discord.js";
 import ms from "ms";
 import os from "os";
-import {Command, NamedCommand, getMemberByName, CHANNEL_TYPE, getGuildByName, RestCommand} from "onion-lasers";
+import {Command, NamedCommand, getUserByNickname, CHANNEL_TYPE, getGuildByName, RestCommand} from "onion-lasers";
 import {formatBytes, trimArray} from "../../lib";
 import {verificationLevels, filterLevels, regions} from "../../defs/info";
 import moment, {utc} from "moment";
@@ -34,17 +34,17 @@ export default new NamedCommand({
                 description: "Shows another user's avatar by searching their name",
                 channelType: CHANNEL_TYPE.GUILD,
                 async run({send, guild, combined}) {
-                    const member = await getMemberByName(guild!, combined);
+                    const user = await getUserByNickname(combined, guild);
 
-                    if (typeof member !== "string") {
+                    if (typeof user !== "string") {
                         send(
-                            member.user.displayAvatarURL({
+                            user.displayAvatarURL({
                                 dynamic: true,
                                 size: 2048
                             })
                         );
                     } else {
-                        send(member);
+                        send(user);
                     }
                 }
             })
@@ -125,8 +125,18 @@ export default new NamedCommand({
         async run({send, guild, args}) {
             const user = args[0] as User;
             // Transforms the User object into a GuildMember object of the current guild.
-            const member = guild?.members.resolve(args[0]);
+            const member = guild?.members.resolve(user);
             send(await getUserInfo(user, member));
+        }
+    }),
+    any: new RestCommand({
+        description: "Displays info about a user by their nickname or username.",
+        async run({send, guild, combined}) {
+            const user = await getUserByNickname(combined, guild);
+            // Transforms the User object into a GuildMember object of the current guild.
+            const member = guild?.members.resolve(user);
+            if (typeof user !== "string") send(await getUserInfo(user, member));
+            else send(user);
         }
     })
 });

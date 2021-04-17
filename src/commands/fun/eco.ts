@@ -1,4 +1,4 @@
-import {Command, NamedCommand, getMemberByName, RestCommand} from "onion-lasers";
+import {Command, NamedCommand, getUserByNickname, RestCommand} from "onion-lasers";
 import {isAuthorized, getMoneyEmbed} from "./modules/eco-utils";
 import {DailyCommand, PayCommand, GuildCommand, LeaderboardCommand} from "./modules/eco-core";
 import {BuyCommand, ShopCommand} from "./modules/eco-shop";
@@ -36,9 +36,9 @@ export default new NamedCommand({
         description: "See how much money someone else has by using their username.",
         async run({send, guild, channel, combined}) {
             if (isAuthorized(guild, channel)) {
-                const member = await getMemberByName(guild!, combined);
-                if (typeof member !== "string") send(getMoneyEmbed(member.user));
-                else send(member);
+                const user = await getUserByNickname(combined, guild);
+                if (typeof user !== "string") send(getMoneyEmbed(user));
+                else send(user);
             }
         }
     })

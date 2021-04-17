@@ -3,6 +3,7 @@
 - Reworked `poll`
 - Extended stream notifications feature
 - Fixed various bugs
+- Improved searching for users by name
 
 # 3.2.1
 - `vaporwave`: Transforms input into full-width text

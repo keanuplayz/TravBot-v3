@@ -1,4 +1,4 @@
-import {Command, getMemberByName, NamedCommand, confirm, RestCommand} from "onion-lasers";
+import {Command, getUserByNickname, NamedCommand, confirm, RestCommand} from "onion-lasers";
 import {pluralise} from "../../../lib";
 import {Storage} from "../../../structures";
 import {isAuthorized, getMoneyEmbed, getSendEmbed, ECO_EMBED_COLOR} from "./eco-utils";
@@ -156,20 +156,18 @@ export const PayCommand = new NamedCommand({
                 else if (!guild)
                     return send("You have to use this in a server if you want to send Mons with a username!");
 
-                const member = await getMemberByName(guild, combined);
-                if (typeof member === "string") return send(member);
-                else if (member.user.id === author.id) return send("You can't send Mons to yourself!");
-                else if (member.user.bot && process.argv[2] !== "dev") return send("You can't send Mons to a bot!");
+                const user = await getUserByNickname(combined, guild);
+                if (typeof user === "string") return send(user);
+                else if (user.id === author.id) return send("You can't send Mons to yourself!");
+                else if (user.bot && !IS_DEV_MODE) return send("You can't send Mons to a bot!");
 
-                const target = member.user;
-
-                const result = await confirm(
+                const confirmed = await confirm(
                     await send(`Are you sure you want to send ${pluralise(amount, "Mon", "s")} to this person?`, {
                         embed: {
                             color: ECO_EMBED_COLOR,
                             author: {
-                                name: target.tag,
-                                icon_url: target.displayAvatarURL({
+                                name: user.tag,
+                                icon_url: user.displayAvatarURL({
                                     format: "png",
                                     dynamic: true
                                 })
@@ -179,12 +177,12 @@ export const PayCommand = new NamedCommand({
                     author.id
                 );
 
-                if (result) {
-                    const receiver = Storage.getUser(target.id);
+                if (confirmed) {
+                    const receiver = Storage.getUser(user.id);
                     sender.money -= amount;
                     receiver.money += amount;
                     Storage.save();
-                    send(getSendEmbed(author, target, amount));
+                    send(getSendEmbed(author, user, amount));
                 }
             }
 

@@ -4,7 +4,7 @@ import {
     askForReply,
     confirm,
     askMultipleChoice,
-    getMemberByName,
+    getUserByNickname,
     RestCommand
 } from "onion-lasers";
 import {Storage} from "../../structures";
@@ -393,9 +393,9 @@ export default new NamedCommand({
     any: new RestCommand({
         description: "See what time it is for someone else (by their username).",
         async run({send, guild, combined}) {
-            const member = await getMemberByName(guild!, combined);
-            if (typeof member !== "string") send(getTimeEmbed(member.user));
-            else send(member);
+            const user = await getUserByNickname(combined, guild);
+            if (typeof user !== "string") send(getTimeEmbed(user));
+            else send(user);
         }
     })
 });

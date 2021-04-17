@@ -1,5 +1,5 @@
 import {User} from "discord.js";
-import {Command, NamedCommand, getMemberByName, CHANNEL_TYPE, RestCommand} from "onion-lasers";
+import {Command, NamedCommand, getUserByNickname, RestCommand} from "onion-lasers";
 
 // Quotes must be used here or the numbers will change
 const registry: {[id: string]: string} = {
@@ -69,18 +69,17 @@ export default new NamedCommand({
         }
     }),
     any: new RestCommand({
-        channelType: CHANNEL_TYPE.GUILD,
         async run({send, guild, combined}) {
-            const member = await getMemberByName(guild!, combined);
+            const user = await getUserByNickname(combined, guild);
 
-            if (typeof member !== "string") {
-                if (member.id in registry) {
-                    send(registry[member.id]);
+            if (typeof user !== "string") {
+                if (user.id in registry) {
+                    send(registry[user.id]);
                 } else {
-                    send(`\`${member.nickname ?? member.user.username}\` hasn't been added to the registry yet!`);
+                    send(`\`${user.tag}\` hasn't been added to the registry yet!`);
                 }
             } else {
-                send(member);
+                send(user);
             }
         }
     })
