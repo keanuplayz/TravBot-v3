@@ -1,6 +1,16 @@
+# Specific to prettier (so it doesn't throw a bunch of errors when running "npm run format")
+.dockerignore
+.gitignore
+.prettierignore
+.husky/
+Dockerfile
+LICENSE
+
 # Specific to this repository
 dist/
 data/
+docs/
+*.md
 tmp/
 test*
 !test/

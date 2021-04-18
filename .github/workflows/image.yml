@@ -1,0 +1,61 @@
+name: CodeQL + Docker Image
+on:
+    push:
+        branches:
+            - typescript
+
+jobs:
+    analyze:
+        name: CodeQL Analysis
+        runs-on: ubuntu-latest
+        steps:
+            - name: Checkout repository
+              uses: actions/checkout@v2
+              with:
+                  fetch-depth: 2
+
+            - name: Setup Node.JS
+              uses: actions/setup-node@v2
+              with:
+                  node-version: "14"
+            # https://github.com/npm/cli/issues/558#issuecomment-580018468
+            # Error: "npm ERR! fsevents not accessible from jest-haste-map"
+            # (supposed to just be a warning b/c optional dependency, but CI environment causes it to fail)
+            - run: npm i
+
+            - name: Build codebase
+              run: npm run build
+
+            - name: Initialize CodeQL
+              uses: github/codeql-action/init@v1
+              with:
+                  config-file: ./.github/codeql/codeql-config.yml
+                  languages: javascript
+
+            - name: Perform CodeQL Analysis
+              uses: github/codeql-action/analyze@v1
+
+    build:
+        name: Build Docker Image
+        needs: analyze
+        runs-on: ubuntu-latest
+        steps:
+            - name: Checkout repository
+              uses: actions/checkout@v2
+              with:
+                  fetch-depth: 2
+
+            - name: Install Docker BuildX
+              id: buildx
+              uses: crazy-max/ghaction-docker-buildx@v1
+              with:
+                  buildx-version: latest
+
+            - name: Login to Docker Hub
+              run: echo "${{ secrets.DOCKER_PASSWORD }}" | docker login -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
+
+            - name: Build the image
+              run: |
+                  docker buildx build \
+                  --tag keanucode/travbot-v3:latest \
+                  --platform linux/amd64,linux/arm/v7,linux/arm64 --push .
