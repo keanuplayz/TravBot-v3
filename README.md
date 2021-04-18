@@ -10,9 +10,6 @@
 	<a href="https://github.com/keanuplayz/TravBot-v3/blob/master/CHANGELOG.md">
 		<img src="https://img.shields.io/github/package-json/v/keanuplayz/travbot-v3" alt="Version">
 	</a>
-	<a href="https://github.com/keanuplayz/TravBot-v3/blob/typescript/CHANGELOG.md">
-		<img src="https://img.shields.io/github/package-json/v/keanuplayz/travbot-v3/typescript" alt="Version (Dev)">
-	</a>
 	<a href="https://discord.js.org/">
 		<img src="https://img.shields.io/github/package-json/dependency-version/keanuplayz/travbot-v3/discord.js" alt="Discord.js Version">
 	</a>

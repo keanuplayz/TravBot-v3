@@ -2,7 +2,7 @@ name: CodeQL + Docker Image
 on:
     push:
         branches:
-            - typescript
+            - master
 
 jobs:
     analyze:
