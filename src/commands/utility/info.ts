@@ -196,51 +196,51 @@ async function getGuildInfo(guild: Guild, currentGuild: Guild | null) {
     const iconURL = guild.iconURL({dynamic: true});
     const embed = new MessageEmbed().setDescription(`**Guild information for __${guild.name}__**`).setColor("BLUE");
     const displayRoles = !!(currentGuild && guild.id === currentGuild.id);
-    if (iconURL) {
-        embed
-            .setThumbnail(iconURL)
-            .addField("General", [
-                `**❯ Name:** ${guild.name}`,
-                `**❯ ID:** ${guild.id}`,
-                `**❯ Owner:** ${guild.owner?.user.tag} (${guild.ownerID})`,
-                `**❯ Region:** ${regions[guild.region]}`,
-                `**❯ Boost Tier:** ${guild.premiumTier ? `Tier ${guild.premiumTier}` : "None"}`,
-                `**❯ Explicit Filter:** ${filterLevels[guild.explicitContentFilter]}`,
-                `**❯ Verification Level:** ${verificationLevels[guild.verificationLevel]}`,
-                `**❯ Time Created:** ${moment(guild.createdTimestamp).format("LT")} ${moment(
-                    guild.createdTimestamp
-                ).format("LL")} ${moment(guild.createdTimestamp).fromNow()}`,
-                "\u200b"
-            ])
-            .addField("Statistics", [
-                `**❯ Role Count:** ${roles.length}`,
-                `**❯ Emoji Count:** ${emojis.size}`,
-                `**❯ Regular Emoji Count:** ${emojis.filter((emoji) => !emoji.animated).size}`,
-                `**❯ Animated Emoji Count:** ${emojis.filter((emoji) => emoji.animated).size}`,
-                `**❯ Member Count:** ${guild.memberCount}`,
-                `**❯ Humans:** ${members.filter((member) => !member.user.bot).size}`,
-                `**❯ Bots:** ${members.filter((member) => member.user.bot).size}`,
-                `**❯ Text Channels:** ${channels.filter((channel) => channel.type === "text").size}`,
-                `**❯ Voice Channels:** ${channels.filter((channel) => channel.type === "voice").size}`,
-                `**❯ Boost Count:** ${guild.premiumSubscriptionCount || "0"}`,
-                `\u200b`
-            ])
-            .addField("Presence", [
-                `**❯ Online:** ${members.filter((member) => member.presence.status === "online").size}`,
-                `**❯ Idle:** ${members.filter((member) => member.presence.status === "idle").size}`,
-                `**❯ Do Not Disturb:** ${members.filter((member) => member.presence.status === "dnd").size}`,
-                `**❯ Offline:** ${members.filter((member) => member.presence.status === "offline").size}`,
-                displayRoles ? "\u200b" : ""
-            ])
-            .setTimestamp();
 
-        // Only add the roles if the guild the bot is sending the message to is the same one that's being requested.
-        if (displayRoles) {
-            embed.addField(
-                `Roles [${roles.length - 1}]`,
-                roles.length < 10 ? roles.join(", ") : roles.length > 10 ? trimArray(roles) : "None"
-            );
-        }
+    embed
+        .addField("General", [
+            `**❯ Name:** ${guild.name}`,
+            `**❯ ID:** ${guild.id}`,
+            `**❯ Owner:** ${guild.owner?.user.tag} (${guild.ownerID})`,
+            `**❯ Region:** ${regions[guild.region]}`,
+            `**❯ Boost Tier:** ${guild.premiumTier ? `Tier ${guild.premiumTier}` : "None"}`,
+            `**❯ Explicit Filter:** ${filterLevels[guild.explicitContentFilter]}`,
+            `**❯ Verification Level:** ${verificationLevels[guild.verificationLevel]}`,
+            `**❯ Time Created:** ${moment(guild.createdTimestamp).format("LT")} ${moment(guild.createdTimestamp).format(
+                "LL"
+            )} ${moment(guild.createdTimestamp).fromNow()}`,
+            "\u200b"
+        ])
+        .addField("Statistics", [
+            `**❯ Role Count:** ${roles.length}`,
+            `**❯ Emoji Count:** ${emojis.size}`,
+            `**❯ Regular Emoji Count:** ${emojis.filter((emoji) => !emoji.animated).size}`,
+            `**❯ Animated Emoji Count:** ${emojis.filter((emoji) => emoji.animated).size}`,
+            `**❯ Member Count:** ${guild.memberCount}`,
+            `**❯ Humans:** ${members.filter((member) => !member.user.bot).size}`,
+            `**❯ Bots:** ${members.filter((member) => member.user.bot).size}`,
+            `**❯ Text Channels:** ${channels.filter((channel) => channel.type === "text").size}`,
+            `**❯ Voice Channels:** ${channels.filter((channel) => channel.type === "voice").size}`,
+            `**❯ Boost Count:** ${guild.premiumSubscriptionCount || "0"}`,
+            `\u200b`
+        ])
+        .addField("Presence", [
+            `**❯ Online:** ${members.filter((member) => member.presence.status === "online").size}`,
+            `**❯ Idle:** ${members.filter((member) => member.presence.status === "idle").size}`,
+            `**❯ Do Not Disturb:** ${members.filter((member) => member.presence.status === "dnd").size}`,
+            `**❯ Offline:** ${members.filter((member) => member.presence.status === "offline").size}`,
+            displayRoles ? "\u200b" : ""
+        ])
+        .setTimestamp();
+
+    if (iconURL) embed.setThumbnail(iconURL);
+
+    // Only add the roles if the guild the bot is sending the message to is the same one that's being requested.
+    if (displayRoles) {
+        embed.addField(
+            `Roles [${roles.length - 1}]`,
+            roles.length < 10 ? roles.join(", ") : roles.length > 10 ? trimArray(roles) : "None"
+        );
     }
 
     return embed;
