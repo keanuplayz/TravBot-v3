@@ -41,7 +41,12 @@ const registry: {[id: string]: string} = {
     "237359961842253835": "Good question.",
     "320680803124248576": "The resident meat lump and certified non-weeb. Inquire directly for details and keep that honey glaze to yourself.",
     "689538764950994990":
-        "The slayer of memes, a vigilante of the voidborn, and the self-proclaimed prophet of Xereptheí.\n> And thus, I shall remain dormant once more. For when judgement day arrives, those whose names are sung shall pierce the heavens."
+        "The slayer of memes, a vigilante of the voidborn, and the self-proclaimed prophet of Xereptheí.\n> And thus, I shall remain dormant once more. For when judgement day arrives, those whose names are sung shall pierce the heavens.",
+    "273599683132260354":
+        "Does memes, art crimes, programming, programming accessories, and is accessory to meme, programming, and art crimes. Also, tiny potato.",
+    "156532969119547393": "Someone pretty cool for a bird made out of fire.",
+    "388522171393245184": "The bat. Likes pats. If mean, apply whacks. 🗞️",
+    "138840343855497216": "your face is a whois entry"
 };
 
 export default new NamedCommand({
