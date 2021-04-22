@@ -20,7 +20,7 @@ function updateGlobalEmoteRegistry(): void {
         }
     }
 
-    FileManager.write("emote-registry", data, true);
+    FileManager.write("public/emote-registry", data, true);
 }
 
 client.on("emojiCreate", (emote) => {

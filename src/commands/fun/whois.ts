@@ -39,7 +39,8 @@ const registry: {[id: string]: string} = {
     "389178357302034442": "In his dreams, he is the star. its him. <:itsMe:808174425253871657>",
     "606395763404046349": "Me.",
     "237359961842253835": "Good question.",
-    "320680803124248576": "The resident meat lump and certified non-weeb. Inquire directly for details and keep that honey glaze to yourself.",
+    "320680803124248576":
+        "The resident meat lump and certified non-weeb. Inquire directly for details and keep that honey glaze to yourself.",
     "689538764950994990":
         "The slayer of memes, a vigilante of the voidborn, and the self-proclaimed prophet of Xereptheí.\n> And thus, I shall remain dormant once more. For when judgement day arrives, those whose names are sung shall pierce the heavens.",
     "273599683132260354":

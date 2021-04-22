@@ -1,6 +1,8 @@
 # Specific to this repository
 dist/
-data/
+data/*
+data/public/emote-registry.json
+!data/public/
 tmp/
 test*
 !test/
