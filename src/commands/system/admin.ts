@@ -204,6 +204,27 @@ export default new NamedCommand({
                             })
                         })
                     }
+                }),
+                name: new NamedCommand({
+                    aliases: ["defaultname"],
+                    description:
+                        "Sets the name that the channel will be reset to once no more members are in the channel.",
+                    usage: "(<name>)",
+                    run: "Please provide a new voice channel name.",
+                    any: new RestCommand({
+                        async run({send, guild, message, combined}) {
+                            const voiceChannel = message.member?.voice.channel;
+                            const guildID = guild!.id;
+                            const guildStorage = Storage.getGuild(guildID);
+                            const newName = combined;
+
+                            if (!voiceChannel) return send("You are not in a voice channel.");
+
+                            guildStorage.channelNames[voiceChannel.id] = newName;
+                            Storage.save();
+                            return await send(`Set default channel name to "${newName}".`);
+                        }
+                    })
                 })
             }
         }),
