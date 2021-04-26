@@ -72,6 +72,7 @@ class Guild {
     public welcomeMessage: string | null;
     public streamingChannel: string | null;
     public streamingRoles: {[role: string]: string}; // Role ID: Category Name
+    public channelNames: {[channel: string]: string};
     public members: {[id: string]: Member};
 
     constructor(data?: GenericJSON) {
@@ -80,6 +81,7 @@ class Guild {
         this.welcomeMessage = select(data?.welcomeMessage, null, String);
         this.streamingChannel = select(data?.streamingChannel, null, String);
         this.streamingRoles = {};
+        this.channelNames = {};
         this.members = {};
 
         switch (data?.welcomeType) {
@@ -100,6 +102,16 @@ class Guild {
 
                 if (/\d{17,}/g.test(id) && typeof category === "string") {
                     this.streamingRoles[id] = category;
+                }
+            }
+        }
+
+        if (data?.channelNames) {
+            for (const id in data.channelNames) {
+                const name = data.channelNames[id];
+
+                if (/\d{17,}/g.test(id) && typeof name === "string") {
+                    this.channelNames[id] = name;
                 }
             }
         }
