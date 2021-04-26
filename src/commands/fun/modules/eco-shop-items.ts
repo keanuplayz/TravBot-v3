@@ -11,18 +11,18 @@ export interface ShopItem {
 
 export const ShopItems: ShopItem[] = [
     {
-        cost: 1,
+        cost: 3,
         title: "Hug",
-        description: "Hug Monika.",
+        description: "Hug Monica.",
         usage: "hug",
         run(message, cost) {
-            message.channel.send(`Transaction of ${cost} Mon completed successfully. <@394808963356688394>`);
+            message.channel.send(`Transaction of ${cost} Mons completed successfully. <@394808963356688394>`);
         }
     },
     {
-        cost: 2,
+        cost: 5,
         title: "Handholding",
-        description: "Hold Monika's hand.",
+        description: "Hold Monica's hand.",
         usage: "handhold",
         run(message, cost) {
             message.channel.send(`Transaction of ${cost} Mons completed successfully. <@394808963356688394>`);
@@ -31,14 +31,23 @@ export const ShopItems: ShopItem[] = [
     {
         cost: 1,
         title: "Cute",
-        description: "Calls Monika cute.",
+        description: "Calls Monica cute.",
         usage: "cute",
         run(message) {
             message.channel.send("<:MoniCheeseBlushRed:637513137083383826>");
         }
     },
     {
-        cost: 3,
+        cost: 2,
+        title: "Pat",
+        description: "Pat Monica's head.",
+        usage: "pat",
+        run(message, cost) {
+            message.channel.send(`Transaction of ${cost} Mons completed successfully. <@394808963356688394>`);
+        }
+    },
+    {
+        cost: 15,
         title: "Laser Bridge",
         description: "Buys what is technically a laser bridge.",
         usage: "laser bridge",
