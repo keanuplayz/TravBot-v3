@@ -59,3 +59,13 @@ jobs:
                   docker buildx build \
                   --tag keanucode/travbot-v3:latest \
                   --platform linux/amd64,linux/arm/v7,linux/arm64 --push .
+
+            - name: Sync From Docker Hub to GitHub
+              uses: onichandame/docker-registry-sync-action@master
+              with:
+                  source_repository: docker.io/keanucode/travbot-v3:latest
+                  source_username: ${{ secrets.DOCKER_USERNAME }}
+                  source_password: ${{ secrets.DOCKER_PASSWORD }}
+                  target_repository: docker.pkg.github.com/keanuplayz/travbot-v3/travbot-v3:latest
+                  target_username: ${{ secrets.GH_USERNAME }}
+                  target_password: ${{ secrets.GH_TOKEN }}
