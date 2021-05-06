@@ -12,7 +12,7 @@ export default new NamedCommand({
         any: new RestCommand({
             description: "Question for the poll.",
             async run({send, message, author, args, combined}) {
-                execPoll(send, message, author, combined, args[0]);
+                execPoll(send, message, author, combined, args[0] * 1000);
             }
         })
     }),

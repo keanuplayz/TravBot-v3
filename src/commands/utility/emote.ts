@@ -1,5 +1,5 @@
 import {NamedCommand, RestCommand} from "onion-lasers";
-import {processEmoteQueryFormatted} from "./modules/emote-utils";
+import {processEmoteQuery} from "./modules/emote-utils";
 
 export default new NamedCommand({
     description:
@@ -9,7 +9,7 @@ export default new NamedCommand({
         description: "The emote(s) to send.",
         usage: "<emotes...>",
         async run({send, args}) {
-            const output = processEmoteQueryFormatted(args);
+            const output = processEmoteQuery(args, true).join("");
             if (output.length > 0) send(output);
         }
     })

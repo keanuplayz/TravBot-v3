@@ -1,3 +1,14 @@
+# 3.2.3
+- Fixed `info guild` bug on servers without an icon
+- Added non-pinging mention to `whois`
+- Moved location of emote registry
+- Added command to set default VC name
+- Added pat shop item
+- Reworked `say` command making use of webhooks to replicate ac2pic's Nitroless idea (Part 1)
+- Fixed `poll` duration
+- Fixed `eco pay` user searching
+- Fixed `admin set welcome type none`
+
 # 3.2.2
 - Moved command handler code to [Onion Lasers](https://github.com/WatDuhHekBro/OnionLasers)
 - Reworked `poll`

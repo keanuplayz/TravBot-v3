@@ -65,7 +65,35 @@ const unicodeEmojiRegex = /^(?:[\u2700-\u27bf]|(?:\ud83c[\udde6-\uddff]){2}|[\ud
 const discordEmoteMentionRegex = /^<a?:\w+:\d+>$/;
 const emoteNameWithSelectorRegex = /^(.+)~(\d+)$/;
 
-function processEmoteQuery(query: string[], isFormatted: boolean): string[] {
+export function searchNearestEmote(query: string, additionalEmotes?: GuildEmoji[]): string {
+    // Selector number used for disambiguating multiple emotes with same name.
+    let selector = 0;
+
+    // If the query has emoteName~123 format, extract the actual name and the selector number.
+    const queryWithSelector = query.match(emoteNameWithSelectorRegex);
+    if (queryWithSelector) {
+        query = queryWithSelector[1];
+        selector = +queryWithSelector[2];
+    }
+
+    // Try to match an emote name directly if the selector is for the closest match.
+    if (selector == 0) {
+        const directMatchEmote = client.emojis.cache.find((em) => em.name === query);
+        if (directMatchEmote) return directMatchEmote.toString();
+    }
+
+    // Find all similar emote candidates within certian threshold and select Nth top one according to the selector.
+    const similarEmotes = searchSimilarEmotes(query);
+    if (similarEmotes.length > 0) {
+        selector = Math.min(selector, similarEmotes.length - 1);
+        return similarEmotes[selector].toString();
+    }
+
+    // Return some "missing/invalid emote" indicator.
+    return "❓";
+}
+
+export function processEmoteQuery(query: string[], isFormatted: boolean): string[] {
     return query.map((emote) => {
         emote = emote.trim();
 
@@ -79,33 +107,6 @@ function processEmoteQuery(query: string[], isFormatted: boolean): string[] {
             if (emote == "_") return "\u200b";
         }
 
-        // Selector number used for disambiguating multiple emotes with same name.
-        let selector = 0;
-
-        // If the query has emoteName~123 format, extract the actual name and the selector number.
-        const queryWithSelector = emote.match(emoteNameWithSelectorRegex);
-        if (queryWithSelector) {
-            emote = queryWithSelector[1];
-            selector = +queryWithSelector[2];
-        }
-
-        // Try to match an emote name directly if the selector is for the closest match.
-        if (selector == 0) {
-            const directMatchEmote = client.emojis.cache.find((em) => em.name === emote);
-            if (directMatchEmote) return directMatchEmote.toString();
-        }
-
-        // Find all similar emote candidates within certian threshold and select Nth top one according to the selector.
-        const similarEmotes = searchSimilarEmotes(emote);
-        if (similarEmotes.length > 0) {
-            selector = Math.min(selector, similarEmotes.length - 1);
-            return similarEmotes[selector].toString();
-        }
-
-        // Return some "missing/invalid emote" indicator.
-        return "❓";
+        return searchNearestEmote(emote);
     });
 }
-
-export const processEmoteQueryArray = (query: string[]): string[] => processEmoteQuery(query, false);
-export const processEmoteQueryFormatted = (query: string[]): string => processEmoteQuery(query, true).join("");

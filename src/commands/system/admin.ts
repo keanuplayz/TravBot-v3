@@ -89,6 +89,13 @@ export default new NamedCommand({
                                         Storage.save();
                                         send("Set this server's welcome type to `graphical`.");
                                     }
+                                }),
+                                none: new NamedCommand({
+                                    async run({send, guild}) {
+                                        Storage.getGuild(guild!.id).welcomeType = "none";
+                                        Storage.save();
+                                        send("Set this server's welcome type to `none`.");
+                                    }
                                 })
                             }
                         }),
@@ -331,10 +338,9 @@ export default new NamedCommand({
             channelType: CHANNEL_TYPE.GUILD,
             run: "You have to specify a nickname to set for the bot",
             any: new RestCommand({
-                async run({send, message, guild, combined}) {
+                async run({send, guild, combined}) {
                     await guild!.me?.setNickname(combined);
-                    if (guild!.me?.hasPermission(Permissions.FLAGS.MANAGE_MESSAGES)) message.delete({timeout: 5000});
-                    send(`Nickname set to \`${combined}\``).then((m) => m.delete({timeout: 5000}));
+                    send(`Nickname set to \`${combined}\``);
                 }
             })
         }),

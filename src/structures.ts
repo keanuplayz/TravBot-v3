@@ -14,6 +14,7 @@ class ConfigStructure extends GenericStructure {
     public admins: string[];
     public support: string[];
     public systemLogsChannel: string | null;
+    public webhooks: {[id: string]: string}; // id-token pairs
 
     constructor(data: GenericJSON) {
         super("config");
@@ -23,6 +24,15 @@ class ConfigStructure extends GenericStructure {
         this.admins = select(data.admins, [], String, true);
         this.support = select(data.support, [], String, true);
         this.systemLogsChannel = select(data.systemLogsChannel, null, String);
+        this.webhooks = {};
+
+        for (const id in data.webhooks) {
+            const token = data.webhooks[id];
+
+            if (/\d{17,}/g.test(id) && typeof token === "string") {
+                this.webhooks[id] = token;
+            }
+        }
     }
 }
 

@@ -1,8 +1,9 @@
 import {NamedCommand, RestCommand} from "onion-lasers";
 import {Message, Channel, TextChannel} from "discord.js";
-import {processEmoteQueryArray} from "./modules/emote-utils";
+import {processEmoteQuery} from "./modules/emote-utils";
 
 export default new NamedCommand({
+    aliases: ["r"],
     description:
         "Reacts to the a previous message in your place. You have to react with the same emote before the bot removes that reaction.",
     usage: 'react <emotes...> (<distance / message ID / "Copy ID" / "Copy Message Link">)',
@@ -100,7 +101,7 @@ export default new NamedCommand({
                 ).last();
             }
 
-            for (const emote of processEmoteQueryArray(args)) {
+            for (const emote of processEmoteQuery(args, false)) {
                 // Even though the bot will always grab *some* emote, the user can choose not to keep that emote there if it isn't what they want
                 const reaction = await target!.react(emote);
 

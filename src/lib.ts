@@ -38,20 +38,48 @@ export function parseArgs(line: string): string[] {
  * - `%%` = `%`
  * - If the invalid token is null/undefined, nothing is changed.
  */
-export function parseVars(line: string, definitions: {[key: string]: string}, invalid: string | null = ""): string {
+export function parseVars(
+    line: string,
+    definitions: {[key: string]: string},
+    delimiter = "%",
+    invalid: string | null = ""
+): string {
     let result = "";
     let inVariable = false;
     let token = "";
 
     for (const c of line) {
-        if (c === "%") {
+        if (c === delimiter) {
             if (inVariable) {
-                if (token === "") result += "%";
+                if (token === "") result += delimiter;
                 else {
                     if (token in definitions) result += definitions[token];
                     else if (invalid === null) result += `%${token}%`;
                     else result += invalid;
 
+                    token = "";
+                }
+            }
+
+            inVariable = !inVariable;
+        } else if (inVariable) token += c;
+        else result += c;
+    }
+
+    return result;
+}
+
+export function parseVarsCallback(line: string, callback: (variable: string) => string, delimiter = "%"): string {
+    let result = "";
+    let inVariable = false;
+    let token = "";
+
+    for (const c of line) {
+        if (c === delimiter) {
+            if (inVariable) {
+                if (token === "") result += delimiter;
+                else {
+                    result += callback(token);
                     token = "";
                 }
             }

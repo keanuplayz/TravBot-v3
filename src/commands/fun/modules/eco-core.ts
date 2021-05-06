@@ -141,7 +141,7 @@ export const PayCommand = new NamedCommand({
         run: "You must use the format `eco pay <user> <amount>`!"
     }),
     any: new RestCommand({
-        async run({send, args, author, channel, guild, combined}) {
+        async run({send, args, author, channel, guild}) {
             if (isAuthorized(guild, channel)) {
                 const last = args.pop();
 
@@ -156,7 +156,8 @@ export const PayCommand = new NamedCommand({
                 else if (!guild)
                     return send("You have to use this in a server if you want to send Mons with a username!");
 
-                const user = await getUserByNickname(combined, guild);
+                // Do NOT use the combined parameter here, it won't account for args.pop() at the start.
+                const user = await getUserByNickname(args.join(" "), guild);
                 if (typeof user === "string") return send(user);
                 else if (user.id === author.id) return send("You can't send Mons to yourself!");
                 else if (user.bot && !IS_DEV_MODE) return send("You can't send Mons to a bot!");

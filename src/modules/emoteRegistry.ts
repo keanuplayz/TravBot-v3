@@ -20,6 +20,7 @@ function updateGlobalEmoteRegistry(): void {
         }
     }
 
+    FileManager.open("data/public"); // generate folder if it doesn't exist
     FileManager.write("public/emote-registry", data, true);
 }
 
