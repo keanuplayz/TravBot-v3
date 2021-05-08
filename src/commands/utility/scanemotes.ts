@@ -129,6 +129,7 @@ export default new NamedCommand({
 
                                         if (reaction.count !== userReactions + botReactions) {
                                             console.warn(
+                                                "[scanemotes]",
                                                 `[Channel: ${channel.id}, Message: ${msg.id}] A reaction count of ${reaction.count} was expected but was given ${userReactions} user reactions and ${botReactions} bot reactions.`
                                             );
                                             warnings++;
@@ -159,7 +160,7 @@ export default new NamedCommand({
                 "y"
             )}.`
         );
-        console.log(`Finished operation in ${finishTime - startTime} ms.`);
+        console.log("[scanemotes]", `Finished operation in ${finishTime - startTime} ms.`);
         channel.stopTyping();
 
         // Display stats on emote usage.

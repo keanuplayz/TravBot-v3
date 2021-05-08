@@ -4,6 +4,7 @@
 - [Setting up the development environment](#setting-up-the-development-environment)
 - [Adding a new command](#adding-a-new-command)
 - [Adding a new non-command feature](#adding-a-new-non-command-feature)
+- [Notes](#notes)
 
 # Introduction
 
@@ -68,3 +69,17 @@ export const client = new Client();
 
 import "./modules/myModule";
 ```
+
+# Notes
+
+## Logger
+
+All calls to `console.error`, `console.warn`, `console.log`, and `console.debug` will also add to an in-memory log you can download, noted by verbosity levels `Error`, `Warn`, `Info`, and `Verbose` respectively.
+- `Error`: This indicates stuff that could or is breaking at least some functionality of the bot.
+- `Warn`: This indicates stuff that should probably be fixed but isn't going to break the bot.
+- `Info`: Used for general events such as joining/leaving guilds for example, but try not to go overboard on logging everything.
+- `Verbose`: This is used as a sort of separator for logging potentially error-prone events so that if an error occurs, you can find the context that error originated from.
+- In order to make reading the logs easier, context should be provided with each call. For example, if a call is being made from the storage module, you'd do something like `console.log("[storage]", "the message")`.
+    - `[name]` indicates a module
+    - `:name:` indicates a command
+    - If a message is clear enough as to what the context was though, it's probably unnecessary to include this prefix. However, you should definitely attach context prefixes to error objects, who knows where those might originate.

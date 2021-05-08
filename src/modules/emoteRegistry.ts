@@ -24,31 +24,9 @@ function updateGlobalEmoteRegistry(): void {
     FileManager.write("public/emote-registry", data, true);
 }
 
-client.on("emojiCreate", (emote) => {
-    console.log(`Updated emote registry. ${emote.name}`);
-    updateGlobalEmoteRegistry();
-});
-
-client.on("emojiDelete", () => {
-    console.log("Updated emote registry.");
-    updateGlobalEmoteRegistry();
-});
-
-client.on("emojiUpdate", () => {
-    console.log("Updated emote registry.");
-    updateGlobalEmoteRegistry();
-});
-
-client.on("guildCreate", () => {
-    console.log("Updated emote registry.");
-    updateGlobalEmoteRegistry();
-});
-
-client.on("guildDelete", () => {
-    console.log("Updated emote registry.");
-    updateGlobalEmoteRegistry();
-});
-
-client.on("ready", () => {
-    updateGlobalEmoteRegistry();
-});
+client.on("emojiCreate", updateGlobalEmoteRegistry);
+client.on("emojiDelete", updateGlobalEmoteRegistry);
+client.on("emojiUpdate", updateGlobalEmoteRegistry);
+client.on("guildCreate", updateGlobalEmoteRegistry);
+client.on("guildDelete", updateGlobalEmoteRegistry);
+client.on("ready", updateGlobalEmoteRegistry);

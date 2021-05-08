@@ -1,24 +1,9 @@
 import {client} from "../index";
-import {GuildChannel, TextChannel} from "discord.js";
+import {TextChannel} from "discord.js";
 import {Config} from "../structures";
 
-client.on("channelCreate", async (channel) => {
-    const botGuilds = client.guilds;
-
-    if (channel instanceof GuildChannel) {
-        const createdGuild = await botGuilds.fetch(channel.guild.id);
-        console.log(`Channel created in '${createdGuild.name}' called '#${channel.name}'`);
-    }
-});
-
-client.on("channelDelete", async (channel) => {
-    const botGuilds = client.guilds;
-
-    if (channel instanceof GuildChannel) {
-        const createdGuild = await botGuilds.fetch(channel.guild.id);
-        console.log(`Channel deleted in '${createdGuild.name}' called '#${channel.name}'`);
-    }
-});
+// Logging which guilds the bot is added to and removed from makes sense.
+// However, logging the specific channels that are added/removed is a tad bit privacy-invading.
 
 client.on("guildCreate", (guild) => {
     console.log(
@@ -51,7 +36,11 @@ client.on("guildDelete", (guild) => {
         if (channel && channel.type === "text") {
             (channel as TextChannel).send(`\`${guild.name}\` (\`${guild.id}\`) removed the bot.`);
         } else {
-            console.warn(`${Config.systemLogsChannel} is not a valid text channel for system logs!`);
+            console.warn(
+                `${Config.systemLogsChannel} is not a valid text channel for system logs! Removing it from storage.`
+            );
+            Config.systemLogsChannel = null;
+            Config.save();
         }
     }
 });

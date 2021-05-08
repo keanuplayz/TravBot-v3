@@ -3,16 +3,6 @@ import inquirer from "inquirer";
 import Storage from "./storage";
 import {Config} from "../structures";
 
-// A generic process handler is set to catch unhandled rejections other than the ones from Lavalink and Discord.
-process.on("unhandledRejection", (reason: any) => {
-    const isLavalinkError = reason?.code === "ECONNREFUSED";
-    const isDiscordError = reason?.name === "DiscordAPIError";
-
-    if (!isLavalinkError && !isDiscordError) {
-        console.error(reason.stack);
-    }
-});
-
 // This file is called (or at least should be called) automatically as long as a config file doesn't exist yet.
 // And that file won't be written until the data is successfully initialized.
 const prompts = [

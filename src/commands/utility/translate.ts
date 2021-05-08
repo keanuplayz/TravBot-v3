@@ -32,7 +32,7 @@ export default new NamedCommand({
                         });
                     })
                     .catch((error) => {
-                        console.error(error);
+                        console.error("[translate]", error);
                         send(
                             `${error}\nPlease use the following list: https://en.wikipedia.org/wiki/List_of_ISO_639-1_codes`
                         );

@@ -33,7 +33,8 @@ for (const listener of process.listeners("unhandledRejection")) {
 
 process.on("unhandledRejection", (reason: any) => {
     if (reason?.code === "ECONNREFUSED") {
-        console.error(
+        // This is console.warn instead of console.error because on development environments, unless Lavalink is being tested, it won't interfere with the bot's functionality.
+        console.warn(
             `[discord.js-lavalink-musicbot] Caught unhandled rejection: ${reason.stack}\nIf this is causing issues, head to the support server at https://discord.gg/dNN4azK`
         );
     }

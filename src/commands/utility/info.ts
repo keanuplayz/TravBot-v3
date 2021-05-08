@@ -65,7 +65,7 @@ export default new NamedCommand({
                         `**❯ Creation Date:** ${utc(client.user?.createdTimestamp).format("Do MMMM YYYY HH:mm:ss")}`,
                         `**❯ Node.JS:** ${process.version}`,
                         `**❯ Version:** v${process.env.npm_package_version}`,
-                        `**❯ Discord.JS:** ${djsversion}`,
+                        `**❯ Discord.JS:** v${djsversion}`,
                         "\u200b"
                     ])
                     .addField("System", [

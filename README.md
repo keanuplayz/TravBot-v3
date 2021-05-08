@@ -1,6 +1,7 @@
 # TravBot-v3
 
 <p align="center">
+	<!-- The image could potentially be a hyperlink to invite TravBot. -->
 	<img src="https://i.imgur.com/l2E2Tfi.png"/>
 </p>
 <p align="center">

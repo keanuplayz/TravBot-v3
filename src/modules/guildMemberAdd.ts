@@ -68,7 +68,7 @@ client.on("guildMemberAdd", async (member) => {
                 );
             }
         } else {
-            console.error(`"${welcomeChannel}" is not a valid text channel ID!`);
+            console.error("[modules/guildMemberAdd]", `"${welcomeChannel}" is not a valid text channel ID!`);
         }
     }
 });

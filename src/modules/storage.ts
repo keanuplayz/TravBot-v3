@@ -14,18 +14,18 @@ const Storage = {
                 data = JSON.parse(file);
             } catch (error) {
                 if (process.argv[2] !== "dev") {
-                    console.warn(`Malformed JSON data (header: ${header}), backing it up.`, file);
-                    fs.writeFile(
-                        `${path}.backup`,
-                        file,
-                        generateHandler(`Backup file of "${header}" successfully written as ${file}.`)
-                    );
+                    console.warn("[storage.read]", `Malformed JSON data (header: ${header}), backing it up.`, file);
+                    fs.writeFile(`${path}.backup`, file, (error) => {
+                        if (error) console.error("[storage.read]", error);
+                        console.log("[storage.read]", `Backup file of "${header}" successfully written as ${file}.`);
+                    });
                 }
             }
         }
 
         return data;
     },
+    // There is no need to log successfully written operations as it pollutes the log with useless info for debugging.
     write(header: string, data: object, asynchronous = true) {
         this.open("data");
         const path = `data/${header}.json`;
@@ -34,12 +34,17 @@ const Storage = {
             const result = JSON.stringify(data, null, "\t");
 
             if (asynchronous)
-                fs.writeFile(path, result, generateHandler(`"${header}" sucessfully spaced and written.`));
+                fs.writeFile(path, result, (error) => {
+                    if (error) console.error("[storage.write]", error);
+                });
             else fs.writeFileSync(path, result);
         } else {
             const result = JSON.stringify(data);
 
-            if (asynchronous) fs.writeFile(path, result, generateHandler(`"${header}" sucessfully written.`));
+            if (asynchronous)
+                fs.writeFile(path, result, (error) => {
+                    if (error) console.error("[storage.write]", error);
+                });
             else fs.writeFileSync(path, result);
         }
     },
@@ -54,15 +59,10 @@ const Storage = {
     },
     close(path: string) {
         if (fs.existsSync(path) && fs.readdirSync(path).length === 0)
-            fs.rmdir(path, generateHandler(`"${path}" successfully closed.`));
+            fs.rmdir(path, (error) => {
+                if (error) console.error("[storage.close]", error);
+            });
     }
 };
-
-export function generateHandler(message: string) {
-    return (error: Error | null) => {
-        if (error) console.error(error);
-        else console.debug(message);
-    };
-}
 
 export default Storage;

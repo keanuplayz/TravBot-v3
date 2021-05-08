@@ -75,3 +75,5 @@ import "./modules/messageEmbed";
 import "./modules/guildMemberAdd";
 import "./modules/streamNotifications";
 import "./modules/channelDefaults";
+// This module must be loaded last for the dynamic event reading to work properly.
+import "./modules/eventLogging";

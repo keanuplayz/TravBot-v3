@@ -217,7 +217,14 @@ export default new NamedCommand({
                     description:
                         "Sets the name that the channel will be reset to once no more members are in the channel.",
                     usage: "(<name>)",
-                    run: "Please provide a new voice channel name.",
+                    async run({send, guild, message}) {
+                        const voiceChannel = message.member?.voice.channel;
+                        if (!voiceChannel) return send("You are not in a voice channel.");
+                        const guildStorage = Storage.getGuild(guild!.id);
+                        delete guildStorage.channelNames[voiceChannel.id];
+                        Storage.save();
+                        return send(`Successfully removed the default channel name for ${voiceChannel}.`);
+                    },
                     any: new RestCommand({
                         async run({send, guild, message, combined}) {
                             const voiceChannel = message.member?.voice.channel;
@@ -226,6 +233,8 @@ export default new NamedCommand({
                             const newName = combined;
 
                             if (!voiceChannel) return send("You are not in a voice channel.");
+                            if (!guild!.me?.hasPermission(Permissions.FLAGS.MANAGE_CHANNELS))
+                                return send("I can't change channel names without the `Manage Channels` permission.");
 
                             guildStorage.channelNames[voiceChannel.id] = newName;
                             Storage.save();
@@ -324,8 +333,12 @@ export default new NamedCommand({
                 async run({send, message, channel, guild, author, member, client, args, combined}) {
                     try {
                         let evaled = eval(combined);
+                        // If promises like message.channel.send() are invoked, await them so unnecessary error reports don't leak into the command handler.
+                        // Also, it's more useful to see the value rather than Promise { <pending> }.
+                        if (evaled instanceof Promise) evaled = await evaled;
                         if (typeof evaled !== "string") evaled = require("util").inspect(evaled);
-                        send(clean(evaled), {code: "js", split: true});
+                        // Also await this send call so that if the message is empty, it doesn't leak into the command handler.
+                        await send(clean(evaled), {code: "js", split: true});
                     } catch (err) {
                         send(clean(err), {code: "js", split: true});
                     }
