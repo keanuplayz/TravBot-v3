@@ -47,7 +47,7 @@ export default new NamedCommand({
                 else send("Cannot send an empty message.");
             }
 
-            if (guild!.me?.hasPermission(Permissions.FLAGS.MANAGE_MESSAGES)) message.delete();
+            if (guild!.me?.permissions.has(Permissions.FLAGS.MANAGE_MESSAGES)) message.delete();
         }
     })
 });

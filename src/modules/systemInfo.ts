@@ -5,21 +5,17 @@ import {Config} from "../structures";
 // Logging which guilds the bot is added to and removed from makes sense.
 // However, logging the specific channels that are added/removed is a tad bit privacy-invading.
 
-client.on("guildCreate", (guild) => {
-    console.log(
-        `[GUILD JOIN] ${guild.name} (${guild.id}) added the bot. Owner: ${guild.owner!.user.tag} (${
-            guild.owner!.user.id
-        }).`
-    );
+client.on("guildCreate", async (guild) => {
+    const owner = await guild.fetchOwner();
+
+    console.log(`[GUILD JOIN] ${guild.name} (${guild.id}) added the bot. Owner: ${owner.user.tag} (${owner.user.id}).`);
 
     if (Config.systemLogsChannel) {
         const channel = client.channels.cache.get(Config.systemLogsChannel);
 
         if (channel && channel.type === "text") {
             (channel as TextChannel).send(
-                `TravBot joined: \`${guild.name}\`. The owner of this guild is: \`${guild.owner!.user.tag}\` (\`${
-                    guild.owner!.user.id
-                }\`)`
+                `TravBot joined: \`${guild.name}\`. The owner of this guild is: \`${owner.user.tag}\` (\`${owner.user.id}\`)`
             );
         } else {
             console.warn(`${Config.systemLogsChannel} is not a valid text channel for system logs!`);

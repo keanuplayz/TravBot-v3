@@ -196,12 +196,13 @@ async function getGuildInfo(guild: Guild, currentGuild: Guild | null) {
     const iconURL = guild.iconURL({dynamic: true});
     const embed = new MessageEmbed().setDescription(`**Guild information for __${guild.name}__**`).setColor("BLUE");
     const displayRoles = !!(currentGuild && guild.id === currentGuild.id);
+    const owner = await guild.fetchOwner();
 
     embed
         .addField("General", [
             `**❯ Name:** ${guild.name}`,
             `**❯ ID:** ${guild.id}`,
-            `**❯ Owner:** ${guild.owner?.user.tag} (${guild.ownerID})`,
+            `**❯ Owner:** ${owner.user.tag} (${guild.ownerID})`,
             `**❯ Region:** ${regions[guild.region]}`,
             `**❯ Boost Tier:** ${guild.premiumTier ? `Tier ${guild.premiumTier}` : "None"}`,
             `**❯ Explicit Filter:** ${filterLevels[guild.explicitContentFilter]}`,

@@ -10,7 +10,7 @@ client.on("voiceStateUpdate", async (before, after) => {
         channel &&
         channel.members.size === 0 &&
         channel.id in channelNames &&
-        before.guild.me?.hasPermission(Permissions.FLAGS.MANAGE_CHANNELS)
+        before.guild.me?.permissions.has(Permissions.FLAGS.MANAGE_CHANNELS)
     ) {
         channel.setName(channelNames[channel.id]);
     }

@@ -1,10 +1,10 @@
 import "./modules/globals";
-import {Client, Permissions} from "discord.js";
+import {Client, Permissions, Intents} from "discord.js";
 import path from "path";
 
 // This is here in order to make it much less of a headache to access the client from other files.
 // This of course won't actually do anything until the setup process is complete and it logs in.
-export const client = new Client();
+export const client = new Client({intents: Intents.ALL});
 
 import {launch} from "onion-lasers";
 import setup from "./modules/setup";
@@ -31,15 +31,15 @@ launch(client, path.join(__dirname, "commands"), {
             name: "Moderator",
             check: (_user, member) =>
                 !!member &&
-                (member.hasPermission(Permissions.FLAGS.MANAGE_ROLES) ||
-                    member.hasPermission(Permissions.FLAGS.MANAGE_MESSAGES) ||
-                    member.hasPermission(Permissions.FLAGS.KICK_MEMBERS) ||
-                    member.hasPermission(Permissions.FLAGS.BAN_MEMBERS))
+                (member.permissions.has(Permissions.FLAGS.MANAGE_ROLES) ||
+                    member.permissions.has(Permissions.FLAGS.MANAGE_MESSAGES) ||
+                    member.permissions.has(Permissions.FLAGS.KICK_MEMBERS) ||
+                    member.permissions.has(Permissions.FLAGS.BAN_MEMBERS))
         },
         {
             // ADMIN //
             name: "Administrator",
-            check: (_user, member) => !!member && member.hasPermission(Permissions.FLAGS.ADMINISTRATOR)
+            check: (_user, member) => !!member && member.permissions.has(Permissions.FLAGS.ADMINISTRATOR)
         },
         {
             // OWNER //

@@ -24,7 +24,7 @@ export default new NamedCommand({
 
         const stats: {
             [id: string]: {
-                name: string;
+                name: string | null;
                 formatted: string;
                 users: number;
                 bots: number;
