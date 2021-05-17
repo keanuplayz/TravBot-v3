@@ -17,6 +17,8 @@ This is a brief overview that'll describe where and how to add new features to T
 
 *Note: Make sure to avoid using `npm run build`! This will remove all your dev dependencies (in order to reduce space used). Instead, use `npm run once` to compile and build in non-dev mode.*
 
+*Note: `npm run dev` will automatically delete any leftover files, preventing errors that might occur because of it. However, sometimes you'd like to test stuff without that build step. To do that, run `npm run dev-fast`. You'll then have to manually delete the `dist` folder to clear any old files.*
+
 *Note: If you update one of the APIs or utility functions, make sure to update the [documentation](Documentation.md).*
 
 # Adding a new command
@@ -80,6 +82,4 @@ All calls to `console.error`, `console.warn`, `console.log`, and `console.debug`
 - `Info`: Used for general events such as joining/leaving guilds for example, but try not to go overboard on logging everything.
 - `Verbose`: This is used as a sort of separator for logging potentially error-prone events so that if an error occurs, you can find the context that error originated from.
 - In order to make reading the logs easier, context should be provided with each call. For example, if a call is being made from the storage module, you'd do something like `console.log("[storage]", "the message")`.
-    - `[name]` indicates a module
-    - `:name:` indicates a command
     - If a message is clear enough as to what the context was though, it's probably unnecessary to include this prefix. However, you should definitely attach context prefixes to error objects, who knows where those might originate.

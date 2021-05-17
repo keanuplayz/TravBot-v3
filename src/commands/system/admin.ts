@@ -3,6 +3,7 @@ import {clean} from "../../lib";
 import {Config, Storage} from "../../structures";
 import {Permissions, TextChannel, User, Role, Channel} from "discord.js";
 import {logs} from "../../modules/globals";
+import {inspect} from "util";
 
 function getLogBuffer(type: string) {
     return {
@@ -332,11 +333,11 @@ export default new NamedCommand({
                 // You have to bring everything into scope to use them. AFAIK, there isn't a more maintainable way to do this, but at least TS will let you know if anything gets removed.
                 async run({send, message, channel, guild, author, member, client, args, combined}) {
                     try {
-                        let evaled = eval(combined);
+                        let evaled: unknown = eval(combined);
                         // If promises like message.channel.send() are invoked, await them so unnecessary error reports don't leak into the command handler.
                         // Also, it's more useful to see the value rather than Promise { <pending> }.
                         if (evaled instanceof Promise) evaled = await evaled;
-                        if (typeof evaled !== "string") evaled = require("util").inspect(evaled);
+                        if (typeof evaled !== "string") evaled = inspect(evaled);
                         // Also await this send call so that if the message is empty, it doesn't leak into the command handler.
                         await send(clean(evaled), {code: "js", split: true});
                     } catch (err) {

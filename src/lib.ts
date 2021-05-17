@@ -114,7 +114,7 @@ export function select<T>(value: any, fallback: T, type: Function, isArray = fal
     }
 }
 
-export function clean(text: any) {
+export function clean(text: unknown) {
     if (typeof text === "string")
         return text.replace(/`/g, "`" + String.fromCharCode(8203)).replace(/@/g, "@" + String.fromCharCode(8203));
     else return text;

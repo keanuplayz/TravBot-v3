@@ -82,7 +82,7 @@ export function searchNearestEmote(query: string, additionalEmotes?: GuildEmoji[
         if (directMatchEmote) return directMatchEmote.toString();
     }
 
-    // Find all similar emote candidates within certian threshold and select Nth top one according to the selector.
+    // Find all similar emote candidates within certain threshold and select Nth top one according to the selector.
     const similarEmotes = searchSimilarEmotes(query);
     if (similarEmotes.length > 0) {
         selector = Math.min(selector, similarEmotes.length - 1);

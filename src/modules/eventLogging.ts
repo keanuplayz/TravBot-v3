@@ -10,14 +10,15 @@ process.on("unhandledRejection", (reason: any) => {
     const isLavalinkError = reason?.code === "ECONNREFUSED";
     const isDiscordError = reason?.name === "DiscordAPIError";
 
-    if (!isLavalinkError)
-        if (!isDiscordError || lastEvent !== "message")
-            // If it's a DiscordAPIError on a message event, I'll make the assumption that it comes from the command handler.
-            console.error(`@${lastEvent}\n${reason.stack}`);
+    // If it's a DiscordAPIError on a message event, I'll make the assumption that it comes from the command handler.
+    if (!isLavalinkError && (!isDiscordError || lastEvent !== "message"))
+        console.error(`@${lastEvent}\n${reason.stack}`);
 });
 
 // This will dynamically attach all known events instead of doing it manually.
 // As such, it needs to be placed after all other events are attached or the tracking won't be done properly.
 for (const event of client.eventNames()) {
-    client.on(event, () => (lastEvent = event.toString()));
+    client.on(event, () => {
+        lastEvent = event.toString();
+    });
 }
