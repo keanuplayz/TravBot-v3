@@ -9,7 +9,7 @@ export default new NamedCommand({
             const voiceChannel = message.member?.voice.channel;
 
             if (!voiceChannel) return send("You are not in a voice channel.");
-            if (!voiceChannel.guild.me?.hasPermission("MANAGE_CHANNELS"))
+            if (!voiceChannel.guild.me?.permissions.has("MANAGE_CHANNELS"))
                 return send("I am lacking the required permissions to perform this action.");
 
             const prevName = voiceChannel.name;

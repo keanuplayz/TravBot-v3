@@ -237,9 +237,9 @@ export function getPrefix(guild: DiscordGuild | null): string {
 }
 
 export interface EmoteRegistryDumpEntry {
-    ref: string;
+    ref: string | null;
     id: Snowflake;
-    name: string;
+    name: string | null;
     requires_colons: boolean;
     animated: boolean;
     url: string;

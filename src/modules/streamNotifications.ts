@@ -1,10 +1,10 @@
-import {GuildMember, VoiceChannel, MessageEmbed, TextChannel, Message, Collection} from "discord.js";
+import {GuildMember, VoiceChannel, MessageEmbed, TextChannel, Message, Collection, StageChannel} from "discord.js";
 import {client} from "../index";
 import {Storage} from "../structures";
 
 type Stream = {
     streamer: GuildMember;
-    channel: VoiceChannel;
+    channel: VoiceChannel | StageChannel;
     category: string;
     description?: string;
     thumbnail?: string;
@@ -19,7 +19,7 @@ export const streamList = new Collection<string, Stream>();
 // Probably find a better, DRY way of doing this.
 function getStreamEmbed(
     streamer: GuildMember,
-    channel: VoiceChannel,
+    channel: VoiceChannel | StageChannel,
     streamStart: number,
     category: string,
     description?: string,

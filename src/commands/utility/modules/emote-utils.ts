@@ -51,9 +51,11 @@ function searchSimilarEmotes(query: string): GuildEmoji[] {
     const emoteCandidates: {emote: GuildEmoji; dist: number}[] = [];
 
     for (const emote of client.emojis.cache.values()) {
-        const dist = levenshtein(emote.name, query);
-        if (dist <= maxAcceptedDistance) {
-            emoteCandidates.push({emote, dist});
+        if (emote.name) {
+            const dist = levenshtein(emote.name, query);
+            if (dist <= maxAcceptedDistance) {
+                emoteCandidates.push({emote, dist});
+            }
         }
     }
 

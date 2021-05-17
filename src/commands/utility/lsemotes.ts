@@ -38,7 +38,9 @@ export default new NamedCommand({
                 let emotes = new Map<string, string>();
 
                 for (const emote of emoteCollection) {
-                    emotes.set(emote.id, emote.name);
+                    if (emote.name) {
+                        emotes.set(emote.id, emote.name);
+                    }
                 }
 
                 // The result will be sandbox.emotes because it'll be modified in-place.
@@ -77,6 +79,7 @@ export default new NamedCommand({
 
 async function displayEmoteList(emotes: GuildEmoji[], send: SendFunction, author: User) {
     emotes.sort((a, b) => {
+        if (!a.name || !b.name) return 0;
         const first = a.name.toLowerCase();
         const second = b.name.toLowerCase();
 

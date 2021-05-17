@@ -8,7 +8,7 @@ const ID_PATTERN = /(\d{17,})/;
 
 // Resolve any available webhooks available for a selected channel.
 export async function resolveWebhook(channel: TextChannel | NewsChannel): Promise<Webhook | null> {
-    if (channel.guild.me?.hasPermission(Permissions.FLAGS.MANAGE_WEBHOOKS)) {
+    if (channel.guild.me?.permissions.has(Permissions.FLAGS.MANAGE_WEBHOOKS)) {
         const webhooksInChannel = await channel.fetchWebhooks();
 
         if (webhooksInChannel.size > 0) return webhooksInChannel.first()!;
