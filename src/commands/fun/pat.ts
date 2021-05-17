@@ -1,5 +1,5 @@
 import {MessageAttachment, User} from "discord.js";
-import {NamedCommand, Command} from "onion-lasers";
+import {NamedCommand, Command, RestCommand, getUserByNickname} from "onion-lasers";
 import petPetGif from "pet-pet-gif";
 
 export default new NamedCommand({
@@ -25,6 +25,19 @@ export default new NamedCommand({
             const gif = await petPetGif(user.displayAvatarURL({format: "png"}));
             const file = new MessageAttachment(gif, "pat.gif");
             send(file);
+        }
+    }),
+    any: new RestCommand({
+        description: "User to generate a GIF of.",
+        async run({send, combined, guild}) {
+            const user = await getUserByNickname(combined, guild);
+
+            if (typeof user === "string") send(user);
+            else {
+                const gif = await petPetGif(user.displayAvatarURL({format: "png"}));
+                const file = new MessageAttachment(gif, "pat.gif");
+                send(file);
+            }
         }
     })
 });
