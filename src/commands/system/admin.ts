@@ -284,30 +284,6 @@ export default new NamedCommand({
                 }
             })
         }),
-        purge: new NamedCommand({
-            description: "Purges the bot's own messages.",
-            permission: PERMISSIONS.BOT_SUPPORT,
-            channelType: CHANNEL_TYPE.GUILD,
-            async run({send, message, channel, guild, client}) {
-                // It's probably better to go through the bot's own messages instead of calling bulkDelete which requires MANAGE_MESSAGES.
-                if (guild!.me?.hasPermission(Permissions.FLAGS.MANAGE_MESSAGES)) {
-                    message.delete();
-                    const msgs = await channel.messages.fetch({
-                        limit: 100
-                    });
-                    const travMessages = msgs.filter((m) => m.author.id === client.user?.id);
-
-                    await send(`Found ${travMessages.size} messages to delete.`).then((m) =>
-                        m.delete({
-                            timeout: 5000
-                        })
-                    );
-                    await (channel as TextChannel).bulkDelete(travMessages);
-                } else {
-                    send("This command must be executed in a guild where I have the `MANAGE_MESSAGES` permission.");
-                }
-            }
-        }),
         clear: new NamedCommand({
             description: "Clears a given amount of messages.",
             usage: "<amount>",
