@@ -51,8 +51,8 @@
 # https://github.com/Automattic/node-canvas/issues/866#issuecomment-330001221
 # Took 7m 29s
 
-FROM node:10.16.0-alpine
-FROM mhart/alpine-node:8.5.0
+FROM node:current-alpine
+FROM mhart/alpine-node:latest
 
 RUN apk add --no-cache \
 	build-base \
