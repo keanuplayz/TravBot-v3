@@ -13,6 +13,7 @@ class ConfigStructure extends GenericStructure {
     public owner: string;
     public admins: string[];
     public support: string[];
+    public lavalink: boolean | null;
     public systemLogsChannel: string | null;
     public webhooks: {[id: string]: string}; // id-token pairs
 
@@ -23,6 +24,7 @@ class ConfigStructure extends GenericStructure {
         this.owner = select(data.owner, "", String);
         this.admins = select(data.admins, [], String, true);
         this.support = select(data.support, [], String, true);
+        this.lavalink = select(data.lavalink, null, Boolean);
         this.systemLogsChannel = select(data.systemLogsChannel, null, String);
         this.webhooks = {};
 
