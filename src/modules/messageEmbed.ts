@@ -26,6 +26,10 @@ client.on("message", async (message) => {
         return message.channel.send(new MessageEmbed().setDescription("🚫 The message is empty."));
     }
 
+    if (linkMessage.cleanContent.length > 2048) {
+        return message.channel.send(new MessageEmbed().setDescription("🚫 This message is too long."));
+    }
+
     const infoEmbed = new MessageEmbed()
         .setAuthor(
             linkMessage.author.username,
