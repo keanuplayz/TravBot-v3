@@ -62,9 +62,17 @@ export function getSendEmbed(sender: User, receiver: User, amount: number): obje
 }
 
 export function isAuthorized(guild: Guild | null, channel: TextChannel | DMChannel | NewsChannel): boolean {
-    if ((guild?.id === "637512823676600330" && channel?.id === "669464416420364288") || IS_DEV_MODE) return true;
-    else {
-        channel.send("Sorry, this command can only be used in Monika's emote server. (#mon-stocks)");
+    if (IS_DEV_MODE) {
+        return true;
+    }
+
+    if (guild?.id !== "637512823676600330") {
+        channel.send("Sorry, this command can only be used in Monika's emote server.");
         return false;
+    } else if (channel?.id === "669464416420364288") {
+        channel.send("Sorry, this command can only be used in <#669464416420364288>.");
+        return false;
+    } else {
+        return true;
     }
 }
