@@ -19,7 +19,13 @@ export const DailyCommand = new NamedCommand({
                     embed: {
                         title: "Daily Reward",
                         description: "You received 1 Mon!",
-                        color: ECO_EMBED_COLOR
+                        color: ECO_EMBED_COLOR,
+                        fields: [
+                            {
+                                name: "New balance:",
+                                value: pluralise(user.money, "Mon", "s")
+                            }
+                        ]
                     }
                 });
             } else
