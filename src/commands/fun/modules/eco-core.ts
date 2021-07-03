@@ -32,10 +32,9 @@ export const DailyCommand = new NamedCommand({
                 send({
                     embed: {
                         title: "Daily Reward",
-                        description: `It's too soon to pick up your daily Mons. You have about ${(
-                            (user.lastReceived + 79200000 - now) /
-                            3600000
-                        ).toFixed(1)} hours to go.`,
+                        description: `It's too soon to pick up your daily Mons. Try again at <t:${Math.floor(
+                            (user.lastReceived + 79200000) / 1000
+                        )}:t>.`,
                         color: ECO_EMBED_COLOR
                     }
                 });
