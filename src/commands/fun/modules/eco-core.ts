@@ -33,7 +33,7 @@ export const DailyCommand = new NamedCommand({
                     embed: {
                         title: "Daily Reward",
                         description: `It's too soon to pick up your daily Mons. Try again at <t:${Math.floor(
-                            (user.lastReceived + 79200000 - now) / 1000
+                            (user.lastReceived + 79200000) / 1000
                         )}:t>.`,
                         color: ECO_EMBED_COLOR
                     }
