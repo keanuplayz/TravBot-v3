@@ -1,7 +1,11 @@
 import {Command, getUserByNickname, NamedCommand, confirm, RestCommand} from "onion-lasers";
+import moment from "moment";
 import {pluralise} from "../../../lib";
 import {Storage} from "../../../structures";
 import {isAuthorized, getMoneyEmbed, getSendEmbed, ECO_EMBED_COLOR} from "./eco-utils";
+import {Collection} from "discord.js";
+
+const lastUsedTimestamps = new Collection<string, number>();
 
 export const DailyCommand = new NamedCommand({
     description: "Pick up your daily Mons. The cooldown is per user and every 22 hours to allow for some leeway.",
@@ -11,11 +15,24 @@ export const DailyCommand = new NamedCommand({
             const user = Storage.getUser(author.id);
             const now = Date.now();
 
+            const startTime = Date.now();
+            const cooldown = 3600000;
+            const lastUsedTimestamp = lastUsedTimestamps.get(guild!.id) ?? 0;
+            const difference = startTime - lastUsedTimestamp;
+            const howLong = moment(startTime).to(lastUsedTimestamp + cooldown);
+
+            if (difference < cooldown) {
+                await send(
+                    `This command requires half an hour to cooldown. You'll be able to use this command ${howLong}.`
+                );
+                return;
+            } else lastUsedTimestamps.set(guild!.id, startTime);
+
             if (now - user.lastReceived >= 79200000) {
                 user.money++;
                 user.lastReceived = now;
                 Storage.save();
-                send({
+                await send({
                     embed: {
                         title: "Daily Reward",
                         description: "You received 1 Mon!",
@@ -28,8 +45,9 @@ export const DailyCommand = new NamedCommand({
                         ]
                     }
                 });
-            } else
-                send({
+                return;
+            } else {
+                await send({
                     embed: {
                         title: "Daily Reward",
                         description: `It's too soon to pick up your daily Mons. Try again at <t:${Math.floor(
@@ -38,7 +56,19 @@ export const DailyCommand = new NamedCommand({
                         color: ECO_EMBED_COLOR
                     }
                 });
+                return;
+            }
         }
+    },
+    subcommands: {
+        cooldown: new NamedCommand({
+            description: "Forces the cooldown timer to reset.",
+            permission: PERMISSIONS.BOT_SUPPORT,
+            async run({send, guild}) {
+                lastUsedTimestamps.set(guild!.id, 0);
+                send("Reset the cooldown on `.eco daily`.");
+            }
+        })
     }
 });
 
