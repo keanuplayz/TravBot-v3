@@ -93,20 +93,37 @@ export function searchNearestEmote(query: string, additionalEmotes?: GuildEmoji[
     return "❓";
 }
 
-export function processEmoteQuery(query: string[], isFormatted: boolean): string[] {
-    return query.map((emote) => {
-        emote = emote.trim();
-
-        // If the query directly matches a Unicode emoji or a Discord custom emote mention, pass it as-is.
-        if (discordEmoteMentionRegex.test(emote) || unicodeEmojiRegex.test(emote)) return emote;
-
-        // If formatted mode is enabled, parse whitespace and newline elements.
+// This formatting system was blatantly ripped from CCBot.
+// <https://github.com/CCDirectLink/ccbot/blob/5b8aa0dbff012a35dc9a54e10b93a397edf6403d/src/commands/emotes.ts#L117-L141>
+export function processEmoteQuery(query: string[], isFormatted: boolean): string {
+    let text = "";
+    let separator = "";
+    for (let i = 0; i < query.length; i++) {
+        const emoteArg: string = query[i];
         if (isFormatted) {
-            if (emote == "-") return " ";
-            if (emote == "+") return "\n";
-            if (emote == "_") return "\u200b";
+            switch (emoteArg) {
+                case "-": {
+                    separator = "";
+                    break;
+                }
+                case "+": {
+                    separator = "\n";
+                    break;
+                }
+                case "_": {
+                    separator = "\u200b";
+                    break;
+                }
+                default: {
+                    const emote = searchNearestEmote(emoteArg);
+                    if (text.length > 0) text += separator;
+                    text += emote.toString();
+                    separator = " ";
+                }
+            }
+        } else {
+            text = searchNearestEmote(emoteArg);
         }
-
-        return searchNearestEmote(emote);
-    });
+    }
+    return text;
 }

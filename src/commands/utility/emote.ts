@@ -9,7 +9,7 @@ export default new NamedCommand({
         description: "The emote(s) to send.",
         usage: "<emotes...>",
         async run({send, args}) {
-            const output = processEmoteQuery(args, true).join("");
+            const output = processEmoteQuery(args, true);
             if (output.length > 0) send(output);
         }
     })
