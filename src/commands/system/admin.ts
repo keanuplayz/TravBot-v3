@@ -61,6 +61,31 @@ export default new NamedCommand({
                         })
                     })
                 }),
+                autoroles: new NamedCommand({
+                    description: "Configure your server's autoroles.",
+                    usage: "<roles...>",
+                    async run({send, guild}) {
+                        Storage.getGuild(guild!.id).autoRoles = [];
+                        Storage.save();
+                        send("Reset this server's autoroles.");
+                    },
+                    id: "role",
+                    any: new RestCommand({
+                        description: "The roles to set as autoroles.",
+                        async run({send, guild, args}) {
+                            const guildd = Storage.getGuild(guild!.id);
+                            for (const role of args) {
+                                if (!role.toString().match(/^<@&(\d{17,})>$/)) {
+                                    return send("Not all arguments are a role mention!");
+                                }
+                                const id = role.toString().match(/^<@&(\d{17,})>$/)![1];
+                                guildd.autoRoles!.push(id);
+                            }
+                            Storage.save();
+                            return send("Saved.");
+                        }
+                    })
+                }),
                 welcome: new NamedCommand({
                     description: "Configure your server's welcome settings for the bot.",
                     usage: "type/channel <...>",

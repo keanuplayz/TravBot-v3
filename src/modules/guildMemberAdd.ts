@@ -16,7 +16,11 @@ function applyText(canvas: Canvas, text: string) {
 }
 
 client.on("guildMemberAdd", async (member) => {
-    const {welcomeType, welcomeChannel, welcomeMessage} = Storage.getGuild(member.guild.id);
+    const {welcomeType, welcomeChannel, welcomeMessage, autoRoles} = Storage.getGuild(member.guild.id);
+
+    if (autoRoles) {
+        member.roles.add(autoRoles);
+    }
 
     if (welcomeChannel) {
         const channel = member.guild.channels.cache.get(welcomeChannel);

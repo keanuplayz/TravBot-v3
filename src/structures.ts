@@ -82,6 +82,7 @@ class Guild {
     public welcomeType: "none" | "text" | "graphical";
     public welcomeChannel: string | null;
     public welcomeMessage: string | null;
+    public autoRoles: string[] | null; // StringArray of role IDs
     public streamingChannel: string | null;
     public streamingRoles: {[role: string]: string}; // Role ID: Category Name
     public channelNames: {[channel: string]: string};
@@ -91,6 +92,7 @@ class Guild {
         this.prefix = select(data?.prefix, null, String);
         this.welcomeChannel = select(data?.welcomeChannel, null, String);
         this.welcomeMessage = select(data?.welcomeMessage, null, String);
+        this.autoRoles = select(data?.autoRoles, null, String, true);
         this.streamingChannel = select(data?.streamingChannel, null, String);
         this.streamingRoles = {};
         this.channelNames = {};
