@@ -61,6 +61,29 @@ export default new NamedCommand({
                         })
                     })
                 }),
+                messageembeds: new NamedCommand({
+                    description: "Enable or disable sending message previews.",
+                    usage: "enable/disable",
+                    run: "Please specify `enable` or `disable`.",
+                    subcommands: {
+                        true: new NamedCommand({
+                            description: "Enable sending of message previews.",
+                            async run({send, guild}) {
+                                Storage.getGuild(guild!.id).messageEmbeds = true;
+                                Storage.save();
+                                send("Sending of message previews has been enabled.");
+                            }
+                        }),
+                        false: new NamedCommand({
+                            description: "Disable sending of message previews.",
+                            async run({send, guild}) {
+                                Storage.getGuild(guild!.id).messageEmbeds = false;
+                                Storage.save();
+                                send("Sending of message previews has been disabled.");
+                            }
+                        })
+                    }
+                }),
                 autoroles: new NamedCommand({
                     description: "Configure your server's autoroles.",
                     usage: "<roles...>",

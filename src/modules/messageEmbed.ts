@@ -2,50 +2,55 @@ import {client} from "../index";
 import {MessageEmbed} from "discord.js";
 import {getPrefix} from "../structures";
 import {getMessageByID} from "onion-lasers";
+import {Storage} from "../structures";
 
 client.on("message", async (message) => {
-    // Only execute if the message is from a user and isn't a command.
-    if (message.content.startsWith(getPrefix(message.guild)) || message.author.bot) return;
-    const messageLink = extractFirstMessageLink(message.content);
-    if (!messageLink) return;
-    const [guildID, channelID, messageID] = messageLink;
+    const {messageEmbeds} = Storage.getGuild(message.guild!.id);
 
-    const linkMessage = await getMessageByID(channelID, messageID);
+    if (messageEmbeds) {
+        // Only execute if the message is from a user and isn't a command.
+        if (message.content.startsWith(getPrefix(message.guild)) || message.author.bot) return;
+        const messageLink = extractFirstMessageLink(message.content);
+        if (!messageLink) return;
+        const [guildID, channelID, messageID] = messageLink;
 
-    // If it's an invalid link (or the bot doesn't have access to it).
-    if (typeof linkMessage === "string") {
-        return message.channel.send("I don't have access to that channel!");
-    }
+        const linkMessage = await getMessageByID(channelID, messageID);
 
-    const embeds = [
-        ...linkMessage.embeds.filter((embed) => embed.type === "rich"),
-        ...linkMessage.attachments.values()
-    ];
+        // If it's an invalid link (or the bot doesn't have access to it).
+        if (typeof linkMessage === "string") {
+            return message.channel.send("I don't have access to that channel!");
+        }
 
-    if (!linkMessage.cleanContent && embeds.length === 0) {
-        return message.channel.send(new MessageEmbed().setDescription("🚫 The message is empty."));
-    }
+        const embeds = [
+            ...linkMessage.embeds.filter((embed) => embed.type === "rich"),
+            ...linkMessage.attachments.values()
+        ];
 
-    if (linkMessage.cleanContent.length > 2048) {
-        return message.channel.send(new MessageEmbed().setDescription("🚫 This message is too long."));
-    }
+        if (!linkMessage.cleanContent && embeds.length === 0) {
+            return message.channel.send(new MessageEmbed().setDescription("🚫 The message is empty."));
+        }
 
-    const infoEmbed = new MessageEmbed()
-        .setAuthor(
-            linkMessage.author.username,
-            linkMessage.author.displayAvatarURL({format: "png", dynamic: true, size: 4096})
-        )
-        .setTimestamp(linkMessage.createdTimestamp)
-        .setDescription(
-            `${linkMessage.cleanContent}\n\nSent in **${linkMessage.guild?.name}** | <#${linkMessage.channel.id}> ([link](https://discord.com/channels/${guildID}/${channelID}/${messageID}))`
-        );
+        if (linkMessage.cleanContent.length > 2048) {
+            return message.channel.send(new MessageEmbed().setDescription("🚫 This message is too long."));
+        }
 
-    if (linkMessage.attachments.size !== 0) {
-        const image = linkMessage.attachments.first();
-        infoEmbed.setImage(image!.url);
-    }
+        const infoEmbed = new MessageEmbed()
+            .setAuthor(
+                linkMessage.author.username,
+                linkMessage.author.displayAvatarURL({format: "png", dynamic: true, size: 4096})
+            )
+            .setTimestamp(linkMessage.createdTimestamp)
+            .setDescription(
+                `${linkMessage.cleanContent}\n\nSent in **${linkMessage.guild?.name}** | <#${linkMessage.channel.id}> ([link](https://discord.com/channels/${guildID}/${channelID}/${messageID}))`
+            );
 
-    return await message.channel.send(infoEmbed);
+        if (linkMessage.attachments.size !== 0) {
+            const image = linkMessage.attachments.first();
+            infoEmbed.setImage(image!.url);
+        }
+
+        return await message.channel.send(infoEmbed);
+    } else return;
 });
 
 export function extractFirstMessageLink(message: string): [string, string, string] | null {

@@ -79,6 +79,7 @@ class Member {
 
 class Guild {
     public prefix: string | null;
+    public messageEmbeds: boolean | null;
     public welcomeType: "none" | "text" | "graphical";
     public welcomeChannel: string | null;
     public welcomeMessage: string | null;
@@ -90,6 +91,7 @@ class Guild {
 
     constructor(data?: GenericJSON) {
         this.prefix = select(data?.prefix, null, String);
+        this.messageEmbeds = select(data?.messageLinks, true, Boolean);
         this.welcomeChannel = select(data?.welcomeChannel, null, String);
         this.welcomeMessage = select(data?.welcomeMessage, null, String);
         this.autoRoles = select(data?.autoRoles, null, String, true);
