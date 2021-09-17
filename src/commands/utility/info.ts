@@ -64,7 +64,7 @@ export default new NamedCommand({
                         `**❯ Channels:** ${client.channels.cache.size.toLocaleString()}`,
                         `**❯ Creation Date:** ${utc(client.user?.createdTimestamp).format("Do MMMM YYYY HH:mm:ss")}`,
                         `**❯ Node.JS:** ${process.version}`,
-                        `**❯ Version:** v${process.env.npm_package_version}`,
+                        `**❯ Version:** v${BOT_VERSION}`,
                         `**❯ Discord.JS:** v${djsversion}`,
                         "\u200b"
                     ])

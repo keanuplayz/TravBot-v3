@@ -3,6 +3,7 @@ import chalk from "chalk";
 declare global {
     var IS_DEV_MODE: boolean;
     var PERMISSIONS: typeof PermissionsEnum;
+    var BOT_VERSION: string;
 
     interface Console {
         ready: (...data: any[]) => void;
@@ -21,6 +22,7 @@ enum PermissionsEnum {
 
 global.IS_DEV_MODE = process.argv[2] === "dev";
 global.PERMISSIONS = PermissionsEnum;
+global.BOT_VERSION = "3.2.3";
 
 const oldConsole = console;
 
