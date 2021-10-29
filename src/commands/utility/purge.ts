@@ -16,14 +16,14 @@ export default new NamedCommand({
                 }
             }
         } else if (hasPermission(author, member, PERMISSIONS.BOT_SUPPORT)) {
-            if (guild!.me?.hasPermission(Permissions.FLAGS.MANAGE_MESSAGES)) message.delete();
+            if (guild!.me?.permissions.has(Permissions.FLAGS.MANAGE_MESSAGES)) message.delete();
 
             const messages = await channel.messages.fetch({
                 limit: 100
             });
             const travMessages = messages.filter((msg) => msg.author.id === client.user!.id);
 
-            send(`Found ${travMessages.size} messages to delete.`).then((msg) => msg.delete({timeout: 5000}));
+            send(`Found ${travMessages.size} messages to delete.`).then((msg) => setTimeout(() => msg.delete(), 5000));
 
             // It's better to go through the bot's own messages instead of calling bulkDelete which requires MANAGE_MESSAGES.
             for (const message of messages.values()) {
