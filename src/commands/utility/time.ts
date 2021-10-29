@@ -124,42 +124,40 @@ function getTimeEmbed(user: User) {
     }
 
     const embed = {
-        embed: {
-            color: TIME_EMBED_COLOR,
-            author: {
-                name: user.username,
-                icon_url: user.displayAvatarURL({
-                    format: "png",
-                    dynamic: true
-                })
+        color: TIME_EMBED_COLOR,
+        author: {
+            name: user.username,
+            icon_url: user.displayAvatarURL({
+                format: "png",
+                dynamic: true
+            })
+        },
+        fields: [
+            {
+                name: "Local Date",
+                value: localDate
             },
-            fields: [
-                {
-                    name: "Local Date",
-                    value: localDate
-                },
-                {
-                    name: "Day of the Week",
-                    value: dayOfWeek
-                },
-                {
-                    name: "Local Time",
-                    value: localTime
-                },
-                {
-                    name: daylightSavingsRegion !== null ? "Current Timezone Offset" : "Timezone Offset",
-                    value: timezoneOffset
-                },
-                {
-                    name: "Observes Daylight Savings?",
-                    value: daylightSavingsRegion ? "Yes" : "No"
-                }
-            ]
-        }
+            {
+                name: "Day of the Week",
+                value: dayOfWeek
+            },
+            {
+                name: "Local Time",
+                value: localTime
+            },
+            {
+                name: daylightSavingsRegion !== null ? "Current Timezone Offset" : "Timezone Offset",
+                value: timezoneOffset
+            },
+            {
+                name: "Observes Daylight Savings?",
+                value: daylightSavingsRegion ? "Yes" : "No"
+            }
+        ]
     };
 
     if (daylightSavingsRegion) {
-        embed.embed.fields.push(
+        embed.fields.push(
             {
                 name: "Daylight Savings Active?",
                 value: hasDaylightSavings(daylightSavingsRegion) ? "Yes" : "No"
@@ -178,7 +176,7 @@ export default new NamedCommand({
     description: "Show others what time it is for you.",
     aliases: ["tz"],
     async run({send, author}) {
-        send(getTimeEmbed(author));
+        send({embeds: [getTimeEmbed(author)]});
     },
     subcommands: {
         // Welcome to callback hell. We hope you enjoy your stay here!
@@ -298,10 +296,11 @@ export default new NamedCommand({
 
                 const finalize = () => {
                     Storage.save();
-                    send(
-                        "You've finished setting up your timezone! Just check to see if this looks right, and if it doesn't, run this setup again.",
-                        getTimeEmbed(author)
-                    );
+                    send({
+                        content:
+                            "You've finished setting up your timezone! Just check to see if this looks right, and if it doesn't, run this setup again.",
+                        embeds: [getTimeEmbed(author)]
+                    });
                 };
 
                 if (hasDST) {
@@ -358,23 +357,25 @@ export default new NamedCommand({
                 const time = moment().utc();
 
                 send({
-                    embed: {
-                        color: TIME_EMBED_COLOR,
-                        fields: [
-                            {
-                                name: "Local Date",
-                                value: time.format(DATE_FORMAT)
-                            },
-                            {
-                                name: "Day of the Week",
-                                value: time.format(DOW_FORMAT)
-                            },
-                            {
-                                name: "Local Time",
-                                value: time.format(TIME_FORMAT)
-                            }
-                        ]
-                    }
+                    embeds: [
+                        {
+                            color: TIME_EMBED_COLOR,
+                            fields: [
+                                {
+                                    name: "Local Date",
+                                    value: time.format(DATE_FORMAT)
+                                },
+                                {
+                                    name: "Day of the Week",
+                                    value: time.format(DOW_FORMAT)
+                                },
+                                {
+                                    name: "Local Time",
+                                    value: time.format(TIME_FORMAT)
+                                }
+                            ]
+                        }
+                    ]
                 });
             }
         }),
@@ -387,14 +388,14 @@ export default new NamedCommand({
     user: new Command({
         description: "See what time it is for someone else.",
         async run({send, args}) {
-            send(getTimeEmbed(args[0]));
+            send({embeds: [getTimeEmbed(args[0])]});
         }
     }),
     any: new RestCommand({
         description: "See what time it is for someone else (by their username).",
         async run({send, guild, combined}) {
             const user = await getUserByNickname(combined, guild);
-            if (typeof user !== "string") send(getTimeEmbed(user));
+            if (typeof user !== "string") send({embeds: [getTimeEmbed(user)]});
             else send(user);
         }
     })

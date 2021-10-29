@@ -16,19 +16,21 @@ export default new NamedCommand({
                 })
                     .then((res) => {
                         send({
-                            embed: {
-                                title: "Translation",
-                                fields: [
-                                    {
-                                        name: "Input",
-                                        value: `\`\`\`${input}\`\`\``
-                                    },
-                                    {
-                                        name: "Output",
-                                        value: `\`\`\`${res}\`\`\``
-                                    }
-                                ]
-                            }
+                            embeds: [
+                                {
+                                    title: "Translation",
+                                    fields: [
+                                        {
+                                            name: "Input",
+                                            value: `\`\`\`${input}\`\`\``
+                                        },
+                                        {
+                                            name: "Output",
+                                            value: `\`\`\`${res}\`\`\``
+                                        }
+                                    ]
+                                }
+                            ]
                         });
                     })
                     .catch((error) => {

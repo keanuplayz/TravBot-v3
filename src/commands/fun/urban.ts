@@ -21,7 +21,7 @@ export default new NamedCommand({
                     if (res.tags && res.tags.length > 0 && res.tags.join(" ").length < 1024)
                         embed.addField("Tags", res.tags.join(", "), true);
 
-                    send(embed);
+                    send({embeds: [embed]});
                 })
                 .catch(() => {
                     send("Sorry, that word was not found.");

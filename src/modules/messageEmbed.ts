@@ -2,12 +2,9 @@ import {client} from "../index";
 import {MessageEmbed} from "discord.js";
 import {getPrefix} from "../structures";
 import {getMessageByID} from "onion-lasers";
-import {Storage} from "../structures";
 
-client.on("message", async (message) => {
-    const {messageEmbeds} = Storage.getGuild(message.guild!.id);
-
-    if (messageEmbeds) {
+client.on("message", (message) => {
+    (async () => {
         // Only execute if the message is from a user and isn't a command.
         if (message.content.startsWith(getPrefix(message.guild)) || message.author.bot) return;
         const messageLink = extractFirstMessageLink(message.content);
@@ -27,11 +24,7 @@ client.on("message", async (message) => {
         ];
 
         if (!linkMessage.cleanContent && embeds.length === 0) {
-            return message.channel.send(new MessageEmbed().setDescription("🚫 The message is empty."));
-        }
-
-        if (linkMessage.cleanContent.length > 2048) {
-            return message.channel.send(new MessageEmbed().setDescription("🚫 This message is too long."));
+            return message.channel.send({embeds: [new MessageEmbed().setDescription("🚫 The message is empty.")]});
         }
 
         const infoEmbed = new MessageEmbed()
@@ -49,8 +42,8 @@ client.on("message", async (message) => {
             infoEmbed.setImage(image!.url);
         }
 
-        return await message.channel.send(infoEmbed);
-    } else return;
+        return await message.channel.send({embeds: [infoEmbed]});
+    })();
 });
 
 export function extractFirstMessageLink(message: string): [string, string, string] | null {

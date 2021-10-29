@@ -57,7 +57,7 @@ export default new NamedCommand({
         const id = author.id;
 
         if (id in registry) {
-            send(`${author} ${registry[id]}`, {allowedMentions: {parse: []}});
+            send({content: `${author} ${registry[id]}`, allowedMentions: {parse: []}});
         } else {
             send("You haven't been added to the registry yet!");
         }
@@ -69,9 +69,9 @@ export default new NamedCommand({
             const id = user.id;
 
             if (id in registry) {
-                send(`${user} ${registry[id]}`, {allowedMentions: {parse: []}});
+                send({content: `${user} ${registry[id]}`, allowedMentions: {parse: []}});
             } else {
-                send(`${user} hasn't been added to the registry yet!`, {allowedMentions: {parse: []}});
+                send({content: `${user} hasn't been added to the registry yet!`, allowedMentions: {parse: []}});
             }
         }
     }),
@@ -81,9 +81,9 @@ export default new NamedCommand({
 
             if (typeof user !== "string") {
                 if (user.id in registry) {
-                    send(`${user} ${registry[user.id]}`, {allowedMentions: {parse: []}});
+                    send({content: `${user} ${registry[user.id]}`, allowedMentions: {parse: []}});
                 } else {
-                    send(`${user} hasn't been added to the registry yet!`, {allowedMentions: {parse: []}});
+                    send({content: `${user} hasn't been added to the registry yet!`, allowedMentions: {parse: []}});
                 }
             } else {
                 send(user);

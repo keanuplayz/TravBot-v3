@@ -1,7 +1,7 @@
 import {NamedCommand, CHANNEL_TYPE} from "onion-lasers";
 import {pluralise} from "../../lib";
 import moment from "moment";
-import {Collection, TextChannel} from "discord.js";
+import {Collection, TextChannel, Util} from "discord.js";
 
 const lastUsedTimestamps = new Collection<string, number>();
 
@@ -33,7 +33,7 @@ export default new NamedCommand({
         let totalUserEmoteUsage = 0;
         // IMPORTANT: You MUST check if the bot actually has access to the channel in the first place. It will get the list of all channels, but that doesn't mean it has access to every channel. Without this, it'll require admin access and throw an annoying unhelpful DiscordAPIError: Missing Access otherwise.
         const allTextChannelsInCurrentGuild = guild!.channels.cache.filter(
-            (channel) => channel.type === "text" && channel.viewable
+            (channel) => channel instanceof TextChannel && channel.viewable
         ) as Collection<string, TextChannel>;
         let messagesSearched = 0;
         let channelsSearched = 0;
@@ -41,7 +41,7 @@ export default new NamedCommand({
         const totalChannels = allTextChannelsInCurrentGuild.size;
         const statusMessage = await send("Gathering emotes...");
         let warnings = 0;
-        channel.startTyping();
+        channel.sendTyping();
 
         // Initialize the emote stats object with every emote in the current guild.
         // The goal here is to cut the need to access guild.emojis.get() which'll make it faster and easier to work with.
@@ -63,7 +63,7 @@ export default new NamedCommand({
 
         for (const channel of allTextChannelsInCurrentGuild.values()) {
             currentChannelName = channel.name;
-            let selected = channel.lastMessageID ?? message.id;
+            let selected = channel.lastMessageId ?? message.id;
             let continueLoop = true;
 
             while (continueLoop) {
@@ -161,7 +161,6 @@ export default new NamedCommand({
             )}.`
         );
         console.log("[scanemotes]", `Finished operation in ${finishTime - startTime} ms.`);
-        channel.stopTyping();
 
         // Display stats on emote usage.
         // This can work outside the loop now that it's synchronous, and now it's clearer what code is meant to execute at the end.
@@ -180,7 +179,10 @@ export default new NamedCommand({
             );
         }
 
-        return await send(lines, {split: true});
+        let emoteList = Util.splitMessage(lines.join("\n"));
+        for (let emoteListPart of emoteList) {
+            return await send(emoteListPart);
+        }
     },
     subcommands: {
         forcereset: new NamedCommand({

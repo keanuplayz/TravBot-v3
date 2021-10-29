@@ -13,8 +13,8 @@ client.on("guildCreate", async (guild) => {
     if (Config.systemLogsChannel) {
         const channel = client.channels.cache.get(Config.systemLogsChannel);
 
-        if (channel && channel.type === "text") {
-            (channel as TextChannel).send(
+        if (channel instanceof TextChannel) {
+            channel.send(
                 `TravBot joined: \`${guild.name}\`. The owner of this guild is: \`${owner.user.tag}\` (\`${owner.user.id}\`)`
             );
         } else {
@@ -29,8 +29,8 @@ client.on("guildDelete", (guild) => {
     if (Config.systemLogsChannel) {
         const channel = client.channels.cache.get(Config.systemLogsChannel);
 
-        if (channel && channel.type === "text") {
-            (channel as TextChannel).send(`\`${guild.name}\` (\`${guild.id}\`) removed the bot.`);
+        if (channel instanceof TextChannel) {
+            channel.send(`\`${guild.name}\` (\`${guild.id}\`) removed the bot.`);
         } else {
             console.warn(
                 `${Config.systemLogsChannel} is not a valid text channel for system logs! Removing it from storage.`

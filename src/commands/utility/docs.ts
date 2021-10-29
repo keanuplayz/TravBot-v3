@@ -11,16 +11,16 @@ export default new NamedCommand({
             var queryString = args[0];
             let url = new URL(`https://djsdocs.sorta.moe/v2/embed?src=master&q=${queryString}`);
             const content = await getContent(url.toString());
-            const msg = await send({embed: content});
+            const msg = await send({embeds: [content]});
             const react = await msg.react("❌");
 
-            const collector = msg.createReactionCollector(
-                (reaction, user) => {
+            const collector = msg.createReactionCollector({
+                filter: (reaction, user) => {
                     if (user.id === author.id && reaction.emoji.name === "❌") msg.delete();
                     return false;
                 },
-                {time: 60000}
-            );
+                time: 60000
+            });
 
             collector.on("end", () => {
                 if (!msg.deleted) react.users.remove(msg.author);

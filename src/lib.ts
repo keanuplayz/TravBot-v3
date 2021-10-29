@@ -154,7 +154,11 @@ export function getContent(url: string): Promise<{url: string}> {
                     const parsedData = JSON.parse(rawData);
                     resolve(parsedData);
                 } catch (e) {
-                    reject(`Error: ${e.message}`);
+                    let errorMessage = "Something went wrong! We don't know what, though...";
+                    if (e instanceof Error) {
+                        errorMessage = e.message;
+                    }
+                    reject(`Error: ${errorMessage}`);
                 }
             });
         }).on("error", (err: {message: any}) => {

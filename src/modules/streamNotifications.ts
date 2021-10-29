@@ -38,7 +38,7 @@ function getStreamEmbed(
         // I decided to not include certain fields:
         // .addField("Activity", "CrossCode", true) - Probably too much presence data involved, increasing memory usage.
         // .addField("Viewers", 5, true) - There doesn't seem to currently be a way to track how many viewers there are. Presence data for "WATCHING" doesn't seem to affect it, and listening to raw client events doesn't seem to make it appear either.
-        .addField("Voice Channel", channel, true)
+        .addField("Voice Channel", channel.toString(), true)
         .addField("Category", category, true)
         .setColor(streamer.displayColor)
         .setFooter(
@@ -90,21 +90,23 @@ client.on("voiceStateUpdate", async (before, after) => {
                         streamer: member,
                         channel: voiceChannel,
                         category,
-                        message: await textChannel.send(
-                            streamNotificationPing,
-                            getStreamEmbed(member, voiceChannel, streamStart, category)
-                        ),
+                        message: await textChannel.send({
+                            content: streamNotificationPing,
+                            embeds: [getStreamEmbed(member, voiceChannel, streamStart, category)]
+                        }),
                         update(this: Stream) {
-                            this.message.edit(
-                                getStreamEmbed(
-                                    this.streamer,
-                                    this.channel,
-                                    streamStart,
-                                    this.category,
-                                    this.description,
-                                    this.thumbnail
-                                )
-                            );
+                            this.message.edit({
+                                embeds: [
+                                    getStreamEmbed(
+                                        this.streamer,
+                                        this.channel,
+                                        streamStart,
+                                        this.category,
+                                        this.description,
+                                        this.thumbnail
+                                    )
+                                ]
+                            });
                         },
                         streamStart
                     });
@@ -125,7 +127,7 @@ client.on("voiceStateUpdate", async (before, after) => {
 });
 
 client.on("channelUpdate", (before, after) => {
-    if (before.type === "voice" && after.type === "voice") {
+    if (before instanceof VoiceChannel && after instanceof VoiceChannel) {
         for (const stream of streamList.values()) {
             if (after.id === stream.channel.id) {
                 stream.update();

@@ -1,5 +1,6 @@
 import {NamedCommand, RestCommand} from "onion-lasers";
 import figlet from "figlet";
+import {Util} from "discord.js";
 
 export default new NamedCommand({
     description: "Generates a figlet of your input.",
@@ -7,12 +8,11 @@ export default new NamedCommand({
     any: new RestCommand({
         async run({send, combined}) {
             return send(
-                figlet.textSync(combined, {
-                    horizontalLayout: "full"
-                }),
-                {
-                    code: true
-                }
+                `\`\`\`\n${Util.cleanCodeBlockContent(
+                    figlet.textSync(combined, {
+                        horizontalLayout: "full"
+                    })
+                )}\n\`\`\``
             );
         }
     })

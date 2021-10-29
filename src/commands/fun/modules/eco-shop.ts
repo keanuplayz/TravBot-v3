@@ -3,13 +3,13 @@ import {pluralise, split} from "../../../lib";
 import {Storage, getPrefix} from "../../../structures";
 import {isAuthorized, ECO_EMBED_COLOR} from "./eco-utils";
 import {ShopItems, ShopItem} from "./eco-shop-items";
-import {EmbedField} from "discord.js";
+import {EmbedField, MessageEmbedOptions} from "discord.js";
 
 export const ShopCommand = new NamedCommand({
     description: "Displays the list of items you can buy in the shop.",
     async run({send, guild, channel, author}) {
         if (isAuthorized(guild, channel)) {
-            function getShopEmbed(selection: ShopItem[], title: string) {
+            function getShopEmbed(selection: ShopItem[], title: string): MessageEmbedOptions {
                 const fields: EmbedField[] = [];
 
                 for (const item of selection)
@@ -20,13 +20,11 @@ export const ShopCommand = new NamedCommand({
                     });
 
                 return {
-                    embed: {
-                        color: ECO_EMBED_COLOR,
-                        title: title,
-                        fields: fields,
-                        footer: {
-                            text: "Mon Shop | TravBot Services"
-                        }
+                    color: ECO_EMBED_COLOR,
+                    title: title,
+                    fields: fields,
+                    footer: {
+                        text: "Mon Shop | TravBot Services"
                     }
                 };
             }
@@ -35,10 +33,14 @@ export const ShopCommand = new NamedCommand({
             const pageAmount = shopPages.length;
 
             paginate(send, author.id, pageAmount, (page, hasMultiplePages) => {
-                return getShopEmbed(
-                    shopPages[page],
-                    hasMultiplePages ? `Shop (Page ${page + 1} of ${pageAmount})` : "Shop"
-                );
+                return {
+                    embeds: [
+                        getShopEmbed(
+                            shopPages[page],
+                            hasMultiplePages ? `Shop (Page ${page + 1} of ${pageAmount})` : "Shop"
+                        )
+                    ]
+                };
             });
         }
     }

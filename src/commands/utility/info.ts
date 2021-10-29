@@ -1,15 +1,15 @@
-import {MessageEmbed, version as djsversion, Guild, User, GuildMember} from "discord.js";
+import {MessageEmbed, version as djsversion, Guild, User, GuildMember, TextChannel, VoiceChannel} from "discord.js";
 import ms from "ms";
 import os from "os";
 import {Command, NamedCommand, getUserByNickname, CHANNEL_TYPE, getGuildByName, RestCommand} from "onion-lasers";
 import {formatBytes, trimArray} from "../../lib";
-import {verificationLevels, filterLevels, regions} from "../../defs/info";
+import {verificationLevels, filterLevels} from "../../defs/info";
 import moment, {utc} from "moment";
 
 export default new NamedCommand({
     description: "Command to provide all sorts of info about the current server, a user, etc.",
     async run({send, author, member}) {
-        send(await getUserInfo(author, member));
+        send({embeds: [await getUserInfo(author, member)]});
     },
     subcommands: {
         avatar: new NamedCommand({
@@ -55,39 +55,47 @@ export default new NamedCommand({
                 const core = os.cpus()[0];
                 const embed = new MessageEmbed()
                     .setColor(guild?.me?.displayHexColor || "BLUE")
-                    .addField("General", [
-                        `**❯ Client:** ${client.user?.tag} (${client.user?.id})`,
-                        `**❯ Servers:** ${client.guilds.cache.size.toLocaleString()}`,
-                        `**❯ Users:** ${client.guilds.cache
-                            .reduce((a: any, b: {memberCount: any}) => a + b.memberCount, 0)
-                            .toLocaleString()}`,
-                        `**❯ Channels:** ${client.channels.cache.size.toLocaleString()}`,
-                        `**❯ Creation Date:** ${utc(client.user?.createdTimestamp).format("Do MMMM YYYY HH:mm:ss")}`,
-                        `**❯ Node.JS:** ${process.version}`,
-                        `**❯ Version:** v${BOT_VERSION}`,
-                        `**❯ Discord.JS:** v${djsversion}`,
-                        "\u200b"
-                    ])
-                    .addField("System", [
-                        `**❯ Platform:** ${process.platform}`,
-                        `**❯ Uptime:** ${ms(os.uptime() * 1000, {
-                            long: true
-                        })}`,
-                        `**❯ CPU:**`,
-                        `\u3000 • Cores: ${os.cpus().length}`,
-                        `\u3000 • Model: ${core.model}`,
-                        `\u3000 • Speed: ${core.speed}MHz`,
-                        `**❯ Memory:**`,
-                        `\u3000 • Total: ${formatBytes(process.memoryUsage().heapTotal)}`,
-                        `\u3000 • Used: ${formatBytes(process.memoryUsage().heapUsed)}`
-                    ])
+                    .addField(
+                        "General",
+                        [
+                            `**❯ Client:** ${client.user?.tag} (${client.user?.id})`,
+                            `**❯ Servers:** ${client.guilds.cache.size.toLocaleString()}`,
+                            `**❯ Users:** ${client.guilds.cache
+                                .reduce((a: any, b: {memberCount: any}) => a + b.memberCount, 0)
+                                .toLocaleString()}`,
+                            `**❯ Channels:** ${client.channels.cache.size.toLocaleString()}`,
+                            `**❯ Creation Date:** ${utc(client.user?.createdTimestamp).format(
+                                "Do MMMM YYYY HH:mm:ss"
+                            )}`,
+                            `**❯ Node.JS:** ${process.version}`,
+                            `**❯ Version:** v${process.env.npm_package_version}`,
+                            `**❯ Discord.JS:** v${djsversion}`,
+                            "\u200b"
+                        ].join("\n")
+                    )
+                    .addField(
+                        "System",
+                        [
+                            `**❯ Platform:** ${process.platform}`,
+                            `**❯ Uptime:** ${ms(os.uptime() * 1000, {
+                                long: true
+                            })}`,
+                            `**❯ CPU:**`,
+                            `\u3000 • Cores: ${os.cpus().length}`,
+                            `\u3000 • Model: ${core.model}`,
+                            `\u3000 • Speed: ${core.speed}MHz`,
+                            `**❯ Memory:**`,
+                            `\u3000 • Total: ${formatBytes(process.memoryUsage().heapTotal)}`,
+                            `\u3000 • Used: ${formatBytes(process.memoryUsage().heapUsed)}`
+                        ].join("\n")
+                    )
                     .setTimestamp();
                 const avatarURL = client.user?.displayAvatarURL({
                     dynamic: true,
                     size: 2048
                 });
                 if (avatarURL) embed.setThumbnail(avatarURL);
-                send(embed);
+                send({embeds: [embed]});
             }
         }),
         guild: new NamedCommand({
@@ -95,14 +103,14 @@ export default new NamedCommand({
             usage: "(<guild name>/<guild ID>)",
             channelType: CHANNEL_TYPE.GUILD,
             async run({send, guild}) {
-                send(await getGuildInfo(guild!, guild));
+                send({embeds: [await getGuildInfo(guild!, guild)]});
             },
             id: "guild",
             guild: new Command({
                 description: "Display info about a guild by its ID.",
                 async run({send, guild, args}) {
                     const targetGuild = args[0] as Guild;
-                    send(await getGuildInfo(targetGuild, guild));
+                    send({embeds: [await getGuildInfo(targetGuild, guild)]});
                 }
             }),
             any: new RestCommand({
@@ -111,7 +119,7 @@ export default new NamedCommand({
                     const targetGuild = getGuildByName(combined);
 
                     if (typeof targetGuild !== "string") {
-                        send(await getGuildInfo(targetGuild, guild));
+                        send({embeds: [await getGuildInfo(targetGuild, guild)]});
                     } else {
                         send(targetGuild);
                     }
@@ -126,7 +134,7 @@ export default new NamedCommand({
             const user = args[0] as User;
             // Transforms the User object into a GuildMember object of the current guild.
             const member = guild?.members.resolve(user);
-            send(await getUserInfo(user, member));
+            send({embeds: [await getUserInfo(user, member)]});
         }
     }),
     any: new RestCommand({
@@ -135,7 +143,7 @@ export default new NamedCommand({
             const user = await getUserByNickname(combined, guild);
             // Transforms the User object into a GuildMember object of the current guild.
             const member = guild?.members.resolve(user);
-            if (typeof user !== "string") send(await getUserInfo(user, member));
+            if (typeof user !== "string") send({embeds: [await getUserInfo(user, member)]});
             else send(user);
         }
     })
@@ -147,20 +155,21 @@ async function getUserInfo(user: User, member: GuildMember | null | undefined): 
     const embed = new MessageEmbed()
         .setThumbnail(user.displayAvatarURL({dynamic: true, size: 512}))
         .setColor("BLUE")
-        .addField("User", [
-            `**❯ Username:** ${user.username}`,
-            `**❯ Discriminator:** ${user.discriminator}`,
-            `**❯ ID:** ${user.id}`,
-            `**❯ Flags:** ${userFlags.length ? userFlags.join(", ") : "None"}`,
-            `**❯ Avatar:** [Link to avatar](${user.displayAvatarURL({
-                dynamic: true
-            })})`,
-            `**❯ Time Created:** ${moment(user.createdTimestamp).format("LT")} ${moment(user.createdTimestamp).format(
-                "LL"
-            )} ${moment(user.createdTimestamp).fromNow()}`,
-            `**❯ Status:** ${user.presence.status}`,
-            `**❯ Game:** ${user.presence.activities || "Not playing a game."}`
-        ]);
+        .addField(
+            "User",
+            [
+                `**❯ Username:** ${user.username}`,
+                `**❯ Discriminator:** ${user.discriminator}`,
+                `**❯ ID:** ${user.id}`,
+                `**❯ Flags:** ${userFlags.length ? userFlags.join(", ") : "None"}`,
+                `**❯ Avatar:** [Link to avatar](${user.displayAvatarURL({
+                    dynamic: true
+                })})`,
+                `**❯ Time Created:** ${moment(user.createdTimestamp).format("LT")} ${moment(
+                    user.createdTimestamp
+                ).format("LL")} ${moment(user.createdTimestamp).fromNow()}`
+            ].join("\n")
+        );
 
     if (member) {
         const roles = member.roles.cache
@@ -170,16 +179,21 @@ async function getUserInfo(user: User, member: GuildMember | null | undefined): 
 
         embed
             .setColor(member.displayHexColor)
-            .addField("Member", [
-                `**❯ Highest Role:** ${
-                    member.roles.highest.id === member.guild.id ? "None" : member.roles.highest.name
-                }`,
-                `**❯ Server Join Date:** ${moment(member.joinedAt).format("LL LTS")}`,
-                `**❯ Hoist Role:** ${member.roles.hoist ? member.roles.hoist.name : "None"}`,
-                `**❯ Roles:** [${roles.length}]: ${
-                    roles.length == 0 ? "None" : roles.length <= 10 ? roles.join(", ") : trimArray(roles).join(", ")
-                }`
-            ]);
+            .addField(
+                "Member",
+                [
+                    `**❯ Status:** ${member.presence?.status}`,
+                    `**❯ Game:** ${member.presence?.activities ?? "Not playing a game."}`,
+                    `**❯ Highest Role:** ${
+                        member.roles.highest.id === member.guild.id ? "None" : member.roles.highest.name
+                    }`,
+                    `**❯ Server Join Date:** ${moment(member.joinedAt).format("LL LTS")}`,
+                    `**❯ Hoist Role:** ${member.roles.hoist ? member.roles.hoist.name : "None"}`,
+                    `**❯ Roles:** [${roles.length}]: ${
+                        roles.length == 0 ? "None" : roles.length <= 10 ? roles.join(", ") : trimArray(roles).join(", ")
+                    }`
+                ].join("\n")
+            );
     }
 
     return embed;
@@ -199,39 +213,47 @@ async function getGuildInfo(guild: Guild, currentGuild: Guild | null) {
     const owner = await guild.fetchOwner();
 
     embed
-        .addField("General", [
-            `**❯ Name:** ${guild.name}`,
-            `**❯ ID:** ${guild.id}`,
-            `**❯ Owner:** ${owner.user.tag} (${guild.ownerID})`,
-            `**❯ Region:** ${regions[guild.region]}`,
-            `**❯ Boost Tier:** ${guild.premiumTier ? `Tier ${guild.premiumTier}` : "None"}`,
-            `**❯ Explicit Filter:** ${filterLevels[guild.explicitContentFilter]}`,
-            `**❯ Verification Level:** ${verificationLevels[guild.verificationLevel]}`,
-            `**❯ Time Created:** ${moment(guild.createdTimestamp).format("LT")} ${moment(guild.createdTimestamp).format(
-                "LL"
-            )} ${moment(guild.createdTimestamp).fromNow()}`,
-            "\u200b"
-        ])
-        .addField("Statistics", [
-            `**❯ Role Count:** ${roles.length}`,
-            `**❯ Emoji Count:** ${emojis.size}`,
-            `**❯ Regular Emoji Count:** ${emojis.filter((emoji) => !emoji.animated).size}`,
-            `**❯ Animated Emoji Count:** ${emojis.filter((emoji) => emoji.animated).size}`,
-            `**❯ Member Count:** ${guild.memberCount}`,
-            `**❯ Humans:** ${members.filter((member) => !member.user.bot).size}`,
-            `**❯ Bots:** ${members.filter((member) => member.user.bot).size}`,
-            `**❯ Text Channels:** ${channels.filter((channel) => channel.type === "text").size}`,
-            `**❯ Voice Channels:** ${channels.filter((channel) => channel.type === "voice").size}`,
-            `**❯ Boost Count:** ${guild.premiumSubscriptionCount || "0"}`,
-            `\u200b`
-        ])
-        .addField("Presence", [
-            `**❯ Online:** ${members.filter((member) => member.presence.status === "online").size}`,
-            `**❯ Idle:** ${members.filter((member) => member.presence.status === "idle").size}`,
-            `**❯ Do Not Disturb:** ${members.filter((member) => member.presence.status === "dnd").size}`,
-            `**❯ Offline:** ${members.filter((member) => member.presence.status === "offline").size}`,
-            displayRoles ? "\u200b" : ""
-        ])
+        .addField(
+            "General",
+            [
+                `**❯ Name:** ${guild.name}`,
+                `**❯ ID:** ${guild.id}`,
+                `**❯ Owner:** ${owner.user.tag} (${guild.ownerId})`,
+                `**❯ Boost Tier:** ${guild.premiumTier ? `Tier ${guild.premiumTier}` : "None"}`,
+                `**❯ Explicit Filter:** ${filterLevels[guild.explicitContentFilter]}`,
+                `**❯ Verification Level:** ${verificationLevels[guild.verificationLevel]}`,
+                `**❯ Time Created:** ${moment(guild.createdTimestamp).format("LT")} ${moment(
+                    guild.createdTimestamp
+                ).format("LL")} ${moment(guild.createdTimestamp).fromNow()}`,
+                "\u200b"
+            ].join("\n")
+        )
+        .addField(
+            "Statistics",
+            [
+                `**❯ Role Count:** ${roles.length}`,
+                `**❯ Emoji Count:** ${emojis.size}`,
+                `**❯ Regular Emoji Count:** ${emojis.filter((emoji) => !emoji.animated).size}`,
+                `**❯ Animated Emoji Count:** ${emojis.filter((emoji) => !!emoji.animated).size}`,
+                `**❯ Member Count:** ${guild.memberCount}`,
+                `**❯ Humans:** ${members.filter((member) => !member.user.bot).size}`,
+                `**❯ Bots:** ${members.filter((member) => member.user.bot).size}`,
+                `**❯ Text Channels:** ${channels.filter((channel) => channel instanceof TextChannel).size}`,
+                `**❯ Voice Channels:** ${channels.filter((channel) => channel instanceof VoiceChannel).size}`,
+                `**❯ Boost Count:** ${guild.premiumSubscriptionCount || "0"}`,
+                `\u200b`
+            ].join("\n")
+        )
+        .addField(
+            "Presence",
+            [
+                `**❯ Online:** ${members.filter((member) => member.presence?.status === "online").size}`,
+                `**❯ Idle:** ${members.filter((member) => member.presence?.status === "idle").size}`,
+                `**❯ Do Not Disturb:** ${members.filter((member) => member.presence?.status === "dnd").size}`,
+                `**❯ Offline:** ${members.filter((member) => member.presence?.status === "offline").size}`,
+                displayRoles ? "\u200b" : ""
+            ].join("\n")
+        )
         .setTimestamp();
 
     if (iconURL) embed.setThumbnail(iconURL);

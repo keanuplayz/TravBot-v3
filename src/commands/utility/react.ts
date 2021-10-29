@@ -1,5 +1,5 @@
 import {NamedCommand, RestCommand} from "onion-lasers";
-import {Message, Channel, TextChannel} from "discord.js";
+import {Message, Channel, TextChannel, TextBasedChannels} from "discord.js";
 import {processEmoteQuery} from "./modules/emote-utils";
 
 export default new NamedCommand({
@@ -15,7 +15,7 @@ export default new NamedCommand({
 
             if (message.reference) {
                 // If the command message is a reply to another message, use that as the react target.
-                target = await channel.messages.fetch(message.reference.messageID!);
+                target = await channel.messages.fetch(message.reference.messageId!);
             }
             // handles reacts by message id/distance
             else if (args.length >= 2) {
@@ -29,7 +29,7 @@ export default new NamedCommand({
                     const guildID = match[1];
                     const channelID = match[2];
                     const messageID = match[3];
-                    let tmpChannel: Channel | undefined = channel;
+                    let tmpChannel: TextBasedChannels | undefined = channel;
 
                     if (guild?.id !== guildID) {
                         try {
@@ -39,12 +39,13 @@ export default new NamedCommand({
                         }
                     }
 
-                    if (tmpChannel.id !== channelID) tmpChannel = guild.channels.cache.get(channelID);
+                    if (tmpChannel?.id !== channelID)
+                        tmpChannel = guild.channels.cache.get(channelID) as TextBasedChannels;
                     if (!tmpChannel) return send(`\`${channelID}\` is an invalid channel ID!`);
 
                     if (message.id !== messageID) {
                         try {
-                            target = await (tmpChannel as TextChannel).messages.fetch(messageID);
+                            target = await tmpChannel.messages.fetch(messageID);
                         } catch {
                             return send(`\`${messageID}\` is an invalid message ID!`);
                         }
@@ -57,14 +58,15 @@ export default new NamedCommand({
                     const match = copyIDPattern.exec(last)!;
                     const channelID = match[1];
                     const messageID = match[2];
-                    let tmpChannel: Channel | undefined = channel;
+                    let tmpChannel: TextBasedChannels | undefined = channel;
 
-                    if (tmpChannel.id !== channelID) tmpChannel = guild?.channels.cache.get(channelID);
+                    if (tmpChannel?.id !== channelID)
+                        tmpChannel = guild?.channels.cache.get(channelID) as TextBasedChannels;
                     if (!tmpChannel) return send(`\`${channelID}\` is an invalid channel ID!`);
 
                     if (message.id !== messageID) {
                         try {
-                            target = await (tmpChannel as TextChannel).messages.fetch(messageID);
+                            target = await tmpChannel.messages.fetch(messageID);
                         } catch {
                             return send(`\`${messageID}\` is an invalid message ID!`);
                         }

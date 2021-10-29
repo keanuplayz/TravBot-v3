@@ -1,6 +1,6 @@
 import {pluralise} from "../../../lib";
 import {Storage} from "../../../structures";
-import {User, Guild, TextChannel, DMChannel, NewsChannel} from "discord.js";
+import {User, Guild, TextChannel, DMChannel, NewsChannel, Channel, TextBasedChannels} from "discord.js";
 
 export const ECO_EMBED_COLOR = 0xf1c40f;
 
@@ -61,18 +61,10 @@ export function getSendEmbed(sender: User, receiver: User, amount: number): obje
     };
 }
 
-export function isAuthorized(guild: Guild | null, channel: TextChannel | DMChannel | NewsChannel): boolean {
-    if (IS_DEV_MODE) {
-        return true;
-    }
-
-    if (guild?.id !== "637512823676600330") {
-        channel.send("Sorry, this command can only be used in Monika's emote server.");
+export function isAuthorized(guild: Guild | null, channel: TextBasedChannels): boolean {
+    if ((guild?.id === "637512823676600330" && channel?.id === "669464416420364288") || IS_DEV_MODE) return true;
+    else {
+        channel.send("Sorry, this command can only be used in Monika's emote server. (#mon-stocks)");
         return false;
-    } else if (channel?.id !== "669464416420364288") {
-        channel.send("Sorry, this command can only be used in <#669464416420364288>.");
-        return false;
-    } else {
-        return true;
     }
 }

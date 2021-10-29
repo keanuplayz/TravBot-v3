@@ -29,7 +29,7 @@ export default new NamedCommand({
                         .addField("Winds", current.winddisplay, true)
                         .addField("Humidity", `${current.humidity}%`, true);
                     return send({
-                        embed
+                        embeds: [embed]
                     });
                 }
             );

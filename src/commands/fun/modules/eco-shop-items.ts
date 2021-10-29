@@ -52,7 +52,8 @@ export const ShopItems: ShopItem[] = [
         description: "Buys what is technically a laser bridge.",
         usage: "laser bridge",
         run(message) {
-            message.channel.send(random(lines), {
+            message.channel.send({
+                content: random(lines),
                 files: [
                     {
                         attachment:

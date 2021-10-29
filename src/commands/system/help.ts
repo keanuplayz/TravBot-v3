@@ -22,7 +22,7 @@ export default new NamedCommand({
         const helpMenuPages: [string, string][] = []; // An array of (category, description) tuples.
 
         // Prevent the description of one category from overflowing by splitting it into multiple pages if needed.
-        for (const category of commands.keyArray()) {
+        for (const category of commands.keys()) {
             const commandList = commands.get(category)!;
             let output = LEGEND;
 
@@ -45,10 +45,16 @@ export default new NamedCommand({
 
         paginate(send, author.id, helpMenuPages.length, (page, hasMultiplePages) => {
             const [category, output] = helpMenuPages[page];
-            return new MessageEmbed()
-                .setTitle(hasMultiplePages ? `${category} (Page ${page + 1} of ${helpMenuPages.length})` : category)
-                .setDescription(output)
-                .setColor(EMBED_COLOR);
+            return {
+                embeds: [
+                    new MessageEmbed()
+                        .setTitle(
+                            hasMultiplePages ? `${category} (Page ${page + 1} of ${helpMenuPages.length})` : category
+                        )
+                        .setDescription(output)
+                        .setColor(EMBED_COLOR)
+                ]
+            };
         });
     },
     any: new RestCommand({
@@ -87,43 +93,45 @@ export default new NamedCommand({
                 aliases = formattedAliases.join(", ") || "None";
             }
 
-            return send(
-                new MessageEmbed()
-                    .setTitle(header)
-                    .setDescription(command.description)
-                    .setColor(EMBED_COLOR)
-                    .addFields(
-                        {
-                            name: "Aliases",
-                            value: aliases,
-                            inline: true
-                        },
-                        {
-                            name: "Category",
-                            value: category,
-                            inline: true
-                        },
-                        {
-                            name: "Permission Required",
-                            value: `\`${getPermissionName(result.permission)}\` (Level ${result.permission})`,
-                            inline: true
-                        },
-                        {
-                            name: "Channel Type",
-                            value: getChannelTypeName(result.channelType),
-                            inline: true
-                        },
-                        {
-                            name: "NSFW Only?",
-                            value: result.nsfw ? "Yes" : "No",
-                            inline: true
-                        },
-                        {
-                            name: "Usages",
-                            value: append
-                        }
-                    )
-            );
+            return send({
+                embeds: [
+                    new MessageEmbed()
+                        .setTitle(header)
+                        .setDescription(command.description)
+                        .setColor(EMBED_COLOR)
+                        .addFields(
+                            {
+                                name: "Aliases",
+                                value: aliases,
+                                inline: true
+                            },
+                            {
+                                name: "Category",
+                                value: category,
+                                inline: true
+                            },
+                            {
+                                name: "Permission Required",
+                                value: `\`${getPermissionName(result.permission)}\` (Level ${result.permission})`,
+                                inline: true
+                            },
+                            {
+                                name: "Channel Type",
+                                value: getChannelTypeName(result.channelType),
+                                inline: true
+                            },
+                            {
+                                name: "NSFW Only?",
+                                value: result.nsfw ? "Yes" : "No",
+                                inline: true
+                            },
+                            {
+                                name: "Usages",
+                                value: append
+                            }
+                        )
+                ]
+            });
         }
     })
 });

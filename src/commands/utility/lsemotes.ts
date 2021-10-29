@@ -9,7 +9,7 @@ export default new NamedCommand({
     description: "Lists all emotes the bot has in it's registry,",
     usage: "<regex pattern> (-flags)",
     async run({send, author, client}) {
-        displayEmoteList(client.emojis.cache.array(), send, author);
+        displayEmoteList(Array.from(client.emojis.cache.values()), send, author);
     },
     any: new RestCommand({
         description:
@@ -20,7 +20,7 @@ export default new NamedCommand({
                 const guildID: string = args[0];
 
                 displayEmoteList(
-                    client.emojis.cache.filter((emote) => emote.guild.id === guildID).array(),
+                    Array.from(client.emojis.cache.filter((emote) => emote.guild.id === guildID).values()),
                     send,
                     author
                 );
@@ -32,7 +32,7 @@ export default new NamedCommand({
                     flags = args.pop().substring(1);
                 }
 
-                let emoteCollection = client.emojis.cache.array();
+                let emoteCollection = Array.from(client.emojis.cache.values());
                 // Creates a sandbox to stop a regular expression if it takes too much time to search.
                 // To avoid passing in a giant data structure, I'll just pass in the structure {[id: string]: [name: string]}.
                 let emotes = new Map<string, string>();
@@ -61,12 +61,18 @@ export default new NamedCommand({
                         emoteCollection = emoteCollection.filter((emote) => emotes.has(emote.id)); // Only allow emotes that haven't been deleted.
                         displayEmoteList(emoteCollection, send, author);
                     } catch (error) {
-                        if (error.code === "ERR_SCRIPT_EXECUTION_TIMEOUT") {
+                        // FIXME: `error` is of type `unknown` here.
+                        // Also: <https://stackoverflow.com/questions/40141005/property-code-does-not-exist-on-type-error>
+                        let errorName = "???";
+                        if (error instanceof Error) {
+                            errorName = error.name;
+                        }
+                        if (errorName === "ERR_SCRIPT_EXECUTION_TIMEOUT") {
                             send(
                                 `The regular expression you entered exceeded the time limit of ${REGEX_TIMEOUT_MS} milliseconds.`
                             );
                         } else {
-                            throw new Error(error);
+                            throw new Error(errorName);
                         }
                     }
                 } else {
@@ -102,7 +108,7 @@ async function displayEmoteList(emotes: GuildEmoji[], send: SendFunction, author
             }
             embed.setDescription(desc);
 
-            return embed;
+            return {embeds: [embed]};
         });
     } else {
         send("No valid emotes found by that query.");

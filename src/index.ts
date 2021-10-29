@@ -4,7 +4,18 @@ import path from "path";
 
 // This is here in order to make it much less of a headache to access the client from other files.
 // This of course won't actually do anything until the setup process is complete and it logs in.
-export const client = new Client({intents: Intents.ALL});
+export const client = new Client({
+    intents: [
+        Intents.FLAGS.GUILDS,
+        Intents.FLAGS.GUILD_MEMBERS,
+        Intents.FLAGS.GUILD_EMOJIS_AND_STICKERS,
+        Intents.FLAGS.GUILD_VOICE_STATES,
+        Intents.FLAGS.GUILD_PRESENCES,
+        Intents.FLAGS.GUILD_MESSAGES,
+        Intents.FLAGS.GUILD_MESSAGE_REACTIONS,
+        Intents.FLAGS.DIRECT_MESSAGES
+    ]
+});
 
 import {launch} from "onion-lasers";
 import setup from "./modules/setup";
@@ -44,7 +55,7 @@ launch(client, path.join(__dirname, "commands"), {
         {
             // OWNER //
             name: "Server Owner",
-            check: (_user, member) => !!member && member.guild.ownerID === member.id
+            check: (_user, member) => !!member && member.guild.ownerId === member.id
         },
         {
             // BOT_SUPPORT //
@@ -67,7 +78,8 @@ launch(client, path.join(__dirname, "commands"), {
 // Initialize Modules //
 import "./modules/ready";
 import "./modules/presence";
-import "./modules/lavalink";
+// TODO: Reimplement entire music system, contact Sink
+// import "./modules/lavalink";
 import "./modules/emoteRegistry";
 import "./modules/systemInfo";
 import "./modules/intercept";

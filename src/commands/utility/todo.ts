@@ -17,7 +17,7 @@ export default new NamedCommand({
             );
         }
 
-        send(embed);
+        send({embeds: [embed]});
     },
     subcommands: {
         add: new NamedCommand({

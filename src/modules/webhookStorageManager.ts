@@ -61,7 +61,7 @@ export async function refreshWebhookCache(): Promise<void> {
         // If there are stored webhook IDs/tokens that don't work, delete those webhooks from storage.
         try {
             const webhook = await client.fetchWebhook(id, token);
-            webhookStorage.set(webhook.channelID, webhook);
+            webhookStorage.set(webhook.channelId, webhook);
         } catch {
             delete Config.webhooks[id];
             Config.save();

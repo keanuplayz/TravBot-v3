@@ -29,7 +29,8 @@ export default new NamedCommand({
                 const resolvedMessage = resolveMessageWithEmotes(combined);
 
                 if (resolvedMessage)
-                    webhook.send(resolvedMessage, {
+                    webhook.send({
+                        content: resolvedMessage,
                         username: member!.nickname ?? author.username,
                         // Webhooks cannot have animated avatars, so requesting the animated version is a moot point.
                         avatarURL:
@@ -38,12 +39,13 @@ export default new NamedCommand({
                             }) || author.defaultAvatarURL,
                         allowedMentions: {parse: []}, // avoids double pings
                         // "embeds" will not be included because it messes with the default ones that generate
-                        files: message.attachments.array()
+                        files: Array.from(message.attachments.values())
                     });
                 else send("Cannot send an empty message.");
             } else {
                 const resolvedMessage = resolveMessageWithEmotes(combined);
-                if (resolvedMessage) send(`*${author} says:*\n${resolvedMessage}`, {allowedMentions: {parse: []}});
+                if (resolvedMessage)
+                    send({content: `*${author} says:*\n${resolvedMessage}`, allowedMentions: {parse: []}});
                 else send("Cannot send an empty message.");
             }
 

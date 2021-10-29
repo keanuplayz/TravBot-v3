@@ -33,26 +33,35 @@ async function execPoll(send: SendFunction, message: Message, user: User, questi
             dynamic: true,
             size: 2048
         }) || user.defaultAvatarURL;
-    const msg = await send(
-        new MessageEmbed()
-            .setAuthor(`Poll created by ${message.author.username}`, icon)
-            .setColor(0xffffff)
-            .setFooter("React to vote.")
-            .setDescription(question)
-    );
+    const msg = await send({
+        embeds: [
+            new MessageEmbed()
+                .setAuthor(`Poll created by ${message.author.username}`, icon)
+                .setColor(0xffffff)
+                .setFooter("React to vote.")
+                .setDescription(question)
+        ]
+    });
     const results = await poll(msg, [AGREE, DISAGREE], duration);
-    send(
-        new MessageEmbed()
-            .setAuthor(`The results of ${message.author.username}'s poll:`, icon)
-            .setTitle(question)
-            .setDescription(
-                `${AGREE} － ${pluralise(
-                    results[AGREE],
-                    "",
-                    "people who agree",
-                    "person who agrees"
-                )}\n${DISAGREE} － ${pluralise(results[DISAGREE], "", "people who disagree", "person who disagrees")}`
-            )
-    );
+    send({
+        embeds: [
+            new MessageEmbed()
+                .setAuthor(`The results of ${message.author.username}'s poll:`, icon)
+                .setTitle(question)
+                .setDescription(
+                    `${AGREE} － ${pluralise(
+                        results[AGREE],
+                        "",
+                        "people who agree",
+                        "person who agrees"
+                    )}\n${DISAGREE} － ${pluralise(
+                        results[DISAGREE],
+                        "",
+                        "people who disagree",
+                        "person who disagrees"
+                    )}`
+                )
+        ]
+    });
     msg.delete();
 }

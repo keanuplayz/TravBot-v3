@@ -1,9 +1,7 @@
 import {Command, NamedCommand, getPermissionLevel, getPermissionName, CHANNEL_TYPE, RestCommand} from "onion-lasers";
-import {clean} from "../../lib";
 import {Config, Storage} from "../../structures";
-import {Permissions, TextChannel, User, Role, Channel} from "discord.js";
+import {Permissions, TextChannel, User, Role, Channel, Util} from "discord.js";
 import {logs} from "../../modules/globals";
-import {inspect} from "util";
 
 function getLogBuffer(type: string) {
     return {
@@ -372,28 +370,34 @@ export default new NamedCommand({
                 }
             })
         }),
-        eval: new NamedCommand({
-            description: "Evaluate code.",
-            usage: "<code>",
-            permission: PERMISSIONS.BOT_OWNER,
-            run: "You have to enter some code to execute first.",
-            any: new RestCommand({
-                // You have to bring everything into scope to use them. AFAIK, there isn't a more maintainable way to do this, but at least TS will let you know if anything gets removed.
-                async run({send, message, channel, guild, author, member, client, args, combined}) {
-                    try {
-                        let evaled: unknown = eval(combined);
-                        // If promises like message.channel.send() are invoked, await them so unnecessary error reports don't leak into the command handler.
-                        // Also, it's more useful to see the value rather than Promise { <pending> }.
-                        if (evaled instanceof Promise) evaled = await evaled;
-                        if (typeof evaled !== "string") evaled = inspect(evaled);
-                        // Also await this send call so that if the message is empty, it doesn't leak into the command handler.
-                        await send(clean(evaled), {code: "js", split: true});
-                    } catch (err) {
-                        send(clean(err), {code: "js", split: true});
-                    }
-                }
-            })
-        }),
+        // TODO: Reimplement this entire command, for `send` doesn't allow
+        // types like `unknown` to be sent anymore. Perhaps try to echo
+        // whatever `evaled` is into an empty buffer and send this.
+        // (see: `Buffer.alloc(...)`) This is unlikely to work though, since
+        // `Buffer.alloc(...)` requires a length, which we can't retrieve from
+        // an `unknown` variable.
+        // eval: new NamedCommand({
+        //     description: "Evaluate code.",
+        //     usage: "<code>",
+        //     permission: PERMISSIONS.BOT_OWNER,
+        //     run: "You have to enter some code to execute first.",
+        //     any: new RestCommand({
+        //         // You have to bring everything into scope to use them. AFAIK, there isn't a more maintainable way to do this, but at least TS will let you know if anything gets removed.
+        //         async run({send, message, channel, guild, author, member, client, args, combined}) {
+        //             try {
+        //                 let evaled: unknown = eval(combined);
+        //                 // If promises like message.channel.send() are invoked, await them so unnecessary error reports don't leak into the command handler.
+        //                 // Also, it's more useful to see the value rather than Promise { <pending> }.
+        //                 if (evaled instanceof Promise) evaled = await evaled;
+        //                 if (typeof evaled !== "string") evaled = inspect(evaled);
+        //                 // Also await this send call so that if the message is empty, it doesn't leak into the command handler.
+        //                 await send(clean(evaled), {code: "js", split: true});
+        //             } catch (err) {
+        //                 send(clean(err), {code: "js", split: true});
+        //             }
+        //         }
+        //     })
+        // }),
         nick: new NamedCommand({
             description: "Change the bot's nickname.",
             permission: PERMISSIONS.BOT_SUPPORT,
@@ -410,8 +414,12 @@ export default new NamedCommand({
             description: "Shows a list of all guilds the bot is a member of.",
             permission: PERMISSIONS.BOT_SUPPORT,
             async run({send, client}) {
-                const guildList = client.guilds.cache.array().map((e) => e.name);
-                send(guildList, {split: true});
+                const guildList = Util.splitMessage(
+                    Array.from(client.guilds.cache.map((e) => e.name).values()).join("\n")
+                );
+                for (let guildListPart of guildList) {
+                    send(guildListPart);
+                }
             }
         }),
         activity: new NamedCommand({

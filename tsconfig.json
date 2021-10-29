@@ -10,7 +10,7 @@
 
         // Type Settings //
         "strict": true, // Enables all strict checks possible.
-        "noImplicitReturns": true, // Makes sure you don't accidentally return something + undefined.
+        "noImplicitReturns": false, // Makes sure you don't accidentally return something + undefined.
         "noFallthroughCasesInSwitch": true, // Prevents accidentally forgetting to break every switch case. Of course, if you know what you're doing, feel free to add a @ts-ignore, which also signals that it's not a mistake.
         "forceConsistentCasingInFileNames": true, // Make import paths case-sensitive. "./tEst" is no longer the same as "./test".
         "esModuleInterop": true, // Enables compatibility with Node.js' module system since the entire export can be whatever you want. allowSyntheticDefaultImports doesn't address runtime issues and is made redundant by this setting.

@@ -36,25 +36,25 @@ export default new NamedCommand({
     usage: "([text])",
     async run({send, author}) {
         const msg = await send(transform(phrase));
-        msg.createReactionCollector(
-            (reaction, user) => {
+        msg.createReactionCollector({
+            filter: (reaction, user) => {
                 if (user.id === author.id && reaction.emoji.name === "❌") msg.delete();
                 return false;
             },
-            {time: 60000}
-        );
+            time: 60000
+        });
     },
     any: new RestCommand({
         async run({send, author, combined}) {
             phrase = combined;
             const msg = await send(transform(phrase));
-            msg.createReactionCollector(
-                (reaction, user) => {
+            msg.createReactionCollector({
+                filter: (reaction, user) => {
                     if (user.id === author.id && reaction.emoji.name === "❌") msg.delete();
                     return false;
                 },
-                {time: 60000}
-            );
+                time: 60000
+            });
         }
     })
 });

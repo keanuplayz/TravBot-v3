@@ -34,11 +34,14 @@ export default new NamedCommand({
                         const stream = streamList.get(userID)!;
                         stream.description = combined;
                         stream.update();
-                        send("Successfully set the stream description to:", {
-                            embed: {
-                                description: stream.description,
-                                color: member!.displayColor
-                            }
+                        send({
+                            content: "Successfully set the stream description to:",
+                            embeds: [
+                                {
+                                    description: stream.description,
+                                    color: member!.displayColor
+                                }
+                            ]
                         });
                     } else {
                         send("You can only use this command when streaming.");
@@ -70,12 +73,15 @@ export default new NamedCommand({
                         const stream = streamList.get(userID)!;
                         stream.thumbnail = combined;
                         stream.update();
-                        send(`Successfully set the stream thumbnail to: ${combined}`, {
-                            embed: {
-                                description: stream.description,
-                                thumbnail: {url: combined},
-                                color: member!.displayColor
-                            }
+                        send({
+                            content: `Successfully set the stream thumbnail to: ${combined}`,
+                            embeds: [
+                                {
+                                    description: stream.description,
+                                    thumbnail: {url: combined},
+                                    color: member!.displayColor
+                                }
+                            ]
                         });
                     } else {
                         send("You can only use this command when streaming.");

@@ -25,7 +25,7 @@ client.on("guildMemberAdd", async (member) => {
     if (welcomeChannel) {
         const channel = member.guild.channels.cache.get(welcomeChannel);
 
-        if (channel && channel.type === "text") {
+        if (channel && channel instanceof TextChannel) {
             if (welcomeType === "graphical") {
                 const canvas = createCanvas(700, 250);
                 const ctx = canvas.getContext("2d");
@@ -60,9 +60,9 @@ client.on("guildMemberAdd", async (member) => {
                 ctx.drawImage(avatar, 25, 25, 200, 200);
 
                 const attachment = new MessageAttachment(canvas.toBuffer("image/png"), "welcome-image.png");
-                (channel as TextChannel).send(`Welcome \`${member.user.tag}\`!`, attachment);
+                channel.send({content: `Welcome \`${member.user.tag}\`!`, attachments: [attachment]});
             } else if (welcomeType === "text") {
-                (channel as TextChannel).send(
+                channel.send(
                     parseVars(
                         welcomeMessage || "Say hello to `%user%`, everyone! We all need a warm welcome sometimes :D",
                         {

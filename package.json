@@ -12,20 +12,19 @@
         "dev-instance": "rimraf dist && tsc && node . dev",
         "test": "jest",
         "format": "prettier --write **/*",
-        "postinstall": "node patch.js && husky install"
+        "postinstall": "husky install"
     },
     "dependencies": {
         "canvas": "^2.7.0",
         "chalk": "^4.1.0",
-        "discord.js": "github:discordjs/discord.js",
-        "discord.js-lavalink-lib": "^0.1.8",
+        "discord.js": "^13.2.0",
         "figlet": "^1.5.0",
         "glob": "^7.1.6",
         "inquirer": "^7.3.3",
         "mathjs": "^9.3.0",
         "moment": "^2.29.1",
         "ms": "^2.1.3",
-        "onion-lasers": "^1.2.0-unstable.0",
+        "onion-lasers": "npm:onion-lasers-v13@^2.0.0",
         "pet-pet-gif": "^1.0.8",
         "relevant-urban": "^2.0.0",
         "translate-google": "^1.4.3",
@@ -46,7 +45,7 @@
         "rimraf": "^3.0.2",
         "ts-jest": "^26.4.4",
         "tsc-watch": "^4.2.9",
-        "typescript": "^4.2.4"
+        "typescript": "^4.4.4"
     },
     "optionalDependencies": {
         "fsevents": "^2.1.2"

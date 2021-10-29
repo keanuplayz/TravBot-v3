@@ -11,8 +11,8 @@ function updateGlobalEmoteRegistry(): void {
                 ref: emote.name,
                 id: emote.id,
                 name: emote.name,
-                requires_colons: emote.requiresColons || false,
-                animated: emote.animated,
+                requires_colons: emote.requiresColons ?? false,
+                animated: emote.animated ?? false,
                 url: emote.url,
                 guild_id: emote.guild.name,
                 guild_name: emote.guild.name

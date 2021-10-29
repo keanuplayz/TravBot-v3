@@ -6,15 +6,17 @@ export default new NamedCommand({
     usage: "[number from 1 to 9]",
     async run({send}) {
         send({
-            embed: {
-                title: "Ravioli ravioli...",
-                image: {
-                    url: `https://raw.githubusercontent.com/keanuplayz/TravBot/master/assets/ravi${Random.int(
-                        1,
-                        10
-                    )}.png`
+            embeds: [
+                {
+                    title: "Ravioli ravioli...",
+                    image: {
+                        url: `https://raw.githubusercontent.com/keanuplayz/TravBot/master/assets/ravi${Random.int(
+                            1,
+                            10
+                        )}.png`
+                    }
                 }
-            }
+            ]
         });
     },
     number: new Command({
@@ -23,12 +25,14 @@ export default new NamedCommand({
 
             if (arg >= 1 && arg <= 9) {
                 send({
-                    embed: {
-                        title: "Ravioli ravioli...",
-                        image: {
-                            url: `https://raw.githubusercontent.com/keanuplayz/TravBot/master/assets/ravi${arg}.png`
+                    embeds: [
+                        {
+                            title: "Ravioli ravioli...",
+                            image: {
+                                url: `https://raw.githubusercontent.com/keanuplayz/TravBot/master/assets/ravi${arg}.png`
+                            }
                         }
-                    }
+                    ]
                 });
             } else {
                 send("Please provide a number between 1 and 9.");

@@ -18,7 +18,7 @@ export default new NamedCommand({
                 .setTitle("Math Calculation")
                 .addField("Input", `\`\`\`js\n${combined}\`\`\``)
                 .addField("Output", `\`\`\`js\n${resp}\`\`\``);
-            return send(embed);
+            return send({embeds: [embed]});
         }
     })
 });

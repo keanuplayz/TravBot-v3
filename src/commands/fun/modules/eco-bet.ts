@@ -39,9 +39,12 @@ export const BetCommand = new NamedCommand({
                     // handle invalid amount
                     if (amount <= 0) return send("You must bet at least one Mon!");
                     else if (sender.money < amount)
-                        return send("You don't have enough Mons for that.", getMoneyEmbed(author));
+                        return send({content: "You don't have enough Mons for that.", embeds: [getMoneyEmbed(author)]});
                     else if (receiver.money < amount)
-                        return send("They don't have enough Mons for that.", getMoneyEmbed(target));
+                        return send({
+                            content: "They don't have enough Mons for that.",
+                            embeds: [getMoneyEmbed(target)]
+                        });
 
                     return send("How long until the bet ends?");
                 } else return;
@@ -67,9 +70,15 @@ export const BetCommand = new NamedCommand({
                         // handle invalid amount
                         if (amount <= 0) return send("You must bet at least one Mon!");
                         else if (sender.money < amount)
-                            return send("You don't have enough Mons for that.", getMoneyEmbed(author));
+                            return send({
+                                content: "You don't have enough Mons for that.",
+                                embeds: [getMoneyEmbed(author)]
+                            });
                         else if (receiver.money < amount)
-                            return send("They don't have enough Mons for that.", getMoneyEmbed(target));
+                            return send({
+                                content: "They don't have enough Mons for that.",
+                                embeds: [getMoneyEmbed(target)]
+                            });
 
                         // handle invalid duration
                         if (duration <= 0) return send("Invalid bet duration");
@@ -107,7 +116,7 @@ export const BetCommand = new NamedCommand({
                         );
 
                         // Wait for the duration of the bet.
-                        return client.setTimeout(async () => {
+                        return setTimeout(async () => {
                             // In debug mode, saving the storage will break the references, so you have to redeclare sender and receiver for it to actually save.
                             const sender = Storage.getUser(author.id);
                             const receiver = Storage.getUser(target.id);
