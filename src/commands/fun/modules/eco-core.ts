@@ -1,3 +1,4 @@
+import {TextChannel} from "discord.js";
 import {Command, getUserByNickname, NamedCommand, confirm, RestCommand} from "onion-lasers";
 import {pluralise} from "../../../lib";
 import {Storage} from "../../../structures";
@@ -20,7 +21,13 @@ export const DailyCommand = new NamedCommand({
                         {
                             title: "Daily Reward",
                             description: "You received 1 Mon!",
-                            color: ECO_EMBED_COLOR
+                            color: ECO_EMBED_COLOR,
+                            fields: [
+                                {
+                                    name: "New balance:",
+                                    value: pluralise(user.money, "Mon", "s")
+                                }
+                            ]
                         }
                     ]
                 });
@@ -29,10 +36,9 @@ export const DailyCommand = new NamedCommand({
                     embeds: [
                         {
                             title: "Daily Reward",
-                            description: `It's too soon to pick up your daily Mons. You have about ${(
-                                (user.lastReceived + 79200000 - now) /
-                                3600000
-                            ).toFixed(1)} hours to go.`,
+                            description: `It's too soon to pick up your daily Mons. Try again at <t:${Math.floor(
+                                (user.lastReceived + 79200000) / 1000
+                            )}:t>.`,
                             color: ECO_EMBED_COLOR
                         }
                     ]

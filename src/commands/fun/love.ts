@@ -5,6 +5,7 @@ export default new NamedCommand({
     channelType: CHANNEL_TYPE.GUILD,
     async run({send, guild}) {
         const member = guild!.members.cache.random();
-        send(`I love ${member.nickname ?? member.user.username}!`);
+        if (!member) return send("For some reason, an error occurred fetching a member.");
+        return send(`I love ${member.nickname ?? member.user.username}!`);
     }
 });
