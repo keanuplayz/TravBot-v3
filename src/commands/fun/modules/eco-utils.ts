@@ -76,6 +76,6 @@ export function isAuthorized(guild: Guild | null, channel: TextBasedChannels): b
         channel.send("Sorry, this command can only be used in <#669464416420364288>.");
         return false;
     } else {
-        return false;
+        return true;
     }
 }
