@@ -83,7 +83,7 @@ import "./modules/presence";
 import "./modules/emoteRegistry";
 import "./modules/systemInfo";
 import "./modules/intercept";
-import "./modules/messageEmbed";
+// import "./modules/messageEmbed";
 import "./modules/guildMemberAdd";
 import "./modules/streamNotifications";
 import "./modules/channelDefaults";
