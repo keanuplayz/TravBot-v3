@@ -6,24 +6,27 @@ export const ECO_EMBED_COLOR = 0xf1c40f;
 
 export function getMoneyEmbed(user: User): object {
     const profile = Storage.getUser(user.id);
+    console.log(profile);
 
     return {
-        embed: {
-            color: ECO_EMBED_COLOR,
-            author: {
-                name: user.username,
-                icon_url: user.displayAvatarURL({
-                    format: "png",
-                    dynamic: true
-                })
-            },
-            fields: [
-                {
-                    name: "Balance",
-                    value: pluralise(profile.money, "Mon", "s")
-                }
-            ]
-        }
+        embeds: [
+            {
+                color: ECO_EMBED_COLOR,
+                author: {
+                    name: user.username,
+                    icon_url: user.displayAvatarURL({
+                        format: "png",
+                        dynamic: true
+                    })
+                },
+                fields: [
+                    {
+                        name: "Balance",
+                        value: pluralise(profile.money, "Mon", "s")
+                    }
+                ]
+            }
+        ]
     };
 }
 
