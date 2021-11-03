@@ -1,4 +1,3 @@
-import {TextChannel} from "discord.js";
 import {Command, getUserByNickname, NamedCommand, confirm, RestCommand} from "onion-lasers";
 import {pluralise} from "../../../lib";
 import {Storage} from "../../../structures";
@@ -139,7 +138,10 @@ export const PayCommand = new NamedCommand({
 
                     if (amount <= 0) return send("You must send at least one Mon!");
                     else if (sender.money < amount)
-                        return send({content: "You don't have enough Mons for that.", embeds: [getMoneyEmbed(author)]});
+                        return send({
+                            content: "You don't have enough Mons for that.",
+                            embeds: [getMoneyEmbed(author, true)]
+                        });
                     else if (target.id === author.id) return send("You can't send Mons to yourself!");
                     else if (target.bot && !IS_DEV_MODE) return send("You can't send Mons to a bot!");
 
@@ -166,7 +168,10 @@ export const PayCommand = new NamedCommand({
 
                 if (amount <= 0) return send("You must send at least one Mon!");
                 else if (sender.money < amount)
-                    return send({content: "You don't have enough Mons to do that!", embeds: [getMoneyEmbed(author)]});
+                    return send({
+                        content: "You don't have enough Mons to do that!",
+                        embeds: [getMoneyEmbed(author, true)]
+                    });
                 else if (!guild)
                     return send("You have to use this in a server if you want to send Mons with a username!");
 

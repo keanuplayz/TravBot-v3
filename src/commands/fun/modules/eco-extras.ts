@@ -21,7 +21,7 @@ export const MondayCommand = new NamedCommand({
                     user.money++;
                     user.lastMonday = now.getTime();
                     Storage.save();
-                    send({content: "It is **Mon**day, my dudes.", embeds: [getMoneyEmbed(author)]});
+                    send({content: "It is **Mon**day, my dudes.", embeds: [getMoneyEmbed(author, true)]});
                 } else send("You've already claimed your **Mon**day reward for this week.");
             } else {
                 const weekdayName = WEEKDAY[weekday];
@@ -47,7 +47,7 @@ export const AwardCommand = new NamedCommand({
                 const user = Storage.getUser(target.id);
                 user.money++;
                 Storage.save();
-                send({content: `1 Mon given to ${target.username}.`, embeds: [getMoneyEmbed(target)]});
+                send({content: `1 Mon given to ${target.username}.`, embeds: [getMoneyEmbed(target, true)]});
             } else {
                 send("This command is restricted to the bean.");
             }
@@ -64,7 +64,7 @@ export const AwardCommand = new NamedCommand({
                         Storage.save();
                         send({
                             content: `${pluralise(amount, "Mon", "s")} given to ${target.username}.`,
-                            embeds: [getMoneyEmbed(target)]
+                            embeds: [getMoneyEmbed(target, true)]
                         });
                     } else {
                         send("You need to enter a number greater than 0.");

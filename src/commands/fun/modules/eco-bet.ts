@@ -39,11 +39,14 @@ export const BetCommand = new NamedCommand({
                     // handle invalid amount
                     if (amount <= 0) return send("You must bet at least one Mon!");
                     else if (sender.money < amount)
-                        return send({content: "You don't have enough Mons for that.", embeds: [getMoneyEmbed(author)]});
+                        return send({
+                            content: "You don't have enough Mons for that.",
+                            embeds: [getMoneyEmbed(author, true)]
+                        });
                     else if (receiver.money < amount)
                         return send({
                             content: "They don't have enough Mons for that.",
-                            embeds: [getMoneyEmbed(target)]
+                            embeds: [getMoneyEmbed(target, true)]
                         });
 
                     return send("How long until the bet ends?");
@@ -72,12 +75,12 @@ export const BetCommand = new NamedCommand({
                         else if (sender.money < amount)
                             return send({
                                 content: "You don't have enough Mons for that.",
-                                embeds: [getMoneyEmbed(author)]
+                                embeds: [getMoneyEmbed(author, true)]
                             });
                         else if (receiver.money < amount)
                             return send({
                                 content: "They don't have enough Mons for that.",
-                                embeds: [getMoneyEmbed(target)]
+                                embeds: [getMoneyEmbed(target, true)]
                             });
 
                         // handle invalid duration

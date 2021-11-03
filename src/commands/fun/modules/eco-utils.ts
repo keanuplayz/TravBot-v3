@@ -4,63 +4,88 @@ import {User, Guild, TextChannel, DMChannel, NewsChannel, Channel, TextBasedChan
 
 export const ECO_EMBED_COLOR = 0xf1c40f;
 
-export function getMoneyEmbed(user: User): object {
+export function getMoneyEmbed(user: User, inline: boolean = false): object {
     const profile = Storage.getUser(user.id);
     console.log(profile);
 
+    if (inline) {
+        return {
+            color: ECO_EMBED_COLOR,
+            author: {
+                name: user.username,
+                icon_url: user.displayAvatarURL({
+                    format: "png",
+                    dynamic: true
+                })
+            },
+            fields: [
+                {
+                    name: "Balance",
+                    value: pluralise(profile.money, "Mon", "s")
+                }
+            ]
+        };
+    } else {
+        return {
+            embeds: [
+                {
+                    color: ECO_EMBED_COLOR,
+                    author: {
+                        name: user.username,
+                        icon_url: user.displayAvatarURL({
+                            format: "png",
+                            dynamic: true
+                        })
+                    },
+                    fields: [
+                        {
+                            name: "Balance",
+                            value: pluralise(profile.money, "Mon", "s")
+                        }
+                    ]
+                }
+            ]
+        };
+    }
+}
+
+export function getSendEmbed(sender: User, receiver: User, amount: number): object {
     return {
         embeds: [
             {
                 color: ECO_EMBED_COLOR,
                 author: {
-                    name: user.username,
-                    icon_url: user.displayAvatarURL({
+                    name: sender.username,
+                    icon_url: sender.displayAvatarURL({
                         format: "png",
                         dynamic: true
                     })
                 },
+                title: "Transaction",
+                description: `${sender.toString()} has sent ${pluralise(
+                    amount,
+                    "Mon",
+                    "s"
+                )} to ${receiver.toString()}!`,
                 fields: [
                     {
-                        name: "Balance",
-                        value: pluralise(profile.money, "Mon", "s")
+                        name: `Sender: ${sender.tag}`,
+                        value: pluralise(Storage.getUser(sender.id).money, "Mon", "s")
+                    },
+                    {
+                        name: `Receiver: ${receiver.tag}`,
+                        value: pluralise(Storage.getUser(receiver.id).money, "Mon", "s")
                     }
-                ]
+                ],
+                footer: {
+                    text: receiver.username,
+                    icon_url: receiver.displayAvatarURL({
+                        format: "png",
+                        dynamic: true
+                    })
+                }
             }
         ]
-    };
-}
-
-export function getSendEmbed(sender: User, receiver: User, amount: number): object {
-    return {
-        embed: {
-            color: ECO_EMBED_COLOR,
-            author: {
-                name: sender.username,
-                icon_url: sender.displayAvatarURL({
-                    format: "png",
-                    dynamic: true
-                })
-            },
-            title: "Transaction",
-            description: `${sender.toString()} has sent ${pluralise(amount, "Mon", "s")} to ${receiver.toString()}!`,
-            fields: [
-                {
-                    name: `Sender: ${sender.tag}`,
-                    value: pluralise(Storage.getUser(sender.id).money, "Mon", "s")
-                },
-                {
-                    name: `Receiver: ${receiver.tag}`,
-                    value: pluralise(Storage.getUser(receiver.id).money, "Mon", "s")
-                }
-            ],
-            footer: {
-                text: receiver.username,
-                icon_url: receiver.displayAvatarURL({
-                    format: "png",
-                    dynamic: true
-                })
-            }
-        }
     };
 }
 
