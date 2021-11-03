@@ -14,6 +14,7 @@ class ConfigStructure extends GenericStructure {
     public admins: string[];
     public support: string[];
     public lavalink: boolean | null;
+    public wolfram: string | null;
     public systemLogsChannel: string | null;
     public webhooks: {[id: string]: string}; // id-token pairs
 
@@ -25,6 +26,7 @@ class ConfigStructure extends GenericStructure {
         this.admins = select(data.admins, [], String, true);
         this.support = select(data.support, [], String, true);
         this.lavalink = select(data.lavalink, null, Boolean);
+        this.wolfram = select(data.wolfram, null, String);
         this.systemLogsChannel = select(data.systemLogsChannel, null, String);
         this.webhooks = {};
 
