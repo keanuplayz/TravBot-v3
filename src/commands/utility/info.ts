@@ -1,4 +1,4 @@
-import {MessageEmbed, version as djsversion, Guild, User, GuildMember, TextChannel, VoiceChannel} from "discord.js";
+import {MessageEmbed, version, Guild, User, GuildMember, TextChannel, VoiceChannel} from "discord.js";
 import ms from "ms";
 import os from "os";
 import {Command, NamedCommand, getUserByNickname, CHANNEL_TYPE, getGuildByName, RestCommand} from "onion-lasers";
@@ -68,8 +68,12 @@ export default new NamedCommand({
                                 "Do MMMM YYYY HH:mm:ss"
                             )}`,
                             `**❯ Node.JS:** ${process.version}`,
-                            `**❯ Version:** v${process.env.npm_package_version}`,
-                            `**❯ Discord.JS:** v${djsversion}`,
+                            `**❯ Version:** ${
+                                process.env.npm_package_version
+                                    ? `v${process.env.npm_package_version}`
+                                    : "*Unable to fetch version, make sure to start the project via `npm start`, not `node`!*"
+                            }`,
+                            `**❯ Discord.JS:** v${version}`,
                             "\u200b"
                         ].join("\n")
                     )

@@ -5,7 +5,7 @@ import {client} from "../index";
 // - "oil" will remain the same though, it's better that way (anything even remotely "oil"-related calls the image)
 // - Also uwu and owo penalties
 
-client.on("message", (message) => {
+client.on("messageCreate", (message) => {
     if (message.content.toLowerCase().includes("remember to drink water")) {
         message.react("🚱");
     }

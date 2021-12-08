@@ -52,7 +52,7 @@ Rather than have an `events` folder which contains dynamically loaded events, yo
 ```ts
 import {client} from "..";
 
-client.on("message", (message) => {
+client.on("messageCreate", (message) => {
 	//...
 });
 ```

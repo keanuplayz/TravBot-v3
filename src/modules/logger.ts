@@ -1,9 +1,7 @@
 import chalk from "chalk";
 
 declare global {
-    var IS_DEV_MODE: boolean;
     var PERMISSIONS: typeof PermissionsEnum;
-    var BOT_VERSION: string;
 
     interface Console {
         ready: (...data: any[]) => void;
@@ -20,9 +18,7 @@ enum PermissionsEnum {
     BOT_OWNER
 }
 
-global.IS_DEV_MODE = process.argv[2] === "dev";
 global.PERMISSIONS = PermissionsEnum;
-global.BOT_VERSION = "3.2.3";
 
 const oldConsole = console;
 
@@ -84,7 +80,8 @@ console = {
     // $.debug(`core/lib::parseArgs("testing \"in progress\"") = ["testing", "in progress"]`) --> <path>/::(<object>.)<function>(<args>) = <value>
     // Would probably be more suited for debugging program logic rather than function logic, which can be checked using unit tests.
     debug(...args: any[]) {
-        if (IS_DEV_MODE) oldConsole.debug(chalk.white.bgGray(formatTimestamp()), chalk.white.bgBlue("DEBUG"), ...args);
+        if (process.env.DEV)
+            oldConsole.debug(chalk.white.bgGray(formatTimestamp()), chalk.white.bgBlue("DEBUG"), ...args);
         const text = `[${formatUTCTimestamp()}] [DEBUG] ${args.join(" ")}\n`;
         logs.verbose += text;
     },
@@ -96,5 +93,3 @@ console = {
         logs.verbose += text;
     }
 };
-
-console.log("Loading globals...");

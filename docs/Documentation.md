@@ -2,6 +2,7 @@
 
 - [Structure](#structure)
 - [Version Numbers](#version-numbers)
+- [Environment Variables](#environment-variables)
 - [Utility Functions](#utility-functions)
 - [Testing](#testing)
 
@@ -33,6 +34,17 @@ Because versions are assigned to batches of changes rather than single changes (
 - `<patch>` will be pretty much for any very small changes like a quick bug fix or typos. *Note: Normally, these would probably get grouped up, but if there hasn't been a proper version in a while, this will get pushed as a patch.*
 
 *Note: This system doesn't retroactively apply to TravBot-v2, which is why this version naming system won't make sense for v2's changelog.*
+
+# Environment Variables
+
+Certain variables are set via `.env` at the project root. These are for system configuration and should never change dynamically within the program, essentially read-only variables.
+- `TOKEN`: Your bot's token
+- `PREFIX`: Your bot's prefix
+- `OWNER`: The ID of the owner
+- `ADMINS`: A comma-separated (with a space) list of bot admin IDs
+- `SUPPORT`: A comma-separated (with a space) list of bot support IDs
+- `WOLFRAM_API_KEY`: Used for `commands/utility/calc`
+- `DEV`: Enables dev mode as long as it isn't a falsy value (`DEV=1` works for example)
 
 # Utility Functions
 

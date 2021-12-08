@@ -8,25 +8,11 @@ import {Guild as DiscordGuild, Snowflake} from "discord.js";
 // And maybe use Collections/Maps instead of objects?
 
 class ConfigStructure extends GenericStructure {
-    public token: string;
-    public prefix: string;
-    public owner: string;
-    public admins: string[];
-    public support: string[];
-    public lavalink: boolean | null;
-    public wolfram: string | null;
     public systemLogsChannel: string | null;
     public webhooks: {[id: string]: string}; // id-token pairs
 
     constructor(data: GenericJSON) {
         super("config");
-        this.token = select(data.token, "<ENTER YOUR TOKEN HERE>", String);
-        this.prefix = select(data.prefix, "$", String);
-        this.owner = select(data.owner, "", String);
-        this.admins = select(data.admins, [], String, true);
-        this.support = select(data.support, [], String, true);
-        this.lavalink = select(data.lavalink, null, Boolean);
-        this.wolfram = select(data.wolfram, null, String);
         this.systemLogsChannel = select(data.systemLogsChannel, null, String);
         this.webhooks = {};
 
@@ -211,7 +197,7 @@ export let Storage = new StorageStructure(FileManager.read("storage"));
 
 // This part will allow the user to manually edit any JSON files they want while the program is running which'll update the program's cache.
 // However, fs.watch is a buggy mess that should be avoided in production. While it helps test out stuff for development, it's not a good idea to have it running outside of development as it causes all sorts of issues.
-if (IS_DEV_MODE) {
+if (process.env.DEV) {
     watch("data", (_event, filename) => {
         const header = filename.substring(0, filename.indexOf(".json"));
 
@@ -229,19 +215,17 @@ if (IS_DEV_MODE) {
 /**
  * Get the current prefix of the guild or the bot's prefix if none is found.
  */
-export function getPrefix(guild: DiscordGuild | null): string {
-    let prefix = Config.prefix;
-
+export function getPrefix(guild?: DiscordGuild | null): string {
     if (guild) {
         const possibleGuildPrefix = Storage.getGuild(guild.id).prefix;
 
         // Here, lossy comparison works in our favor because you wouldn't want an empty string to trigger the prefix.
         if (possibleGuildPrefix) {
-            prefix = possibleGuildPrefix;
+            return possibleGuildPrefix;
         }
     }
 
-    return prefix;
+    return process.env.PREFIX || "$";
 }
 
 export interface EmoteRegistryDumpEntry {

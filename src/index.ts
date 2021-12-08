@@ -1,6 +1,5 @@
-import "./modules/globals";
+import "./modules/logger";
 import {Client, Permissions, Intents} from "discord.js";
-import path from "path";
 
 // This is here in order to make it much less of a headache to access the client from other files.
 // This of course won't actually do anything until the setup process is complete and it logs in.
@@ -17,18 +16,16 @@ export const client = new Client({
     ]
 });
 
+import {join} from "path";
 import {launch} from "onion-lasers";
-import setup from "./modules/setup";
-import {Config, getPrefix} from "./structures";
+import {getPrefix} from "./structures";
 import {toTitleCase} from "./lib";
 
 // Send the login request to Discord's API and then load modules while waiting for it.
-setup.init().then(() => {
-    client.login(Config.token).catch(setup.again);
-});
+client.login(process.env.TOKEN).catch(console.error);
 
 // Setup the command handler.
-launch(client, path.join(__dirname, "commands"), {
+launch(client, join(__dirname, "commands"), {
     getPrefix,
     categoryTransformer: toTitleCase,
     permissionLevels: [
@@ -60,17 +57,17 @@ launch(client, path.join(__dirname, "commands"), {
         {
             // BOT_SUPPORT //
             name: "Bot Support",
-            check: (user) => Config.support.includes(user.id)
+            check: (user) => !!process.env.SUPPORT && process.env.SUPPORT.split(", ").includes(user.id)
         },
         {
             // BOT_ADMIN //
             name: "Bot Admin",
-            check: (user) => Config.admins.includes(user.id)
+            check: (user) => !!process.env.ADMINS && process.env.ADMINS.split(", ").includes(user.id)
         },
         {
             // BOT_OWNER //
             name: "Bot Owner",
-            check: (user) => Config.owner === user.id
+            check: (user) => process.env.OWNER === user.id
         }
     ]
 });

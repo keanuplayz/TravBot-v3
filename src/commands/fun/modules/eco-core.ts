@@ -143,7 +143,7 @@ export const PayCommand = new NamedCommand({
                             embeds: [getMoneyEmbed(author, true)]
                         });
                     else if (target.id === author.id) return send("You can't send Mons to yourself!");
-                    else if (target.bot && !IS_DEV_MODE) return send("You can't send Mons to a bot!");
+                    else if (target.bot && !process.env.DEV) return send("You can't send Mons to a bot!");
 
                     sender.money -= amount;
                     receiver.money += amount;
@@ -179,7 +179,7 @@ export const PayCommand = new NamedCommand({
                 const user = await getUserByNickname(args.join(" "), guild);
                 if (typeof user === "string") return send(user);
                 else if (user.id === author.id) return send("You can't send Mons to yourself!");
-                else if (user.bot && !IS_DEV_MODE) return send("You can't send Mons to a bot!");
+                else if (user.bot && !process.env.DEV) return send("You can't send Mons to a bot!");
 
                 const confirmed = await confirm(
                     await send({

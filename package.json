@@ -4,23 +4,20 @@
     "description": "TravBot Discord bot.",
     "main": "dist/index.js",
     "scripts": {
+        "start": "node -r dotenv/config .",
         "build": "rimraf dist && tsc --project tsconfig.prod.json && npm prune --production",
-        "start": "node .",
-        "once": "tsc && npm start",
-        "dev": "tsc-watch --onSuccess \"npm run dev-instance\"",
-        "dev-fast": "tsc-watch --onSuccess \"node . dev\"",
-        "dev-instance": "rimraf dist && tsc && node . dev",
+        "dev": "tsc-watch --onSuccess \"npm start\"",
         "test": "jest",
         "format": "prettier --write **/*",
         "postinstall": "husky install"
     },
     "dependencies": {
+        "better-sqlite3": "^7.4.5",
         "canvas": "^2.8.0",
         "chalk": "^4.1.2",
         "discord.js": "^13.3.0",
+        "dotenv": "^10.0.0",
         "figlet": "^1.5.2",
-        "glob": "^7.2.0",
-        "inquirer": "^8.2.0",
         "moment": "^2.29.1",
         "ms": "^2.1.3",
         "node-wolfram-alpha": "^1.2.5",
@@ -30,9 +27,8 @@
         "weather-js": "^2.0.0"
     },
     "devDependencies": {
+        "@types/better-sqlite3": "^7.4.1",
         "@types/figlet": "^1.5.4",
-        "@types/glob": "^7.2.0",
-        "@types/inquirer": "^8.1.3",
         "@types/jest": "^27.0.2",
         "@types/mathjs": "^9.4.1",
         "@types/ms": "^0.7.31",

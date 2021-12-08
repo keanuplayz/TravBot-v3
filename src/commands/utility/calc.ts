@@ -1,16 +1,15 @@
 import {NamedCommand, RestCommand} from "onion-lasers";
 import {WolframClient} from "node-wolfram-alpha";
 import {MessageEmbed} from "discord.js";
-import {Config} from "../../structures";
 
 export default new NamedCommand({
     description: "Calculates a specified math expression.",
     run: "Please provide a calculation.",
     any: new RestCommand({
         async run({send, combined}) {
-            if (Config.wolfram === null) return send("There's no Wolfram token in the config.");
+            if (!process.env.WOLFRAM_API_KEY) return send("There's no Wolfram API key in `.env`.");
 
-            const wClient = new WolframClient(Config.wolfram);
+            const wClient = new WolframClient(process.env.WOLFRAM_API_KEY);
             let resp;
             try {
                 resp = await wClient.query(combined);

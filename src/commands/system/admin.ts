@@ -1,7 +1,7 @@
 import {Command, NamedCommand, getPermissionLevel, getPermissionName, CHANNEL_TYPE, RestCommand} from "onion-lasers";
-import {Config, Storage} from "../../structures";
+import {Config, Storage, getPrefix} from "../../structures";
 import {Permissions, TextChannel, User, Role, Channel, Util} from "discord.js";
-import {logs} from "../../modules/globals";
+import {logs} from "../../modules/logger";
 
 function getLogBuffer(type: string) {
     return {
@@ -38,7 +38,7 @@ export default new NamedCommand({
                         Storage.getGuild(guild!.id).prefix = null;
                         Storage.save();
                         send(
-                            `The custom prefix for this guild has been removed. My prefix is now back to \`${Config.prefix}\`.`
+                            `The custom prefix for this guild has been removed. My prefix is now back to \`${getPrefix()}\`.`
                         );
                     },
                     any: new Command({

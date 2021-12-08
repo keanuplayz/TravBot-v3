@@ -1,5 +1,5 @@
 import {client} from "../index";
-import {Config, Storage} from "../structures";
+import {Storage, getPrefix} from "../structures";
 
 client.once("ready", () => {
     if (client.user) {
@@ -8,7 +8,7 @@ client.once("ready", () => {
         );
         client.user.setActivity({
             type: "LISTENING",
-            name: `${Config.prefix}help`
+            name: `${getPrefix()}help`
         });
 
         // Run this setup block once to restore eco bet money in case the bot went down. (And I guess search the client for those users to let them know too.)

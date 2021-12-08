@@ -3,7 +3,7 @@ import {MessageEmbed} from "discord.js";
 import {getPrefix} from "../structures";
 import {getMessageByID} from "onion-lasers";
 
-client.on("message", (message) => {
+client.on("messageCreate", (message) => {
     (async () => {
         // Only execute if the message is from a user and isn't a command.
         if (message.content.startsWith(getPrefix(message.guild)) || message.author.bot) return;

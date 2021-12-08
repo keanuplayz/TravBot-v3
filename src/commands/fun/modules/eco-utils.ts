@@ -90,7 +90,7 @@ export function getSendEmbed(sender: User, receiver: User, amount: number): obje
 }
 
 export function isAuthorized(guild: Guild | null, channel: TextBasedChannels): boolean {
-    if (IS_DEV_MODE) {
+    if (process.env.DEV) {
         return true;
     }
 

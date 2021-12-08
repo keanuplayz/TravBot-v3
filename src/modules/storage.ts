@@ -13,7 +13,9 @@ const Storage = {
             try {
                 data = JSON.parse(file);
             } catch (error) {
-                if (process.argv[2] !== "dev") {
+                console.error(error, file);
+
+                if (!process.env.DEV) {
                     console.warn("[storage.read]", `Malformed JSON data (header: ${header}), backing it up.`, file);
                     fs.writeFile(`${path}.backup`, file, (error) => {
                         if (error) console.error("[storage.read]", error);
@@ -30,7 +32,7 @@ const Storage = {
         this.open("data");
         const path = `data/${header}.json`;
 
-        if (IS_DEV_MODE || header === "config") {
+        if (process.env.DEV || header === "config") {
             const result = JSON.stringify(data, null, "\t");
 
             if (asynchronous)

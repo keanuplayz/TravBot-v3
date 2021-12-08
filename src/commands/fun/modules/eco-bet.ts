@@ -17,7 +17,7 @@ export const BetCommand = new NamedCommand({
 
                 // handle invalid target
                 if (target.id == author.id) return send("You can't bet Mons with yourself!");
-                else if (target.bot && process.argv[2] !== "dev") return send("You can't bet Mons with a bot!");
+                else if (target.bot && !process.env.DEV) return send("You can't bet Mons with a bot!");
 
                 return send("How much are you betting?");
             } else return;
@@ -34,7 +34,7 @@ export const BetCommand = new NamedCommand({
 
                     // handle invalid target
                     if (target.id == author.id) return send("You can't bet Mons with yourself!");
-                    else if (target.bot && process.argv[2] !== "dev") return send("You can't bet Mons with a bot!");
+                    else if (target.bot && !process.env.DEV) return send("You can't bet Mons with a bot!");
 
                     // handle invalid amount
                     if (amount <= 0) return send("You must bet at least one Mon!");
@@ -68,7 +68,7 @@ export const BetCommand = new NamedCommand({
 
                         // handle invalid target
                         if (target.id == author.id) return send("You can't bet Mons with yourself!");
-                        else if (target.bot && !IS_DEV_MODE) return send("You can't bet Mons with a bot!");
+                        else if (target.bot && !!process.env.DEV) return send("You can't bet Mons with a bot!");
 
                         // handle invalid amount
                         if (amount <= 0) return send("You must bet at least one Mon!");
