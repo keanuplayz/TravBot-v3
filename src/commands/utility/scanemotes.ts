@@ -45,7 +45,7 @@ export default new NamedCommand({
 
         // Initialize the emote stats object with every emote in the current guild.
         // The goal here is to cut the need to access guild.emojis.get() which'll make it faster and easier to work with.
-        for (let emote of guild!.emojis.cache.values()) {
+        for (const emote of guild!.emojis.cache.values()) {
             // If you don't include the "a" for animated emotes, it'll not only not show up, but also cause all other emotes in the same message to not show up. The emote name is self-correcting but it's better to keep the right value since it'll be used to calculate message lengths that fit.
             stats[emote.id] = {
                 name: emote.name,
@@ -180,7 +180,7 @@ export default new NamedCommand({
         }
 
         let emoteList = Util.splitMessage(lines.join("\n"));
-        for (let emoteListPart of emoteList) {
+        for (const emoteListPart of emoteList) {
             return await send(emoteListPart);
         }
     },

@@ -1,6 +1,6 @@
 import {NamedCommand, RestCommand} from "onion-lasers";
 import {streamList} from "../../modules/streamNotifications";
-import {Storage} from "../../structures";
+import {Guild, Member} from "../../lib";
 
 // Alternatively, I could make descriptions last outside of just one stream.
 // But then again, users could just copy paste descriptions. :leaSMUG:
@@ -96,9 +96,8 @@ export default new NamedCommand({
             usage: "(<category>)",
             async run({send, guild, author}) {
                 const userID = author.id;
-                const memberStorage = Storage.getGuild(guild!.id).getMember(userID);
+                const memberStorage = new Member(userID, guild!.id);
                 memberStorage.streamCategory = null;
-                Storage.save();
                 send("Successfully removed the category for all your current and future streams.");
 
                 // Then modify the current category if the user is streaming
@@ -111,8 +110,8 @@ export default new NamedCommand({
             any: new RestCommand({
                 async run({send, guild, author, combined}) {
                     const userID = author.id;
-                    const guildStorage = Storage.getGuild(guild!.id);
-                    const memberStorage = guildStorage.getMember(userID);
+                    const guildStorage = new Guild(guild!.id);
+                    const memberStorage = new Member(userID, guild!.id);
                     let found = false;
 
                     // Check if it's a valid category
@@ -120,7 +119,6 @@ export default new NamedCommand({
                         if (combined === categoryName) {
                             found = true;
                             memberStorage.streamCategory = roleID;
-                            Storage.save();
                             send(
                                 `Successfully set the category for your current and future streams to: \`${categoryName}\``
                             );

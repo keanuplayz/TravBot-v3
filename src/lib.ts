@@ -1,6 +1,17 @@
-// Library for pure functions
 import {get} from "https";
-import FileManager from "./modules/storage";
+import {join} from "path";
+import {existsSync, mkdirSync} from "fs";
+import {Guild as DiscordGuild} from "discord.js";
+import {Guild} from "./defs/guild";
+
+// Instantiating a class has the same effect as a SELECT statement.
+// Through getters/setters, it saves basically through INSERT statements.
+// new User(<id that doesn't exist>) will create a new entry in the Users table.
+export {config} from "./defs/config";
+export {User} from "./defs/user";
+export {Guild} from "./defs/guild";
+export {Member} from "./defs/member";
+export {EmoteRegistryDump, EmoteRegistryDumpEntry} from "./defs/emoteRegistry";
 
 /**
  * Splits a command by spaces while accounting for quotes which capture string arguments.
@@ -13,7 +24,7 @@ export function parseArgs(line: string): string[] {
     let inString = false;
     let isEscaped = false;
 
-    for (let c of line) {
+    for (const c of line) {
         if (isEscaped) {
             if (['"', "\\"].includes(c)) selection += c;
             else selection += "\\" + c;
@@ -92,28 +103,6 @@ export function parseVarsCallback(line: string, callback: (variable: string) => 
     return result;
 }
 
-export function isType(value: any, type: any): boolean {
-    if (value === undefined && type === undefined) return true;
-    else if (value === null && type === null) return true;
-    else return value !== undefined && value !== null && value.constructor === type;
-}
-
-/**
- * Checks a value to see if it matches the fallback's type, otherwise returns the fallback.
- * For the purposes of the templates system, this function will only check array types, objects should be checked under their own type (as you'd do anyway with something like a User object).
- * If at any point the value doesn't match the data structure provided, the fallback is returned.
- * Warning: Type checking is based on the fallback's type. Be sure that the "type" parameter is accurate to this!
- */
-export function select<T>(value: any, fallback: T, type: Function, isArray = false): T {
-    if (isArray && isType(value, Array)) {
-        for (let item of value) if (!isType(item, type)) return fallback;
-        return value;
-    } else {
-        if (isType(value, type)) return value;
-        else return fallback;
-    }
-}
-
 export function clean(text: unknown) {
     if (typeof text === "string")
         return text.replace(/`/g, "`" + String.fromCharCode(8203)).replace(/@/g, "@" + String.fromCharCode(8203));
@@ -165,29 +154,6 @@ export function getContent(url: string): Promise<{url: string}> {
             reject(`Error: ${err.message}`);
         });
     });
-}
-
-export interface GenericJSON {
-    [key: string]: any;
-}
-
-// In order to define a file to write to while also not:
-// - Using the delete operator (which doesn't work on properties which cannot be undefined)
-// - Assigning it first then using Object.defineProperty (which raises a flag on CodeQL)
-// A non-null assertion is used on the class property to say that it'll definitely be assigned.
-export abstract class GenericStructure {
-    private __meta__!: string;
-
-    constructor(tag?: string) {
-        Object.defineProperty(this, "__meta__", {
-            value: tag || "generic",
-            enumerable: false
-        });
-    }
-
-    public save(asynchronous = true) {
-        FileManager.write(this.__meta__, this, asynchronous);
-    }
 }
 
 // A 50% chance would be "Math.random() < 0.5" because Math.random() can be [0, 1), so to make two equal ranges, you'd need [0, 0.5)U[0.5, 1).
@@ -268,4 +234,36 @@ export function split<T>(array: T[], lengthOfEachSection: number): T[][] {
  */
 export function requireAllCasesHandledFor(variable: never): never {
     throw new Error(`This function should never be called but got the value: ${variable}`);
+}
+
+/**
+ * Provide a path to create folders for.
+ * `createPath("data", "public", "tmp")` creates `<root>/data/public/tmp`
+ */
+export function createPath(...path: string[]): void {
+    let currentPath = ""; // path.join ignores empty strings
+
+    for (const folder of path) {
+        currentPath = join(currentPath, folder);
+
+        if (!existsSync(currentPath)) {
+            mkdirSync(currentPath);
+        }
+    }
+}
+
+/**
+ * Get the current prefix of the guild or the bot's prefix if none is found.
+ */
+export function getPrefix(guild?: DiscordGuild | null): string {
+    if (guild) {
+        const possibleGuildPrefix = new Guild(guild.id).prefix;
+
+        // Here, lossy comparison works in our favor because you wouldn't want an empty string to trigger the prefix.
+        if (possibleGuildPrefix) {
+            return possibleGuildPrefix;
+        }
+    }
+
+    return process.env.PREFIX || "$";
 }

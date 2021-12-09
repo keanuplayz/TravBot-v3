@@ -1,8 +1,7 @@
 import {Command, NamedCommand} from "onion-lasers";
-import {Storage} from "../../../structures";
 import {isAuthorized, getMoneyEmbed} from "./eco-utils";
-import {User} from "discord.js";
-import {pluralise} from "../../../lib";
+import {User as DiscordUser} from "discord.js";
+import {User, pluralise} from "../../../lib";
 
 const WEEKDAY = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
 
@@ -10,7 +9,7 @@ export const MondayCommand = new NamedCommand({
     description: "Use this on a UTC Monday to get an extra Mon. Does not affect your 22 hour timer for `eco daily`.",
     async run({send, guild, channel, author}) {
         if (isAuthorized(guild, channel)) {
-            const user = Storage.getUser(author.id);
+            const user = new User(author.id);
             const now = new Date();
             const weekday = now.getUTCDay();
 
@@ -20,7 +19,6 @@ export const MondayCommand = new NamedCommand({
                 if (now.getTime() - user.lastMonday >= 86400000) {
                     user.money++;
                     user.lastMonday = now.getTime();
-                    Storage.save();
                     send({content: "It is **Mon**day, my dudes.", embeds: [getMoneyEmbed(author, true)]});
                 } else send("You've already claimed your **Mon**day reward for this week.");
             } else {
@@ -43,10 +41,9 @@ export const AwardCommand = new NamedCommand({
     user: new Command({
         async run({send, author, args}) {
             if (author.id === "394808963356688394" || process.env.DEV) {
-                const target = args[0] as User;
-                const user = Storage.getUser(target.id);
+                const target = args[0] as DiscordUser;
+                const user = new User(target.id);
                 user.money++;
-                Storage.save();
                 send({content: `1 Mon given to ${target.username}.`, embeds: [getMoneyEmbed(target, true)]});
             } else {
                 send("This command is restricted to the bean.");
@@ -55,13 +52,12 @@ export const AwardCommand = new NamedCommand({
         number: new Command({
             async run({send, author, args}) {
                 if (author.id === "394808963356688394" || process.env.DEV) {
-                    const target = args[0] as User;
+                    const target = args[0] as DiscordUser;
                     const amount = Math.floor(args[1]);
 
                     if (amount > 0) {
-                        const user = Storage.getUser(target.id);
+                        const user = new User(target.id);
                         user.money += amount;
-                        Storage.save();
                         send({
                             content: `${pluralise(amount, "Mon", "s")} given to ${target.username}.`,
                             embeds: [getMoneyEmbed(target, true)]

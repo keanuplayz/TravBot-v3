@@ -1,12 +1,12 @@
 import {NamedCommand, RestCommand} from "onion-lasers";
 import moment from "moment";
-import {Storage} from "../../structures";
+import {User} from "../../lib";
 import {MessageEmbed} from "discord.js";
 
 export default new NamedCommand({
     description: "Keep and edit your personal todo list.",
     async run({send, author}) {
-        const user = Storage.getUser(author.id);
+        const user = new User(author.id);
         const embed = new MessageEmbed().setTitle(`Todo list for ${author.tag}`).setColor("BLUE");
 
         for (const timestamp in user.todoList) {
@@ -24,7 +24,7 @@ export default new NamedCommand({
             run: "You need to specify a note to add.",
             any: new RestCommand({
                 async run({send, author, combined}) {
-                    const user = Storage.getUser(author.id);
+                    const user = new User(author.id);
                     user.todoList[Date.now().toString()] = combined;
                     Storage.save();
                     send(`Successfully added \`${combined}\` to your todo list.`);
@@ -35,7 +35,7 @@ export default new NamedCommand({
             run: "You need to specify a note to remove.",
             any: new RestCommand({
                 async run({send, author, combined}) {
-                    const user = Storage.getUser(author.id);
+                    const user = new User(author.id);
                     let isFound = false;
 
                     for (const timestamp in user.todoList) {
@@ -55,7 +55,7 @@ export default new NamedCommand({
         }),
         clear: new NamedCommand({
             async run({send, author}) {
-                const user = Storage.getUser(author.id);
+                const user = new User(author.id);
                 user.todoList = {};
                 Storage.save();
                 send("Cleared todo list.");

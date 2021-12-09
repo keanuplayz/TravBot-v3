@@ -1,6 +1,5 @@
 import {Command, getUserByNickname, NamedCommand, confirm, RestCommand} from "onion-lasers";
-import {pluralise} from "../../../lib";
-import {Storage} from "../../../structures";
+import {User, pluralise} from "../../../lib";
 import {isAuthorized, getMoneyEmbed, getSendEmbed, ECO_EMBED_COLOR} from "./eco-utils";
 
 export const DailyCommand = new NamedCommand({
@@ -8,13 +7,12 @@ export const DailyCommand = new NamedCommand({
     aliases: ["get"],
     async run({send, author, channel, guild}) {
         if (isAuthorized(guild, channel)) {
-            const user = Storage.getUser(author.id);
+            const user = new User(author.id);
             const now = Date.now();
 
             if (now - user.lastReceived >= 79200000) {
                 user.money++;
                 user.lastReceived = now;
-                Storage.save();
                 send({
                     embeds: [
                         {
@@ -50,11 +48,10 @@ export const GuildCommand = new NamedCommand({
     description: "Get info on the guild's economy as a whole.",
     async run({send, guild, channel}) {
         if (isAuthorized(guild, channel)) {
-            const users = Storage.users;
+            const users = User.all();
             let totalAmount = 0;
 
-            for (const ID in users) {
-                const user = users[ID];
+            for (const user of users) {
                 totalAmount += user.money;
             }
 
@@ -90,7 +87,7 @@ export const LeaderboardCommand = new NamedCommand({
     aliases: ["top"],
     async run({send, guild, channel, client}) {
         if (isAuthorized(guild, channel)) {
-            const users = Storage.users;
+            const users = User.all();
             const ids = Object.keys(users);
             ids.sort((a, b) => users[b].money - users[a].money);
             const fields = [];
@@ -132,9 +129,9 @@ export const PayCommand = new NamedCommand({
             async run({send, args, author, channel, guild}): Promise<any> {
                 if (isAuthorized(guild, channel)) {
                     const amount = Math.floor(args[1]);
-                    const sender = Storage.getUser(author.id);
+                    const sender = new User(author.id);
                     const target = args[0];
-                    const receiver = Storage.getUser(target.id);
+                    const receiver = new User(target.id);
 
                     if (amount <= 0) return send("You must send at least one Mon!");
                     else if (sender.money < amount)
@@ -147,7 +144,6 @@ export const PayCommand = new NamedCommand({
 
                     sender.money -= amount;
                     receiver.money += amount;
-                    Storage.save();
                     return send(getSendEmbed(author, target, amount));
                 }
             }
@@ -164,7 +160,7 @@ export const PayCommand = new NamedCommand({
                 if (!/\d+/g.test(last) && args.length === 0) return send("You need to enter an amount you're sending!");
 
                 const amount = Math.floor(last);
-                const sender = Storage.getUser(author.id);
+                const sender = new User(author.id);
 
                 if (amount <= 0) return send("You must send at least one Mon!");
                 else if (sender.money < amount)
@@ -201,10 +197,9 @@ export const PayCommand = new NamedCommand({
                 );
 
                 if (confirmed) {
-                    const receiver = Storage.getUser(user.id);
+                    const receiver = new User(user.id);
                     sender.money -= amount;
                     receiver.money += amount;
-                    Storage.save();
                     send(getSendEmbed(author, user, amount));
                 }
             }

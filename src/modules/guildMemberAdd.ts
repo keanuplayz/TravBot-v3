@@ -1,7 +1,6 @@
 import {createCanvas, loadImage, Canvas} from "canvas";
 import {TextChannel, MessageAttachment} from "discord.js";
-import {parseVars} from "../lib";
-import {Storage} from "../structures";
+import {Guild, parseVars} from "../lib";
 import {client} from "../index";
 
 function applyText(canvas: Canvas, text: string) {
@@ -16,7 +15,7 @@ function applyText(canvas: Canvas, text: string) {
 }
 
 client.on("guildMemberAdd", async (member) => {
-    const {welcomeType, welcomeChannel, welcomeMessage, autoRoles} = Storage.getGuild(member.guild.id);
+    const {welcomeType, welcomeChannel, welcomeMessage, autoRoles} = new Guild(member.guild.id);
 
     if (autoRoles) {
         member.roles.add(autoRoles);

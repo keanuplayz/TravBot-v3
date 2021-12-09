@@ -7,8 +7,8 @@ import {
     getUserByNickname,
     RestCommand
 } from "onion-lasers";
-import {Storage} from "../../structures";
-import {User} from "discord.js";
+import {User} from "../../lib";
+import {User as DiscordUser} from "discord.js";
 import moment from "moment";
 
 const DATE_FORMAT = "D MMMM YYYY";
@@ -106,21 +106,22 @@ function hasDaylightSavings(region: DST) {
     return region !== "sh" ? insideBounds : !insideBounds;
 }
 
-function getTimeEmbed(user: User) {
-    const {timezone, daylightSavingsRegion} = Storage.getUser(user.id);
+function getTimeEmbed(user: DiscordUser) {
+    const {timezoneOffset, daylightSavingsRegion} = new User(user.id);
     let localDate = "N/A";
     let dayOfWeek = "N/A";
     let localTime = "N/A";
-    let timezoneOffset = "N/A";
+    let timezoneOffsetDisplay = "N/A";
 
-    if (timezone !== null) {
-        const daylightSavingsOffset = daylightSavingsRegion && hasDaylightSavings(daylightSavingsRegion) ? 1 : 0;
-        const daylightTimezone = timezone + daylightSavingsOffset;
+    if (timezoneOffset !== null) {
+        const daylightSavingsOffset =
+            daylightSavingsRegion !== "none" && hasDaylightSavings(daylightSavingsRegion) ? 1 : 0;
+        const daylightTimezone = timezoneOffset + daylightSavingsOffset;
         const now = moment().utcOffset(daylightTimezone * 60);
         localDate = now.format(DATE_FORMAT);
         dayOfWeek = now.format(DOW_FORMAT);
         localTime = now.format(TIME_FORMAT);
-        timezoneOffset = daylightTimezone >= 0 ? `+${daylightTimezone}` : daylightTimezone.toString();
+        timezoneOffsetDisplay = daylightTimezone >= 0 ? `+${daylightTimezone}` : daylightTimezone.toString();
     }
 
     const embed = {
@@ -147,7 +148,7 @@ function getTimeEmbed(user: User) {
             },
             {
                 name: daylightSavingsRegion !== null ? "Current Timezone Offset" : "Timezone Offset",
-                value: timezoneOffset
+                value: timezoneOffsetDisplay
             },
             {
                 name: "Observes Daylight Savings?",
@@ -156,7 +157,7 @@ function getTimeEmbed(user: User) {
         ]
     };
 
-    if (daylightSavingsRegion) {
+    if (daylightSavingsRegion !== "none") {
         embed.fields.push(
             {
                 name: "Daylight Savings Active?",
@@ -183,9 +184,9 @@ export default new NamedCommand({
         setup: new NamedCommand({
             description: "Registers your timezone information for the bot.",
             async run({send, author}) {
-                const profile = Storage.getUser(author.id);
-                profile.timezone = null;
-                profile.daylightSavingsRegion = null;
+                const profile = new User(author.id);
+                profile.timezoneOffset = null;
+                profile.daylightSavingsRegion = "none";
 
                 // Parse and validate reply
                 const reply = await askForReply(
@@ -269,13 +270,13 @@ export default new NamedCommand({
                     if (isSameDay) {
                         for (const [hourPoint, dayOffset, timezoneOffset] of timezoneTupleList) {
                             if (dayOffset === 0 && hour === hourPoint) {
-                                profile.timezone = timezoneOffset;
+                                profile.timezoneOffset = timezoneOffset;
                             }
                         }
                     } else {
                         for (const [hourPoint, dayOffset, timezoneOffset] of timezoneTupleList) {
                             if (dayOffset !== 0 && hour === hourPoint) {
-                                profile.timezone = timezoneOffset;
+                                profile.timezoneOffset = timezoneOffset;
                             }
                         }
                     }
@@ -283,7 +284,7 @@ export default new NamedCommand({
                     // If it's a unique hour, just search through the tuple list and find the matching entry.
                     for (const [hourPoint, _dayOffset, timezoneOffset] of timezoneTupleList) {
                         if (hour === hourPoint) {
-                            profile.timezone = timezoneOffset;
+                            profile.timezoneOffset = timezoneOffset;
                         }
                     }
                 }
@@ -295,7 +296,6 @@ export default new NamedCommand({
                 );
 
                 const finalize = () => {
-                    Storage.save();
                     send({
                         content:
                             "You've finished setting up your timezone! Just check to see if this looks right, and if it doesn't, run this setup again.",
@@ -309,7 +309,7 @@ export default new NamedCommand({
 
                         // If daylight savings is active, subtract the timezone offset by one to store the standard time.
                         if (hasDaylightSavings(region)) {
-                            profile.timezone!--;
+                            profile.timezoneOffset!--;
                         }
 
                         finalize();
@@ -344,10 +344,9 @@ export default new NamedCommand({
                 );
 
                 if (result) {
-                    const profile = Storage.getUser(author.id);
-                    profile.timezone = null;
-                    profile.daylightSavingsRegion = null;
-                    Storage.save();
+                    const profile = new User(author.id);
+                    profile.timezoneOffset = null;
+                    profile.daylightSavingsRegion = "none";
                 }
             }
         }),

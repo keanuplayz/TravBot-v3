@@ -1,6 +1,6 @@
-import {Command, NamedCommand, paginate, RestCommand} from "onion-lasers";
+import {NamedCommand, paginate, RestCommand} from "onion-lasers";
 import {pluralise, split} from "../../../lib";
-import {Storage, getPrefix} from "../../../structures";
+import {User, getPrefix} from "../../../lib";
 import {isAuthorized, ECO_EMBED_COLOR} from "./eco-utils";
 import {ShopItems, ShopItem} from "./eco-shop-items";
 import {EmbedField, MessageEmbedOptions} from "discord.js";
@@ -60,16 +60,15 @@ export const BuyCommand = new NamedCommand({
                 //if (/\d+/g.test(args[args.length - 1]))
                 //amount = parseInt(args.pop());
 
-                for (let item of ShopItems) {
+                for (const item of ShopItems) {
                     if (item.usage === combined) {
-                        const user = Storage.getUser(author.id);
+                        const user = new User(author.id);
                         const cost = item.cost * amount;
 
                         if (cost > user.money) {
                             send("Not enough Mons!");
                         } else {
                             user.money -= cost;
-                            Storage.save();
                             item.run(message, cost, amount);
                         }
 

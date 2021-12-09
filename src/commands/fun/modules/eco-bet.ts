@@ -1,8 +1,7 @@
 import {Command, NamedCommand, confirm, poll} from "onion-lasers";
-import {pluralise} from "../../../lib";
-import {Storage} from "../../../structures";
+import {User, pluralise} from "../../../lib";
 import {isAuthorized, getMoneyEmbed} from "./eco-utils";
-import {User} from "discord.js";
+import {User as DiscordUser} from "discord.js";
 
 export const BetCommand = new NamedCommand({
     description: "Bet your Mons with other people.",
@@ -27,9 +26,9 @@ export const BetCommand = new NamedCommand({
             // handles missing duration argument
             async run({send, args, author, channel, guild}) {
                 if (isAuthorized(guild, channel)) {
-                    const sender = Storage.getUser(author.id);
-                    const target = args[0] as User;
-                    const receiver = Storage.getUser(target.id);
+                    const sender = new User(author.id);
+                    const target = args[0] as DiscordUser;
+                    const receiver = new User(target.id);
                     const amount = Math.floor(args[1]);
 
                     // handle invalid target
@@ -54,15 +53,15 @@ export const BetCommand = new NamedCommand({
             },
             any: new Command({
                 description: "Duration of the bet.",
-                async run({send, client, args, author, message, channel, guild}) {
+                async run({send, args, author, message, channel, guild}) {
                     if (isAuthorized(guild, channel)) {
                         // [Pertinence to make configurable on the fly.]
                         // Lower and upper bounds for bet
                         const durationBounds = {min: "1m", max: "1d"};
 
-                        const sender = Storage.getUser(author.id);
-                        const target = args[0] as User;
-                        const receiver = Storage.getUser(target.id);
+                        const sender = new User(author.id);
+                        const target = args[0] as DiscordUser;
+                        const receiver = new User(target.id);
                         const amount = Math.floor(args[1]);
                         const duration = parseDuration(args[2].trim());
 
@@ -107,7 +106,6 @@ export const BetCommand = new NamedCommand({
                         // Very hacky solution for persistence but better than no solution, backup returns runs during the bot's setup code.
                         sender.ecoBetInsurance += amount;
                         receiver.ecoBetInsurance += amount;
-                        Storage.save();
 
                         // Notify both users.
                         send(
@@ -121,8 +119,8 @@ export const BetCommand = new NamedCommand({
                         // Wait for the duration of the bet.
                         return setTimeout(async () => {
                             // In debug mode, saving the storage will break the references, so you have to redeclare sender and receiver for it to actually save.
-                            const sender = Storage.getUser(author.id);
-                            const receiver = Storage.getUser(target.id);
+                            const sender = new User(author.id);
+                            const receiver = new User(target.id);
                             // [TODO: when D.JSv13 comes out, inline reply to clean up.]
                             // When bet is over, give a vote to ask people their thoughts.
                             // Filter reactions to only collect the pertinent ones.
@@ -159,7 +157,6 @@ export const BetCommand = new NamedCommand({
 
                             sender.ecoBetInsurance -= amount;
                             receiver.ecoBetInsurance -= amount;
-                            Storage.save();
                         }, duration);
                     } else return;
                 }

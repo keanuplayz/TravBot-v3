@@ -1,11 +1,10 @@
-import {pluralise} from "../../../lib";
-import {Storage} from "../../../structures";
-import {User, Guild, TextChannel, DMChannel, NewsChannel, Channel, TextBasedChannels} from "discord.js";
+import {User, pluralise} from "../../../lib";
+import {User as DiscordUser, Guild, TextBasedChannels} from "discord.js";
 
 export const ECO_EMBED_COLOR = 0xf1c40f;
 
-export function getMoneyEmbed(user: User, inline: boolean = false): object {
-    const profile = Storage.getUser(user.id);
+export function getMoneyEmbed(user: DiscordUser, inline: boolean = false): object {
+    const profile = new User(user.id);
     console.log(profile);
 
     if (inline) {
@@ -49,7 +48,7 @@ export function getMoneyEmbed(user: User, inline: boolean = false): object {
     }
 }
 
-export function getSendEmbed(sender: User, receiver: User, amount: number): object {
+export function getSendEmbed(sender: DiscordUser, receiver: DiscordUser, amount: number): object {
     return {
         embeds: [
             {
@@ -70,11 +69,11 @@ export function getSendEmbed(sender: User, receiver: User, amount: number): obje
                 fields: [
                     {
                         name: `Sender: ${sender.tag}`,
-                        value: pluralise(Storage.getUser(sender.id).money, "Mon", "s")
+                        value: pluralise(new User(sender.id).money, "Mon", "s")
                     },
                     {
                         name: `Receiver: ${receiver.tag}`,
-                        value: pluralise(Storage.getUser(receiver.id).money, "Mon", "s")
+                        value: pluralise(new User(receiver.id).money, "Mon", "s")
                     }
                 ],
                 footer: {

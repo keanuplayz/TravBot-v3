@@ -1,6 +1,6 @@
 import {client} from "../index";
 import {MessageEmbed} from "discord.js";
-import {getPrefix} from "../structures";
+import {getPrefix} from "../lib";
 import {getMessageByID} from "onion-lasers";
 
 client.on("messageCreate", (message) => {

@@ -7,7 +7,7 @@
         "start": "node -r dotenv/config .",
         "build": "rimraf dist && tsc --project tsconfig.prod.json && npm prune --production",
         "dev": "tsc-watch --onSuccess \"npm start\"",
-        "test": "jest",
+        "test": "jest --setupFiles dotenv/config",
         "format": "prettier --write **/*",
         "postinstall": "husky install"
     },

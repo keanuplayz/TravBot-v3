@@ -1,6 +1,6 @@
 import {GuildMember, VoiceChannel, MessageEmbed, TextChannel, Message, Collection, StageChannel} from "discord.js";
 import {client} from "../index";
-import {Storage} from "../structures";
+import {Guild, Member} from "../lib";
 
 type Stream = {
     streamer: GuildMember;
@@ -61,7 +61,7 @@ client.on("voiceStateUpdate", async (before, after) => {
     // Note: isStopStreamEvent can be called twice in a row - If Discord crashes/quits while you're streaming, it'll call once with a null channel and a second time with a channel.
 
     if (isStartStreamEvent || isStopStreamEvent) {
-        const {streamingChannel, streamingRoles, members} = Storage.getGuild(after.guild.id);
+        const {streamingChannel, streamingRoles} = new Guild(after.guild.id);
 
         if (streamingChannel) {
             const member = after.member!;
@@ -76,14 +76,12 @@ client.on("voiceStateUpdate", async (before, after) => {
                     let category = "None";
 
                     // Check the category if there's one set then ping that role.
-                    if (member.id in members) {
-                        const roleID = members[member.id].streamCategory;
+                    const roleID = new Member(member.id, after.guild.id).streamCategory;
 
-                        // Only continue if they set a valid category.
-                        if (roleID && roleID in streamingRoles) {
-                            streamNotificationPing = `<@&${roleID}>`;
-                            category = streamingRoles[roleID];
-                        }
+                    // Only continue if they set a valid category.
+                    if (roleID && streamingRoles.has(roleID)) {
+                        streamNotificationPing = `<@&${roleID}>`;
+                        category = streamingRoles.get(roleID)!;
                     }
 
                     streamList.set(member.id, {

@@ -18,8 +18,7 @@ export const client = new Client({
 
 import {join} from "path";
 import {launch} from "onion-lasers";
-import {getPrefix} from "./structures";
-import {toTitleCase} from "./lib";
+import {getPrefix, toTitleCase} from "./lib";
 
 // Send the login request to Discord's API and then load modules while waiting for it.
 client.login(process.env.TOKEN).catch(console.error);

@@ -1,6 +1,6 @@
 import {Webhook, TextChannel, NewsChannel, Permissions, Collection} from "discord.js";
 import {client} from "..";
-import {Config} from "../structures";
+import {config} from "../lib";
 
 export const webhookStorage = new Collection<string, Webhook>(); // Channel ID: Webhook
 const WEBHOOK_PATTERN = /https:\/\/discord\.com\/api\/webhooks\/(\d{17,})\/(.+)/;
@@ -23,8 +23,7 @@ export async function resolveWebhook(channel: TextChannel | NewsChannel): Promis
 export function registerWebhook(url: string): boolean {
     if (WEBHOOK_PATTERN.test(url)) {
         const [_, id, token] = WEBHOOK_PATTERN.exec(url)!;
-        Config.webhooks[id] = token;
-        Config.save();
+        config.setWebhook(id, token);
         refreshWebhookCache();
         return true;
     } else {
@@ -39,8 +38,7 @@ export function deleteWebhook(urlOrID: string): boolean {
     else if (ID_PATTERN.test(urlOrID)) id = ID_PATTERN.exec(urlOrID)![1];
 
     if (id) {
-        delete Config.webhooks[id];
-        Config.save();
+        delete config.webhooks[id];
         refreshWebhookCache();
     }
 

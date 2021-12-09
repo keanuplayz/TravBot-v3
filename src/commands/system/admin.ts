@@ -1,5 +1,5 @@
 import {Command, NamedCommand, getPermissionLevel, getPermissionName, CHANNEL_TYPE, RestCommand} from "onion-lasers";
-import {Config, Storage, getPrefix} from "../../structures";
+import {config, Guild, getPrefix} from "../../lib";
 import {Permissions, TextChannel, User, Role, Channel, Util} from "discord.js";
 import {logs} from "../../modules/logger";
 
@@ -35,24 +35,21 @@ export default new NamedCommand({
                     description: "Set a custom prefix for your guild. Removes your custom prefix if none is provided.",
                     usage: "(<prefix>) (<@bot>)",
                     async run({send, guild}) {
-                        Storage.getGuild(guild!.id).prefix = null;
-                        Storage.save();
+                        new Guild(guild!.id).prefix = null;
                         send(
                             `The custom prefix for this guild has been removed. My prefix is now back to \`${getPrefix()}\`.`
                         );
                     },
                     any: new Command({
                         async run({send, guild, args}) {
-                            Storage.getGuild(guild!.id).prefix = args[0];
-                            Storage.save();
+                            new Guild(guild!.id).prefix = args[0];
                             send(`The custom prefix for this guild is now \`${args[0]}\`.`);
                         },
                         user: new Command({
                             description: "Specifies the bot in case of conflicting prefixes.",
                             async run({send, guild, client, args}) {
                                 if ((args[1] as User).id === client.user!.id) {
-                                    Storage.getGuild(guild!.id).prefix = args[0];
-                                    Storage.save();
+                                    new Guild(guild!.id).prefix = args[0];
                                     send(`The custom prefix for this guild is now \`${args[0]}\`.`);
                                 }
                             }
@@ -67,16 +64,14 @@ export default new NamedCommand({
                         true: new NamedCommand({
                             description: "Enable sending of message previews.",
                             async run({send, guild}) {
-                                Storage.getGuild(guild!.id).messageEmbeds = true;
-                                Storage.save();
+                                new Guild(guild!.id).hasMessageEmbeds = true;
                                 send("Sending of message previews has been enabled.");
                             }
                         }),
                         false: new NamedCommand({
                             description: "Disable sending of message previews.",
                             async run({send, guild}) {
-                                Storage.getGuild(guild!.id).messageEmbeds = false;
-                                Storage.save();
+                                new Guild(guild!.id).hasMessageEmbeds = false;
                                 send("Sending of message previews has been disabled.");
                             }
                         })
@@ -86,15 +81,14 @@ export default new NamedCommand({
                     description: "Configure your server's autoroles.",
                     usage: "<roles...>",
                     async run({send, guild}) {
-                        Storage.getGuild(guild!.id).autoRoles = [];
-                        Storage.save();
+                        new Guild(guild!.id).autoRoles = [];
                         send("Reset this server's autoroles.");
                     },
                     id: "role",
                     any: new RestCommand({
                         description: "The roles to set as autoroles.",
                         async run({send, guild, args}) {
-                            const guildd = Storage.getGuild(guild!.id);
+                            const guildd = new Guild(guild!.id);
                             for (const role of args) {
                                 if (!role.toString().match(/^<@&(\d{17,})>$/)) {
                                     return send("Not all arguments are a role mention!");
@@ -102,7 +96,6 @@ export default new NamedCommand({
                                 const id = role.toString().match(/^<@&(\d{17,})>$/)![1];
                                 guildd.autoRoles!.push(id);
                             }
-                            Storage.save();
                             return send("Saved.");
                         }
                     })
@@ -117,30 +110,26 @@ export default new NamedCommand({
                                 "Sets how welcome messages are displayed for your server. Removes welcome messages if unspecified.",
                             usage: "`none`/`text`/`graphical`",
                             async run({send, guild}) {
-                                Storage.getGuild(guild!.id).welcomeType = "none";
-                                Storage.save();
+                                new Guild(guild!.id).welcomeType = "none";
                                 send("Set this server's welcome type to `none`.");
                             },
                             // I should probably make this a bit more dynamic... Oh well.
                             subcommands: {
                                 text: new NamedCommand({
                                     async run({send, guild}) {
-                                        Storage.getGuild(guild!.id).welcomeType = "text";
-                                        Storage.save();
+                                        new Guild(guild!.id).welcomeType = "text";
                                         send("Set this server's welcome type to `text`.");
                                     }
                                 }),
                                 graphical: new NamedCommand({
                                     async run({send, guild}) {
-                                        Storage.getGuild(guild!.id).welcomeType = "graphical";
-                                        Storage.save();
+                                        new Guild(guild!.id).welcomeType = "graphical";
                                         send("Set this server's welcome type to `graphical`.");
                                     }
                                 }),
                                 none: new NamedCommand({
                                     async run({send, guild}) {
-                                        Storage.getGuild(guild!.id).welcomeType = "none";
-                                        Storage.save();
+                                        new Guild(guild!.id).welcomeType = "none";
                                         send("Set this server's welcome type to `none`.");
                                     }
                                 })
@@ -150,8 +139,7 @@ export default new NamedCommand({
                             description: "Sets the welcome channel for your server. Type `#` to reference the channel.",
                             usage: "(<channel mention>)",
                             async run({send, channel, guild}) {
-                                Storage.getGuild(guild!.id).welcomeChannel = channel.id;
-                                Storage.save();
+                                new Guild(guild!.id).welcomeChannel = channel.id;
                                 send(`Successfully set ${channel} as the welcome channel for this server.`);
                             },
                             id: "channel",
@@ -160,8 +148,7 @@ export default new NamedCommand({
                                     const result = args[0] as Channel;
 
                                     if (result instanceof TextChannel) {
-                                        Storage.getGuild(guild!.id).welcomeChannel = result.id;
-                                        Storage.save();
+                                        new Guild(guild!.id).welcomeChannel = result.id;
                                         send(`Successfully set this server's welcome channel to ${result}.`);
                                     } else {
                                         send(`\`${result.id}\` is not a valid text channel!`);
@@ -174,14 +161,12 @@ export default new NamedCommand({
                                 "Sets a custom welcome message for your server. Use `%user%` as the placeholder for the user.",
                             usage: "(<message>)",
                             async run({send, guild}) {
-                                Storage.getGuild(guild!.id).welcomeMessage = null;
-                                Storage.save();
+                                new Guild(guild!.id).welcomeMessage = null;
                                 send("Reset your server's welcome message to the default.");
                             },
                             any: new RestCommand({
                                 async run({send, guild, combined}) {
-                                    Storage.getGuild(guild!.id).welcomeMessage = combined;
-                                    Storage.save();
+                                    new Guild(guild!.id).welcomeMessage = combined;
                                     send(`Set your server's welcome message to \`${combined}\`.`);
                                 }
                             })
@@ -192,7 +177,7 @@ export default new NamedCommand({
                     description: "Set a channel to send stream notifications. Type `#` to reference the channel.",
                     usage: "(<channel mention>)",
                     async run({send, channel, guild}) {
-                        const targetGuild = Storage.getGuild(guild!.id);
+                        const targetGuild = new Guild(guild!.id);
 
                         if (targetGuild.streamingChannel) {
                             targetGuild.streamingChannel = null;
@@ -201,8 +186,6 @@ export default new NamedCommand({
                             targetGuild.streamingChannel = channel.id;
                             send(`Set your server's stream notifications channel to ${channel}.`);
                         }
-
-                        Storage.save();
                     },
                     id: "channel",
                     channel: new Command({
@@ -210,8 +193,7 @@ export default new NamedCommand({
                             const result = args[0] as Channel;
 
                             if (result instanceof TextChannel) {
-                                Storage.getGuild(guild!.id).streamingChannel = result.id;
-                                Storage.save();
+                                new Guild(guild!.id).streamingChannel = result.id;
                                 send(`Successfully set this server's stream notifications channel to ${result}.`);
                             } else {
                                 send(`\`${result.id}\` is not a valid text channel!`);
@@ -232,8 +214,7 @@ export default new NamedCommand({
                                 any: new RestCommand({
                                     async run({send, guild, args, combined}) {
                                         const role = args[0] as Role;
-                                        Storage.getGuild(guild!.id).streamingRoles[role.id] = combined;
-                                        Storage.save();
+                                        new Guild(guild!.id).streamingRoles.set(role.id, combined);
                                         send(
                                             `Successfully set the category \`${combined}\` to notify \`${role.name}\`.`
                                         );
@@ -247,10 +228,9 @@ export default new NamedCommand({
                             role: new Command({
                                 async run({send, guild, args}) {
                                     const role = args[0] as Role;
-                                    const guildStorage = Storage.getGuild(guild!.id);
-                                    const category = guildStorage.streamingRoles[role.id];
+                                    const guildStorage = new Guild(guild!.id);
+                                    const category = guildStorage.streamingRoles.get(role.id);
                                     delete guildStorage.streamingRoles[role.id];
-                                    Storage.save();
                                     send(
                                         `Successfully removed the category \`${category}\` to notify \`${role.name}\`.`
                                     );
@@ -267,24 +247,22 @@ export default new NamedCommand({
                     async run({send, guild, message}) {
                         const voiceChannel = message.member?.voice.channel;
                         if (!voiceChannel) return send("You are not in a voice channel.");
-                        const guildStorage = Storage.getGuild(guild!.id);
-                        delete guildStorage.channelNames[voiceChannel.id];
-                        Storage.save();
+                        const guildStorage = new Guild(guild!.id);
+                        delete guildStorage.defaultChannelNames[voiceChannel.id];
                         return send(`Successfully removed the default channel name for ${voiceChannel}.`);
                     },
                     any: new RestCommand({
                         async run({send, guild, message, combined}) {
                             const voiceChannel = message.member?.voice.channel;
                             const guildID = guild!.id;
-                            const guildStorage = Storage.getGuild(guildID);
+                            const guildStorage = new Guild(guildID);
                             const newName = combined;
 
                             if (!voiceChannel) return send("You are not in a voice channel.");
                             if (!guild!.me?.permissions.has(Permissions.FLAGS.MANAGE_CHANNELS))
                                 return send("I can't change channel names without the `Manage Channels` permission.");
 
-                            guildStorage.channelNames[voiceChannel.id] = newName;
-                            Storage.save();
+                            guildStorage.defaultChannelNames.set(voiceChannel.id, newName);
                             return await send(`Set default channel name to "${newName}".`);
                         }
                     })
@@ -417,7 +395,7 @@ export default new NamedCommand({
                 const guildList = Util.splitMessage(
                     Array.from(client.guilds.cache.map((e) => e.name).values()).join("\n")
                 );
-                for (let guildListPart of guildList) {
+                for (const guildListPart of guildList) {
                     send(guildListPart);
                 }
             }
@@ -456,8 +434,7 @@ export default new NamedCommand({
             permission: PERMISSIONS.BOT_ADMIN,
             channelType: CHANNEL_TYPE.GUILD,
             async run({send, channel}) {
-                Config.systemLogsChannel = channel.id;
-                Config.save();
+                config.systemLogsChannel = channel.id;
                 send(`Successfully set ${channel} as the system logs channel.`);
             },
             channel: new Command({
@@ -465,8 +442,7 @@ export default new NamedCommand({
                     const targetChannel = args[0] as Channel;
 
                     if (targetChannel instanceof TextChannel) {
-                        Config.systemLogsChannel = targetChannel.id;
-                        Config.save();
+                        config.systemLogsChannel = targetChannel.id;
                         send(`Successfully set ${targetChannel} as the system logs channel.`);
                     } else {
                         send(`\`${targetChannel.id}\` is not a valid text channel!`);

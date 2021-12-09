@@ -1,5 +1,5 @@
 import {client} from "../index";
-import {Storage, getPrefix} from "../structures";
+import {User, getPrefix} from "../lib";
 
 client.once("ready", () => {
     if (client.user) {
@@ -12,12 +12,12 @@ client.once("ready", () => {
         });
 
         // Run this setup block once to restore eco bet money in case the bot went down. (And I guess search the client for those users to let them know too.)
-        for (const id in Storage.users) {
-            const user = Storage.users[id];
+        const users = User.all();
 
+        for (const user of users) {
             if (user.ecoBetInsurance > 0) {
                 client.users.cache
-                    .get(id)
+                    .get(user.id)
                     ?.send(
                         `Because my system either crashed or restarted while you had a pending bet, the total amount of money that you bet, which was \`${user.ecoBetInsurance}\`, has been restored.`
                     );
@@ -25,6 +25,5 @@ client.once("ready", () => {
                 user.ecoBetInsurance = 0;
             }
         }
-        Storage.save();
     }
 });

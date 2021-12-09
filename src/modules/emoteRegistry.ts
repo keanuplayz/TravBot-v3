@@ -1,6 +1,7 @@
 import {client} from "../index";
-import FileManager from "./storage";
-import {EmoteRegistryDump} from "../structures";
+import {createPath, EmoteRegistryDump} from "../lib";
+import {writeFile} from "fs/promises";
+import {join} from "path";
 
 function updateGlobalEmoteRegistry(): void {
     const data: EmoteRegistryDump = {version: 1, list: []};
@@ -20,8 +21,8 @@ function updateGlobalEmoteRegistry(): void {
         }
     }
 
-    FileManager.open("data/public"); // generate folder if it doesn't exist
-    FileManager.write("public/emote-registry", data, true);
+    createPath("public"); // generate folder if it doesn't exist
+    writeFile(join("public", "emote-registry.json"), JSON.stringify(data, null, "\t")).catch(console.error);
 }
 
 client.on("emojiCreate", updateGlobalEmoteRegistry);
