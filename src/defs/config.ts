@@ -23,15 +23,23 @@ class Config {
         this._systemLogsChannel = systemLogsChannel;
         db.prepare("UPDATE Settings SET SystemLogsChannel = ? WHERE Tag = 'Main'").run(systemLogsChannel);
     }
-    get webhooks() {
-        return this._webhooks;
+
+    getWebhook(id: string) {
+        return this._webhooks.get(id);
     }
-    // getWebhook, setWebhook, removeWebhook, hasWebhook, getWebhookEntries
+    getWebhookEntries() {
+        return this._webhooks.entries();
+    }
+    hasWebhook(id: string) {
+        return this._webhooks.has(id);
+    }
     setWebhook(id: string, token: string) {
+        db.prepare("INSERT INTO Webhooks VALUES (?, ?)").run(id, token);
         this._webhooks.set(id, token);
-        db.prepare(
-            "INSERT INTO Webhooks VALUES (:id, :token) ON CONFLICT (ID) DO UPDATE SET Token = :token WHERE ID = :id"
-        ).run({id, token});
+    }
+    removeWebhook(id: string) {
+        db.prepare("DELETE FROM Webhooks WHERE ID = ?").run(id);
+        return this._webhooks.delete(id);
     }
 }
 

@@ -38,7 +38,7 @@ export function deleteWebhook(urlOrID: string): boolean {
     else if (ID_PATTERN.test(urlOrID)) id = ID_PATTERN.exec(urlOrID)![1];
 
     if (id) {
-        delete config.webhooks[id];
+        config.removeWebhook(id);
         refreshWebhookCache();
     }
 
@@ -55,14 +55,13 @@ client.on("ready", refreshWebhookCache);
 export async function refreshWebhookCache(): Promise<void> {
     webhookStorage.clear();
 
-    for (const [id, token] of Object.entries(Config.webhooks)) {
+    for (const [id, token] of config.getWebhookEntries()) {
         // If there are stored webhook IDs/tokens that don't work, delete those webhooks from storage.
         try {
             const webhook = await client.fetchWebhook(id, token);
             webhookStorage.set(webhook.channelId, webhook);
         } catch {
-            delete Config.webhooks[id];
-            Config.save();
+            config.removeWebhook(id);
         }
     }
 }

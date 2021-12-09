@@ -17,7 +17,7 @@ import {join} from "path";
 // Guilds: ID, Prefix (TEXT NULLABLE), WelcomeType (INT), WelcomeChannel (TEXT NULLABLE), WelcomeMessage (TEXT NULLABLE), StreamingChannel (TEXT NULLABLE), HasMessageEmbeds (BOOL)
 // Members: UserID, GuildID, StreamCategory (TEXT NULLABLE)
 // Webhooks: ID, Token (TEXT)
-// TodoLists: UserID, Timestamp (TIME), Entry (TEXT)
+// TodoLists: ID (INT PRIMARY KEY), UserID, Entry (TEXT), LastModified (TIME)
 // StreamingRoles: GuildID, RoleID, Category (TEXT)
 // DefaultChannelNames: GuildID, ChannelID, Name (TEXT)
 // AutoRoles: GuildID, RoleID
@@ -33,7 +33,7 @@ import {join} from "path";
 // - Booleans (marked as BOOL) will be stored as an integer, either 0 or 1 (though it just checks for 0).
 
 const DATA_FOLDER = "data";
-const DATABASE_FILE = join(DATA_FOLDER, "main.db");
+const DATABASE_FILE = join(DATA_FOLDER, `${process.env.DEV_DATABASE ?? "main"}.db`);
 
 // Calling migrations[2]() migrates the database from version 2 to version 3.
 // NOTE: Once a migration is written, DO NOT change that migration or it'll break all future migrations.
@@ -84,9 +84,10 @@ const migrations: (() => void)[] = [
 				Token TEXT NOT NULL
 			)`,
             `CREATE TABLE TodoLists (
+                ID INTEGER NOT NULL PRIMARY KEY ON CONFLICT REPLACE AUTOINCREMENT,
 				UserID TEXT NOT NULL,
-				Timestamp INT NOT NULL,
-				Entry TEXT NOT NULL
+				Entry TEXT NOT NULL,
+				LastModified INT NOT NULL
 			)`,
             `CREATE TABLE StreamingRoles (
 				GuildID TEXT NOT NULL,
@@ -108,11 +109,18 @@ const migrations: (() => void)[] = [
         if (hasLegacyData) {
             const config = JSON.parse(readFileSync(CONFIG_FILE, "utf-8"));
             const {users, guilds} = JSON.parse(readFileSync(STORAGE_FILE, "utf-8"));
-
             db.prepare("INSERT INTO Settings VALUES ('Main', ?)").run(config.systemLogsChannel);
+            const addWebhooks = db.prepare("INSERT INTO Webhooks VALUES (?, ?)");
+            const addUsers = db.prepare("INSERT INTO Users VALUES (?, ?, ?, ?, ?, ?, ?)");
+            const addTodoLists = db.prepare("INSERT INTO TodoLists (UserID, Entry, LastModified) VALUES (?, ?, ?)");
+            const addGuilds = db.prepare("INSERT INTO Guilds VALUES (?, ?, ?, ?, ?, ?, ?)");
+            const addMembers = db.prepare("INSERT INTO Members VALUES (?, ?, ?)");
+            const addStreamingRoles = db.prepare("INSERT INTO StreamingRoles VALUES (?, ?, ?)");
+            const addDefaultChannelNames = db.prepare("INSERT INTO DefaultChannelNames VALUES (?, ?, ?)");
+            const addAutoRoles = db.prepare("INSERT INTO AutoRoles VALUES (?, ?)");
 
             for (const [id, token] of Object.entries(config.webhooks)) {
-                db.prepare("INSERT INTO Webhooks VALUES (?, ?)").run(id, token);
+                addWebhooks.run(id, token);
             }
 
             for (const id in users) {
@@ -134,19 +142,11 @@ const migrations: (() => void)[] = [
                     }
                 }
 
-                db.prepare("INSERT INTO Users VALUES (?, ?, ?, ?, ?, ?, ?)").run(
-                    id,
-                    money,
-                    lastReceived,
-                    lastMonday,
-                    timezone,
-                    dstInfo,
-                    ecoBetInsurance
-                );
+                addUsers.run(id, money, lastReceived, lastMonday, timezone, dstInfo, ecoBetInsurance);
 
                 for (const timestamp in todoList) {
                     const entry = todoList[timestamp];
-                    db.prepare("INSERT INTO TodoLists VALUES (?, ?, ?)").run(id, Number(timestamp), entry);
+                    addTodoLists.run(id, entry, Number(timestamp));
                 }
             }
 
@@ -174,7 +174,7 @@ const migrations: (() => void)[] = [
                         break;
                 }
 
-                db.prepare("INSERT INTO Guilds VALUES (?, ?, ?, ?, ?, ?, ?)").run(
+                addGuilds.run(
                     id,
                     prefix,
                     welcomeTypeInt,
@@ -186,28 +186,28 @@ const migrations: (() => void)[] = [
 
                 for (const userID in members) {
                     const {streamCategory} = members[userID];
-                    db.prepare("INSERT INTO Members VALUES (?, ?, ?)").run(userID, id, streamCategory);
+                    addMembers.run(userID, id, streamCategory);
                 }
 
                 for (const roleID in streamingRoles) {
                     const category = streamingRoles[roleID];
-                    db.prepare("INSERT INTO StreamingRoles VALUES (?, ?, ?)").run(id, roleID, category);
+                    addStreamingRoles.run(id, roleID, category);
                 }
 
                 for (const channelID in channelNames) {
                     const channelName = channelNames[channelID];
-                    db.prepare("INSERT INTO DefaultChannelNames VALUES (?, ?, ?)").run(id, channelID, channelName);
+                    addDefaultChannelNames.run(id, channelID, channelName);
                 }
 
                 if (autoRoles) {
                     for (const roleID of autoRoles) {
-                        db.prepare("INSERT INTO AutoRoles VALUES (?, ?)").run(id, roleID);
+                        addAutoRoles.run(id, roleID);
                     }
                 }
             }
         }
     }
-    // generateSQLMigration(["UPDATE System SET Version = 2"])
+    // generateSQLMigration([])
 ];
 
 const isExistingDatabase = existsSync(DATABASE_FILE);
@@ -244,6 +244,10 @@ if (isExistingDatabase) {
 if (version !== -1) {
     for (let v = version; v < migrations.length; v++) {
         migrations[v]();
+
+        if (v >= 1) {
+            db.prepare("UPDATE System SET Version = ?").run(v + 1);
+        }
     }
 }
 

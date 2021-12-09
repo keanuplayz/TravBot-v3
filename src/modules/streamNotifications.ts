@@ -61,7 +61,8 @@ client.on("voiceStateUpdate", async (before, after) => {
     // Note: isStopStreamEvent can be called twice in a row - If Discord crashes/quits while you're streaming, it'll call once with a null channel and a second time with a channel.
 
     if (isStartStreamEvent || isStopStreamEvent) {
-        const {streamingChannel, streamingRoles} = new Guild(after.guild.id);
+        const guild = new Guild(after.guild.id);
+        const {streamingChannel} = guild;
 
         if (streamingChannel) {
             const member = after.member!;
@@ -79,9 +80,9 @@ client.on("voiceStateUpdate", async (before, after) => {
                     const roleID = new Member(member.id, after.guild.id).streamCategory;
 
                     // Only continue if they set a valid category.
-                    if (roleID && streamingRoles.has(roleID)) {
+                    if (roleID && guild.hasStreamingRole(roleID)) {
                         streamNotificationPing = `<@&${roleID}>`;
-                        category = streamingRoles.get(roleID)!;
+                        category = guild.getStreamingRole(roleID)!;
                     }
 
                     streamList.set(member.id, {

@@ -109,7 +109,7 @@ export class Guild {
                 break;
         }
 
-        db.prepare(upsert("WelcomeType", "welcomeType")).run({
+        db.prepare(upsert("WelcomeType", "welcomeTypeInt")).run({
             id: this.id,
             welcomeTypeInt
         });
@@ -154,13 +154,53 @@ export class Guild {
             hasMessageEmbeds: +hasMessageEmbeds
         });
     }
-    get streamingRoles() {
-        return this._streamingRoles; // Role ID: Category Name
+
+    getStreamingRole(id: string) {
+        return this._streamingRoles.get(id);
     }
-    get defaultChannelNames() {
-        return this._defaultChannelNames; // Channel ID: Channel Name
+    getStreamingRoleEntries() {
+        return this._streamingRoles.entries();
     }
+    hasStreamingRole(id: string) {
+        return this._streamingRoles.has(id);
+    }
+    setStreamingRole(id: string, category: string) {
+        db.prepare("INSERT INTO StreamingRoles VALUES (?, ?, ?)").run(this.id, id, category);
+        this._streamingRoles.set(id, category);
+    }
+    removeStreamingRole(id: string) {
+        db.prepare("DELETE FROM StreamingRoles WHERE GuildID = ? AND RoleID = ?").run(this.id, id);
+        return this._streamingRoles.delete(id);
+    }
+
+    getDefaultChannelName(id: string) {
+        return this._defaultChannelNames.get(id);
+    }
+    getDefaultChannelNameEntries() {
+        return this._defaultChannelNames.entries();
+    }
+    hasDefaultChannelName(id: string) {
+        return this._defaultChannelNames.has(id);
+    }
+    setDefaultChannelName(id: string, name: string) {
+        db.prepare("INSERT INTO DefaultChannelNames VALUES (?, ?, ?)").run(this.id, id, name);
+        this._defaultChannelNames.set(id, name);
+    }
+    removeDefaultChannelName(id: string) {
+        db.prepare("DELETE FROM DefaultChannelNames WHERE GuildID = ? AND ChannelID = ?").run(this.id, id);
+        return this._defaultChannelNames.delete(id);
+    }
+
     get autoRoles() {
-        return this._autoRoles; // string array of role IDs
+        return this._autoRoles;
+    }
+    set autoRoles(autoRoles) {
+        this._autoRoles = autoRoles;
+        db.prepare("DELETE FROM AutoRoles WHERE GuildID = ?").run(this.id);
+        const addAutoRoles = db.prepare("INSERT INTO AutoRoles VALUES (?, ?)");
+
+        for (const roleID of autoRoles) {
+            addAutoRoles.run(this.id, roleID);
+        }
     }
 }

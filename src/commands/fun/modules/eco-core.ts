@@ -88,17 +88,16 @@ export const LeaderboardCommand = new NamedCommand({
     async run({send, guild, channel, client}) {
         if (isAuthorized(guild, channel)) {
             const users = User.all();
-            const ids = Object.keys(users);
-            ids.sort((a, b) => users[b].money - users[a].money);
+            users.sort((a, b) => b.money - a.money);
             const fields = [];
 
-            for (let i = 0, limit = Math.min(10, ids.length); i < limit; i++) {
-                const id = ids[i];
+            for (let i = 0, limit = Math.min(10, users.length); i < limit; i++) {
+                const id = users[i].id;
                 const user = await client.users.fetch(id);
 
                 fields.push({
                     name: `#${i + 1}. ${user.tag}`,
-                    value: pluralise(users[id].money, "Mon", "s")
+                    value: pluralise(users[i].money, "Mon", "s")
                 });
             }
 

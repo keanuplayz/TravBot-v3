@@ -115,7 +115,7 @@ export default new NamedCommand({
                     let found = false;
 
                     // Check if it's a valid category
-                    for (const [roleID, categoryName] of Object.entries(guildStorage.streamingRoles)) {
+                    for (const [roleID, categoryName] of guildStorage.getStreamingRoleEntries()) {
                         if (combined === categoryName) {
                             found = true;
                             memberStorage.streamCategory = roleID;
@@ -133,10 +133,16 @@ export default new NamedCommand({
                     }
 
                     if (!found) {
+                        const categories = [];
+
+                        for (const [_, category] of guildStorage.getStreamingRoleEntries()) {
+                            categories.push(category);
+                        }
+
                         send(
-                            `No valid category found by \`${combined}\`! The available categories are: \`${Object.values(
-                                guildStorage.streamingRoles
-                            ).join(", ")}\``
+                            `No valid category found by \`${combined}\`! The available categories are: \`${categories.join(
+                                ", "
+                            )}\``
                         );
                     }
                 }

@@ -1,4 +1,4 @@
-import {NamedCommand, RestCommand} from "onion-lasers";
+import {Command, NamedCommand, RestCommand} from "onion-lasers";
 import moment from "moment";
 import {User} from "../../lib";
 import {MessageEmbed} from "discord.js";
@@ -9,11 +9,12 @@ export default new NamedCommand({
         const user = new User(author.id);
         const embed = new MessageEmbed().setTitle(`Todo list for ${author.tag}`).setColor("BLUE");
 
-        for (const timestamp in user.todoList) {
-            const date = new Date(Number(timestamp));
+        for (const [id, {entry, lastModified}] of user.getTodoEntries()) {
             embed.addField(
-                `${moment(date).format("LT")} ${moment(date).format("LL")} (${moment(date).fromNow()})`,
-                user.todoList[timestamp]
+                `\`${id}\`: ${moment(lastModified).format("LT")} ${moment(lastModified).format("LL")} (${moment(
+                    lastModified
+                ).fromNow()})`,
+                entry
             );
         }
 
@@ -24,40 +25,29 @@ export default new NamedCommand({
             run: "You need to specify a note to add.",
             any: new RestCommand({
                 async run({send, author, combined}) {
-                    const user = new User(author.id);
-                    user.todoList[Date.now().toString()] = combined;
-                    Storage.save();
+                    new User(author.id).addTodoEntry(combined);
                     send(`Successfully added \`${combined}\` to your todo list.`);
                 }
             })
         }),
         remove: new NamedCommand({
             run: "You need to specify a note to remove.",
-            any: new RestCommand({
-                async run({send, author, combined}) {
+            number: new Command({
+                async run({send, author, args}) {
                     const user = new User(author.id);
-                    let isFound = false;
+                    const success = user.removeTodoEntry(args[0]);
 
-                    for (const timestamp in user.todoList) {
-                        const selectedNote = user.todoList[timestamp];
-
-                        if (selectedNote === combined) {
-                            delete user.todoList[timestamp];
-                            Storage.save();
-                            isFound = true;
-                            send(`Removed \`${combined}\` from your todo list.`);
-                        }
+                    if (success) {
+                        send(`Removed Note \`${args[0]}\` from your todo list.`);
+                    } else {
+                        send("That item couldn't be found.");
                     }
-
-                    if (!isFound) send("That item couldn't be found.");
                 }
             })
         }),
         clear: new NamedCommand({
             async run({send, author}) {
-                const user = new User(author.id);
-                user.todoList = {};
-                Storage.save();
+                new User(author.id).clearTodoEntries();
                 send("Cleared todo list.");
             }
         })

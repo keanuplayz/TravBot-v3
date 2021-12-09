@@ -44,7 +44,8 @@ Certain variables are set via `.env` at the project root. These are for system c
 - `ADMINS`: A comma-separated (with a space) list of bot admin IDs
 - `SUPPORT`: A comma-separated (with a space) list of bot support IDs
 - `WOLFRAM_API_KEY`: Used for `commands/utility/calc`
-- `DEV`: Enables dev mode as long as it isn't a falsy value (`DEV=1` works for example)
+- `DEV`: Enables dev mode as long as it isn't a falsy value (`DEV=1` works for example), specific values can be checked to test certain features
+- `DEV_DATABASE`: Specifies the file to use for trying out changes on a database (`DEV_DATABASE=test` writes to `data/test.db`)
 
 # Utility Functions
 

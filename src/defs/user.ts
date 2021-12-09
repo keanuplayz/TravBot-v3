@@ -12,12 +12,12 @@ export class User {
     private _timezoneOffset: number | null; // This is for the standard timezone only, not the daylight savings timezone
     private _daylightSavingsRegion: "na" | "eu" | "sh" | "none";
     private _ecoBetInsurance: number;
-    private _todoList: Collection<number, string>;
+    private _todoList: Collection<number, {lastModified: Date; entry: string}>;
 
     constructor(id: string) {
         this.id = id;
         const data = db.prepare("SELECT * FROM Users WHERE ID = ?").get(id);
-        const todoList = db.prepare("SELECT Timestamp, Entry FROM TodoLists WHERE UserID = ?").all(id) ?? [];
+        const todoList = db.prepare("SELECT ID, LastModified, Entry FROM TodoLists WHERE UserID = ?").all(id) ?? [];
 
         if (data) {
             const {Money, LastReceived, LastMonday, TimezoneOffset, DaylightSavingsRegion, EcoBetInsurance} = data;
@@ -51,8 +51,11 @@ export class User {
 
         this._todoList = new Collection();
 
-        for (const {Timestamp, Entry} of todoList) {
-            this._todoList.set(Timestamp, Entry);
+        for (const {ID, LastModified, Entry} of todoList) {
+            this._todoList.set(ID, {
+                entry: Entry,
+                lastModified: new Date(LastModified)
+            });
         }
     }
 
@@ -147,8 +150,52 @@ export class User {
     get todoList() {
         return this._todoList;
     }
-    // NOTE: Need to figure out an actual ID system
-    setTodoEntry(timestamp: number, entry: string) {
-        db.prepare("INSERT INTO TodoLists VALUES (?, ?, ?)").run(this.id, timestamp, entry);
+
+    getTodoEntry(id: number) {
+        return this._todoList.get(id);
+    }
+    getTodoEntries() {
+        return this._todoList.entries();
+    }
+    hasTodoEntry(id: number) {
+        return this._todoList.has(id);
+    }
+    addTodoEntry(entry: string) {
+        const lastModified = Date.now();
+        db.prepare("INSERT INTO TodoLists (UserID, Entry, LastModified) VALUES (?, ?, ?)").run(
+            this.id,
+            entry,
+            lastModified
+        );
+        const {ID} = db
+            .prepare("SELECT ID FROM TodoLists WHERE UserID = ? AND Entry = ? AND LastModified = ?")
+            .get(this.id, entry, lastModified);
+        this._todoList.set(ID, {
+            entry,
+            lastModified: new Date(lastModified)
+        });
+    }
+    setTodoEntry(id: number, entry: string): boolean {
+        const lastModified = Date.now();
+        const exists = !!db.prepare("SELECT * FROM TodoLists WHERE UserID = ? AND ID = ?").get(this.id, id);
+
+        if (exists) {
+            db.prepare("INSERT INTO TodoLists VALUES (?, ?, ?, ?)").run(id, this.id, entry, lastModified);
+            this._todoList.set(id, {
+                entry,
+                lastModified: new Date(lastModified)
+            });
+            return true;
+        } else {
+            return false;
+        }
+    }
+    removeTodoEntry(id: number) {
+        db.prepare("DELETE FROM TodoLists WHERE UserID = ? AND ID = ?").run(this.id, id);
+        return this._todoList.delete(id);
+    }
+    clearTodoEntries() {
+        db.prepare("DELETE FROM TodoLists WHERE UserID = ?").run(this.id);
+        this._todoList.clear();
     }
 }

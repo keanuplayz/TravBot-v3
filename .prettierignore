@@ -9,6 +9,7 @@ LICENSE
 # Specific to this repository
 dist/
 data/
+public/
 docs/
 *.md
 tmp/

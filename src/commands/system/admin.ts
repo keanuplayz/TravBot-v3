@@ -214,7 +214,7 @@ export default new NamedCommand({
                                 any: new RestCommand({
                                     async run({send, guild, args, combined}) {
                                         const role = args[0] as Role;
-                                        new Guild(guild!.id).streamingRoles.set(role.id, combined);
+                                        new Guild(guild!.id).setStreamingRole(role.id, combined);
                                         send(
                                             `Successfully set the category \`${combined}\` to notify \`${role.name}\`.`
                                         );
@@ -229,11 +229,14 @@ export default new NamedCommand({
                                 async run({send, guild, args}) {
                                     const role = args[0] as Role;
                                     const guildStorage = new Guild(guild!.id);
-                                    const category = guildStorage.streamingRoles.get(role.id);
-                                    delete guildStorage.streamingRoles[role.id];
-                                    send(
-                                        `Successfully removed the category \`${category}\` to notify \`${role.name}\`.`
-                                    );
+                                    const category = guildStorage.getStreamingRole(role.id);
+                                    if (guildStorage.removeStreamingRole(role.id)) {
+                                        send(
+                                            `Successfully removed the category \`${category}\` to notify \`${role.name}\`.`
+                                        );
+                                    } else {
+                                        send(`Failed to remove streaming role \`${role.id}\` (\`${category}\`).`);
+                                    }
                                 }
                             })
                         })
@@ -248,8 +251,12 @@ export default new NamedCommand({
                         const voiceChannel = message.member?.voice.channel;
                         if (!voiceChannel) return send("You are not in a voice channel.");
                         const guildStorage = new Guild(guild!.id);
-                        delete guildStorage.defaultChannelNames[voiceChannel.id];
-                        return send(`Successfully removed the default channel name for ${voiceChannel}.`);
+
+                        if (guildStorage.removeDefaultChannelName(voiceChannel.id)) {
+                            send(`Successfully removed the default channel name for ${voiceChannel}.`);
+                        } else {
+                            send(`Failed to remove the default channel name for ${voiceChannel}`);
+                        }
                     },
                     any: new RestCommand({
                         async run({send, guild, message, combined}) {
@@ -262,7 +269,7 @@ export default new NamedCommand({
                             if (!guild!.me?.permissions.has(Permissions.FLAGS.MANAGE_CHANNELS))
                                 return send("I can't change channel names without the `Manage Channels` permission.");
 
-                            guildStorage.defaultChannelNames.set(voiceChannel.id, newName);
+                            guildStorage.setDefaultChannelName(voiceChannel.id, newName);
                             return await send(`Set default channel name to "${newName}".`);
                         }
                     })
