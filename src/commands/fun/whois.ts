@@ -1,8 +1,10 @@
 import {User} from "discord.js";
 import {Command, NamedCommand, getUserByNickname, RestCommand} from "onion-lasers";
+import {SlashCommandBuilder} from "@discordjs/builders";
+import {CommandInteraction} from "discord.js";
 
 // Quotes must be used here or the numbers will change
-const registry: {[id: string]: string} = {
+export const registry: {[id: string]: string} = {
     "465662909645848577": "You're an idiot, that's what.",
     "306499531665833984":
         "Kuma, you eldritch fuck, I demand you to release me from this Discord bot and let me see my Chromebook!",
@@ -49,6 +51,24 @@ const registry: {[id: string]: string} = {
     "388522171393245184": "The bat. Likes pats. If mean, apply whacks. 🗞️",
     "138840343855497216": "your face is a whois entry"
 };
+
+export const header = new SlashCommandBuilder()
+    .setDescription("Tells you who the specified user is")
+    .addUserOption((option) =>
+        option.setName("target").setDescription("The person to inquire about").setRequired(true)
+    );
+
+export function handler(interaction: CommandInteraction) {
+    const {options} = interaction;
+    const user = options.getUser("target", true);
+    const id = user.id;
+
+    if (id in registry) {
+        interaction.reply({content: `${user} ${registry[id]}`, allowedMentions: {parse: []}});
+    } else {
+        interaction.reply({content: `${user} hasn't been added to the registry yet!`, allowedMentions: {parse: []}});
+    }
+}
 
 export default new NamedCommand({
     description: "Tells you who you or the specified user is.",

@@ -5,6 +5,7 @@
 .husky/
 Dockerfile
 LICENSE
+*.txt
 
 # Specific to this repository
 dist/

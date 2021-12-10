@@ -1,0 +1,91 @@
+-= [Fun] =-
+/8ball <question: string>
+/cookie all
+/cookie (<@user>)
+/eco show (<@user>)
+/eco daily - "... Same as /eco get."
+/eco get - "... Same as /eco daily."
+/eco pay <@user> <amount: int>
+/eco guild
+/eco leaderboard - "... Same as /eco top."
+/eco top - "... Same as /eco leaderboard."
+/eco buy <item: string>
+/eco shop
+/eco monday
+/eco bet <@user> <amount: int> <duration: string>
+/eco award <@user> (<amount: int>)
+/eco post
+/eco delete --- "Operation successful. 5000 rows affected."
+/figlet <input: string>
+/insult
+/love
+/ok
+/owoify <input>
+/party
+/pat (<@user>)
+/poll <question: string> (<seconds: int>)
+/ravi (<index: int>)
+/thonk (<text: string>)
+/urban <word: string>
+/vaporwave <text: string>
+/weather <city: string>
+/whoami
+/whois <@user>
+
+-= [System] =- ("/admin other ..." if needed)
+/admin prefix (<prefix: string>)
+/admin messageembeds <enabled: boolean>
+/admin welcome type <[none, text, graphical]: string>
+/admin welcome channel <#channel>
+/admin stream <#channel>
+/admin defaultname (<name: string>)
+/admin logs (<verbosity: string>)
+/admin status
+/admin clear <amount: int>
+/admin nickname <nickname: string>
+/admin guilds
+/admin activity <type: string> (<description: string>)
+/admin syslog
+/admin autoroles list
+/admin autoroles reset
+/admin autoroles add <@role>
+/admin autoroles remove <@role>
+/admin streamroles set <@role> <category: string>
+/admin streamroles remove <@role>
+/webhook register <url: string>
+/webhook delete <url: string>
+
+-= [Utility] =-
+/calc <expression: string>
+/code
+/desc <name: string>
+/docs <query: string>
+/emote <emotes: string>
+/info
+/info avatar (<@user>)
+/info bot
+/info guild <name: string>
+/info guild <id: int>
+/info <@user>
+/invite (<flag: int>)
+/lsemotes <regex: string> (<isCaseSensitive: boolean>)
+/purge
+/react <emotes: string> (<target: string>)
+/say <message: string>
+/scanemotes (<forceReset: boolean>)
+/shorten <url: string>
+/stream description set (<description: string>)
+/stream description remove
+/stream thumbnail set (<link: string>)
+/stream thumbnail remove
+/stream category set (<category: string>)
+/stream category remove
+/time show (<@user>)
+/time setup
+/time delete
+/time utc
+/time daylight
+/todo show
+/todo add <note: string>
+/todo remove <note: string>
+/todo clear

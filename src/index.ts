@@ -14,6 +14,9 @@ export const client = new Client({
         Intents.FLAGS.GUILD_MESSAGES,
         Intents.FLAGS.GUILD_MESSAGE_REACTIONS,
         Intents.FLAGS.DIRECT_MESSAGES
+    ],
+    partials: [
+        "CHANNEL" // Needed so the bot can receive DM messages
     ]
 });
 
@@ -76,6 +79,7 @@ launch(client, path.join(__dirname, "commands"), {
 });
 
 // Initialize Modules //
+import "./modules/slashCommands";
 import "./modules/ready";
 import "./modules/presence";
 // TODO: Reimplement entire music system, contact Sink
