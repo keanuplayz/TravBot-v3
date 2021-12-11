@@ -1,3 +1,5 @@
+import {SlashCommandBuilder} from "@discordjs/builders";
+import {CommandInteraction} from "discord.js";
 import {NamedCommand} from "onion-lasers";
 import {random} from "../../lib";
 
@@ -58,7 +60,10 @@ const responses = [
     "cat",
     "large man"
 ];
-
+export const header = new SlashCommandBuilder().setDescription("Sends random ok message.");
+export async function handler(interaction: CommandInteraction) {
+    interaction.reply(`ok ${random(responses)}`);
+}
 export default new NamedCommand({
     description: "Sends random ok message.",
     async run({send}) {
