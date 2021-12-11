@@ -42,7 +42,7 @@ export async function handler(interaction: CommandInteraction) {
 
     interaction.reply(transform(response));
     // You might notice the remove message code is missing here. It's because reactions collectors are
-    //not a thing in interactions. The best alternative would buttons
+    //not a thing in interactions. The best alternative would be buttons
 }
 
 let phrase = "I have no currently set phrase!";
