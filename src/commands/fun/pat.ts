@@ -10,11 +10,11 @@ export default new NamedCommand({
             const attachment = message.attachments.first()!;
             const gif = await petPetGif(attachment.url);
             const file = new MessageAttachment(gif, "pat.gif");
-            send({attachments: [file]});
+            send({files: [file]});
         } else {
             const gif = await petPetGif(author.displayAvatarURL({format: "png"}));
             const file = new MessageAttachment(gif, "pat.gif");
-            send({attachments: [file]});
+            send({files: [file]});
         }
     },
     id: "user",
@@ -24,7 +24,7 @@ export default new NamedCommand({
             const user: User = args[0];
             const gif = await petPetGif(user.displayAvatarURL({format: "png"}));
             const file = new MessageAttachment(gif, "pat.gif");
-            send({attachments: [file]});
+            send({files: [file]});
         }
     }),
     any: new RestCommand({
@@ -36,7 +36,7 @@ export default new NamedCommand({
             else {
                 const gif = await petPetGif(user.displayAvatarURL({format: "png"}));
                 const file = new MessageAttachment(gif, "pat.gif");
-                send({attachments: [file]});
+                send({files: [file]});
             }
         }
     })
