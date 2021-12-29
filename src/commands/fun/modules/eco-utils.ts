@@ -1,6 +1,6 @@
 import {pluralise} from "../../../lib";
 import {Storage} from "../../../structures";
-import {User, Guild, TextChannel, DMChannel, NewsChannel, Channel, TextBasedChannels} from "discord.js";
+import {User, Guild, TextChannel, DMChannel, NewsChannel, Channel, TextBasedChannel} from "discord.js";
 
 export const ECO_EMBED_COLOR = 0xf1c40f;
 
@@ -89,7 +89,7 @@ export function getSendEmbed(sender: User, receiver: User, amount: number): obje
     };
 }
 
-export function isAuthorized(guild: Guild | null, channel: TextBasedChannels): boolean {
+export function isAuthorized(guild: Guild | null, channel: TextBasedChannel): boolean {
     if (IS_DEV_MODE) {
         return true;
     }

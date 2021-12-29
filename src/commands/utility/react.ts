@@ -1,5 +1,5 @@
 import {NamedCommand, RestCommand} from "onion-lasers";
-import {Message, Channel, TextChannel, TextBasedChannels} from "discord.js";
+import {Message, Channel, TextChannel, TextBasedChannel} from "discord.js";
 import {processEmoteQuery} from "./modules/emote-utils";
 
 export default new NamedCommand({
@@ -29,7 +29,7 @@ export default new NamedCommand({
                     const guildID = match[1];
                     const channelID = match[2];
                     const messageID = match[3];
-                    let tmpChannel: TextBasedChannels | undefined = channel;
+                    let tmpChannel: TextBasedChannel | undefined = channel;
 
                     if (guild?.id !== guildID) {
                         try {
@@ -40,7 +40,7 @@ export default new NamedCommand({
                     }
 
                     if (tmpChannel?.id !== channelID)
-                        tmpChannel = guild.channels.cache.get(channelID) as TextBasedChannels;
+                        tmpChannel = guild.channels.cache.get(channelID) as TextBasedChannel;
                     if (!tmpChannel) return send(`\`${channelID}\` is an invalid channel ID!`);
 
                     if (message.id !== messageID) {
@@ -58,10 +58,10 @@ export default new NamedCommand({
                     const match = copyIDPattern.exec(last)!;
                     const channelID = match[1];
                     const messageID = match[2];
-                    let tmpChannel: TextBasedChannels | undefined = channel;
+                    let tmpChannel: TextBasedChannel | undefined = channel;
 
                     if (tmpChannel?.id !== channelID)
-                        tmpChannel = guild?.channels.cache.get(channelID) as TextBasedChannels;
+                        tmpChannel = guild?.channels.cache.get(channelID) as TextBasedChannel;
                     if (!tmpChannel) return send(`\`${channelID}\` is an invalid channel ID!`);
 
                     if (message.id !== messageID) {
