@@ -24,7 +24,7 @@
         "moment": "^2.29.1",
         "ms": "^2.1.3",
         "node-wolfram-alpha": "^1.2.5",
-        "onion-lasers": "npm:onion-lasers-v13@^2.1.0",
+        "onion-lasers": "npm:onion-lasers-v13@^2.2.0",
         "pet-pet-gif": "^1.0.9",
         "relevant-urban": "^2.0.0",
         "weather-js": "^2.0.0"
