@@ -269,3 +269,29 @@ export function split<T>(array: T[], lengthOfEachSection: number): T[][] {
 export function requireAllCasesHandledFor(variable: never): never {
     throw new Error(`This function should never be called but got the value: ${variable}`);
 }
+/**
+ * Parses a duration string into milliseconds
+ * Examples:
+ * - 3d -> 3 days    -> 259200000ms
+ * - 2h -> 2 hours   -> 7200000ms
+ * - 7m -> 7 minutes -> 420000ms
+ * - 3s -> 3 seconds -> 3000ms
+ */
+export function parseDuration(duration: string): number {
+    // extract last char as unit
+    const unit = duration[duration.length - 1].toLowerCase();
+    // get the rest as value
+    let value: number = +duration.substring(0, duration.length - 1);
+
+    if (!["d", "h", "m", "s"].includes(unit) || isNaN(value)) return 0;
+
+    if (unit === "d") value *= 86400000;
+    // 1000ms * 60s * 60m * 24h
+    else if (unit === "h") value *= 3600000;
+    // 1000ms * 60s * 60m
+    else if (unit === "m") value *= 60000;
+    // 1000ms * 60s
+    else if (unit === "s") value *= 1000; // 1000ms
+
+    return value;
+}

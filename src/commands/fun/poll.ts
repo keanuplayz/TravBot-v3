@@ -2,7 +2,7 @@ import {MessageEmbed, Message, User, MessageActionRow, MessageButton} from "disc
 import {NamedCommand, RestCommand, poll, CHANNEL_TYPE, SendFunction, Command} from "onion-lasers";
 import {SlashCommandBuilder} from "@discordjs/builders";
 import {CommandInteraction} from "discord.js";
-import {pluralise} from "../../lib";
+import {pluralise, parseDuration} from "../../lib";
 
 export const header = new SlashCommandBuilder()
     .setDescription("Create a poll.")
@@ -14,8 +14,8 @@ export const header = new SlashCommandBuilder()
 export async function handler(interaction: CommandInteraction) {
     const {options} = interaction;
     const question = options.getString("question", true);
-    const duration = options.getInteger("duration", false);
-
+    var duration = options.getInteger("duration", false);
+    duration = parseDuration(duration + "s"); //override the duration variable with miliseconds one
     execSlashPoll(interaction, question, duration || 60000);
 }
 

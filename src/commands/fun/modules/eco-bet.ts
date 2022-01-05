@@ -1,5 +1,5 @@
 import {Command, NamedCommand, confirm, poll} from "onion-lasers";
-import {pluralise} from "../../../lib";
+import {pluralise, parseDuration} from "../../../lib";
 import {Storage} from "../../../structures";
 import {isAuthorized, getMoneyEmbed} from "./eco-utils";
 import {User} from "discord.js";
@@ -167,30 +167,3 @@ export const BetCommand = new NamedCommand({
         })
     })
 });
-
-/**
- * Parses a duration string into milliseconds
- * Examples:
- * - 3d -> 3 days    -> 259200000ms
- * - 2h -> 2 hours   -> 7200000ms
- * - 7m -> 7 minutes -> 420000ms
- * - 3s -> 3 seconds -> 3000ms
- */
-function parseDuration(duration: string): number {
-    // extract last char as unit
-    const unit = duration[duration.length - 1].toLowerCase();
-    // get the rest as value
-    let value: number = +duration.substring(0, duration.length - 1);
-
-    if (!["d", "h", "m", "s"].includes(unit) || isNaN(value)) return 0;
-
-    if (unit === "d") value *= 86400000;
-    // 1000ms * 60s * 60m * 24h
-    else if (unit === "h") value *= 3600000;
-    // 1000ms * 60s * 60m
-    else if (unit === "m") value *= 60000;
-    // 1000ms * 60s
-    else if (unit === "s") value *= 1000; // 1000ms
-
-    return value;
-}
