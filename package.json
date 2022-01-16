@@ -15,10 +15,10 @@
         "postinstall": "husky install"
     },
     "dependencies": {
-        "@discordjs/builders": "^0.8.2",
+        "@discordjs/builders": "^0.11.0",
         "canvas": "^2.8.0",
         "chalk": "^4.1.2",
-        "discord.js": "^13.3.0",
+        "discord.js": "^13.6.0",
         "dotenv": "^10.0.0",
         "figlet": "^1.5.2",
         "glob": "^7.2.0",
