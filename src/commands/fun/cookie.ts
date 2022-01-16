@@ -1,7 +1,8 @@
 import {User} from "discord.js";
 import {Command, NamedCommand} from "onion-lasers";
 import {random, parseVars} from "../../lib";
-
+import {SlashCommandBuilder} from "@discordjs/builders";
+import {CommandInteraction} from "discord.js";
 const cookies = [
     `has given %target% a chocolate chip cookie!`,
     `has given %target% a soft homemade oatmeal cookie!`,
@@ -25,6 +26,20 @@ const cookies = [
     `bakes %target% fresh cookies, it smells amazing.`
 ];
 
+export const header = new SlashCommandBuilder()
+    .setDescription("Gives specified user a cookie.")
+    .addUserOption((option) =>
+        option.setName("user").setDescription("User you want to give a cookie to.").setRequired(true)
+    );
+export async function handler(interaction: CommandInteraction) {
+    const {options} = interaction;
+
+    return interaction.reply(
+        `:cookie: ${interaction.user.tag} ${parseVars(random(cookies), {
+            target: options.getUser("user", true).tag.toString()
+        })}`
+    );
+}
 export default new NamedCommand({
     description: "Gives specified user a cookie.",
     usage: "['all'/@user]",

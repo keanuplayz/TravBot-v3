@@ -1,5 +1,7 @@
 import {NamedCommand, RestCommand} from "onion-lasers";
 import {random} from "../../lib";
+import {SlashCommandBuilder} from "@discordjs/builders";
+import {CommandInteraction} from "discord.js";
 
 const responses = [
     "Most likely,",
@@ -23,7 +25,14 @@ const responses = [
     "Outlook not so good,",
     "Very doubtful,"
 ];
-
+export const header = new SlashCommandBuilder()
+    .setDescription("Answers your question in an 8-ball manner.")
+    .addStringOption((option) =>
+        option.setName("question").setDescription("Question to ask the 8-ball.").setRequired(true)
+    );
+export async function handler(interaction: CommandInteraction) {
+    interaction.reply(`${random(responses)} ${interaction.user.tag}`);
+}
 export default new NamedCommand({
     description: "Answers your question in an 8-ball manner.",
     usage: "<question>",

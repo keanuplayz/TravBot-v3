@@ -1,5 +1,6 @@
+import {SlashCommandBuilder} from "@discordjs/builders";
+import {CommandInteraction} from "discord.js";
 import {NamedCommand, RestCommand} from "onion-lasers";
-
 const letters: {[letter: string]: string[]} = {
     a: "aáàảãạâấầẩẫậăắằẳẵặ".split(""),
     e: "eéèẻẽẹêếềểễệ".split(""),
@@ -29,8 +30,22 @@ function transform(str: string) {
     return out;
 }
 
-let phrase = "I have no currently set phrase!";
+export const header = new SlashCommandBuilder()
+    .setDescription("Transforms your text into ｖｉｅｔｎａｍｅｓｅ.")
+    .addStringOption((option) =>
+        option.setName("text").setDescription("The text you want to transform").setRequired(true)
+    );
 
+export async function handler(interaction: CommandInteraction) {
+    const {options} = interaction;
+    const response = options.getString("text", true);
+
+    interaction.reply(transform(response));
+    // You might notice the remove message code is missing here. It's because reactions collectors are
+    //not a thing in interactions. The best alternative would be buttons
+}
+
+let phrase = "I have no currently set phrase!";
 export default new NamedCommand({
     description: "Transforms your text into ｖｉｅｔｎａｍｅｓｅ.",
     usage: "([text])",

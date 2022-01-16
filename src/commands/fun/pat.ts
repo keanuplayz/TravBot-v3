@@ -1,6 +1,23 @@
 import {MessageAttachment, User} from "discord.js";
 import {NamedCommand, Command, RestCommand, getUserByNickname} from "onion-lasers";
 import petPetGif from "pet-pet-gif";
+import {SlashCommandBuilder} from "@discordjs/builders";
+import {CommandInteraction} from "discord.js";
+
+//Ravioli ravioli...
+//number from 1 to 9
+export const header = new SlashCommandBuilder()
+    .setDescription("Generates a pat GIF of the avatar of the mentioned user.")
+    .addUserOption((option) => option.setName("user").setDescription("User you want a pat gif of.").setRequired(true));
+
+export async function handler(interaction: CommandInteraction) {
+    await interaction.reply("Generating pat gif...");
+    const {options} = interaction;
+    const pfp = options.getUser("user", true).displayAvatarURL({format: "png"});
+    const gif = await petPetGif(pfp);
+    const file = new MessageAttachment(gif, "pat.gif");
+    await interaction.editReply({content: "Here you go!", files: [file]});
+}
 
 export default new NamedCommand({
     description: "Generates a pat GIF of the provided attachment image OR the avatar of the mentioned user.",
