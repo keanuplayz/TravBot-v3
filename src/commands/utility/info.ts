@@ -262,7 +262,7 @@ async function getGuildInfo(guild: Guild, currentGuild: Guild | null) {
     if (displayRoles) {
         embed.addField(
             `Roles [${roles.length - 1}]`,
-            roles.length < 10 ? roles.join(", ") : roles.length > 10 ? trimArray(roles) : "None"
+            roles.length < 10 ? roles.join(", ") : roles.length > 10 ? trimArray(roles).join(", ") : "None"
         );
     }
 
